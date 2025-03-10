@@ -1,0 +1,39 @@
+[tool.poetry]
+name = "habideploy"
+version = "0.1.0"
+description = "HabiDeploy"
+authors = ["Quynh Nguyen <seriquynh@gmail.com>"]
+readme = "README.md"
+packages = [{include = "hapi", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+typer = "^0.15.2"
+fabric = "^3.2.2"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.5"
+black = "^25.1.0"
+isort = "^6.0.1"
+flake8 = "^7.1.2"
+
+[tool.poetry.scripts]
+hello = "hello.cli:start"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 88
+target-version = ['py37']
+include = '\.pyi?$'
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+line_length = 88
+
+[tool.flake8]
+max-line-length = 88
+extend-ignore = 'E203'
