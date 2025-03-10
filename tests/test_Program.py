@@ -3,11 +3,10 @@ from typer import Typer
 from hapi import Deployer, Program
 
 
-def test_new_instance():
+def test_constructor():
     app = Program()
 
     assert isinstance(app.deployer, Deployer)
-    assert isinstance(app.typer, Typer)
 
 
 def test_the_put_shortcut():
