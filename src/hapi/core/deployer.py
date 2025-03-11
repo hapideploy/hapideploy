@@ -7,17 +7,17 @@ from fabric import Connection
 from typing_extensions import Annotated
 
 from ..exceptions import RuntimeException
-from .config import Configuration
+from .config import Config
 from .io import InputOutput
 from .run_result import RunResult
-from .task import TaskDefinition
+from .task import Task
 
 
 class Deployer:
     __instance = None
 
     def __init__(self):
-        self.config = Configuration()
+        self.config = Config()
         self.remotes = []
         self.tasks = {}
 
@@ -56,7 +56,7 @@ class Deployer:
         self.config.put("stage", io.stage)
 
     def add_task(self, name: str, desc: str, func: typing.Callable):
-        task = TaskDefinition(name, desc, func)
+        task = Task(name, desc, func)
 
         self.tasks[name] = task
 
@@ -104,7 +104,7 @@ class Deployer:
 
     def run_task(self, task):
         # TODO: If there is no running remote, exit?
-        task = task if isinstance(task, TaskDefinition) else self.tasks.get(task)
+        task = task if isinstance(task, Task) else self.tasks.get(task)
         self.begin_task(task)
         task.func(self)
         self.end_task(task)
@@ -124,7 +124,7 @@ class Deployer:
                 continue
 
             if self.config.has(key) is not True:
-                raise RuntimeException(f"Configuration key {key} is not defined.")
+                raise RuntimeException(f"Config key {key} is not defined.")
 
             value = self.config.find(key)
 

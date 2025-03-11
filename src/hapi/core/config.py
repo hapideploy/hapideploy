@@ -3,7 +3,7 @@ import typing
 from ..exceptions import LogicException
 
 
-class Configuration:
+class Config:
     def __init__(self):
         self.__items = {}
 

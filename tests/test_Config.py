@@ -1,10 +1,10 @@
 import pytest
 
-from hapi import Configuration, LogicException
+from hapi import Config, LogicException
 
 
 def test_it_puts_a_single_value():
-    config = Configuration()
+    config = Config()
 
     config.put("stage", "production")
     assert config.find("stage") == "production"
@@ -14,7 +14,7 @@ def test_it_puts_a_single_value():
 
 
 def test_it_puts_a_list_value():
-    config = Configuration()
+    config = Config()
 
     names = [
         "James",
@@ -28,7 +28,7 @@ def test_it_puts_a_list_value():
 
 
 def test_it_adds_single_values():
-    config = Configuration()
+    config = Config()
     config.put("names", [])
 
     config.add("names", "James")
@@ -37,7 +37,7 @@ def test_it_adds_single_values():
 
 
 def test_it_adds_list_values():
-    config = Configuration()
+    config = Config()
     config.put("names", [])
 
     config.add("names", ["James", "Jane"])
@@ -46,7 +46,7 @@ def test_it_adds_list_values():
 
 
 def test_it_adds_values_for_a_non_existing_key():
-    config = Configuration()
+    config = Config()
     assert config.find("names") is None
 
     config.add("names", "James")
@@ -55,7 +55,7 @@ def test_it_adds_values_for_a_non_existing_key():
 
 
 def test_it_raises_a_logic_exception_if_adding_values_for_a_key_is_not_type_of_list():
-    config = Configuration()
+    config = Config()
 
     config.put("name", "James")
 
@@ -66,7 +66,7 @@ def test_it_raises_a_logic_exception_if_adding_values_for_a_key_is_not_type_of_l
 
 
 def test_it_gets_all_values():
-    config = Configuration()
+    config = Config()
 
     config.put("stage", "production")
     config.put("repository", "git@github.com:hapideploy/hapideploy.git")
@@ -78,7 +78,7 @@ def test_it_gets_all_values():
 
 
 def test_it_checks_if_a_key_exists():
-    config = Configuration()
+    config = Config()
 
     config.put("stage", "production")
 

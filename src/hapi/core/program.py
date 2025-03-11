@@ -3,7 +3,7 @@ import typing
 import yaml
 
 from .deployer import Deployer
-from .remote import RemoteDefinition
+from .remote import Remote
 
 
 class Program:
@@ -36,7 +36,7 @@ class Program:
     def host(self, **kwargs):
         kwargs["host"] = kwargs.get("name")
         del kwargs["name"]
-        remote = RemoteDefinition(**kwargs)
+        remote = Remote(**kwargs)
         self.deployer.remotes.append(remote)
         return self
 

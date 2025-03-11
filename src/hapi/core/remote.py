@@ -1,4 +1,4 @@
-class RemoteDefinition:
+class Remote:
     def __init__(
         self,
         host: str,

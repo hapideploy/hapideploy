@@ -1,12 +1,12 @@
-from hapi import Configuration, Deployer, RemoteDefinition
+from hapi import Config, Deployer, Remote
 
 
 def test_constructor():
     deployer = Deployer()
 
-    assert isinstance(deployer.config, Configuration)
+    assert isinstance(deployer.config, Config)
     assert isinstance(deployer.remotes, list)
-    assert isinstance(deployer.tasks, list)
+    assert isinstance(deployer.tasks, dict)
 
 
 def test_it_can_get_and_set_instance():
@@ -23,7 +23,7 @@ def test_it_can_parse_running_remote_deploy_dir():
 
     deployer.config.put("stage", "production")
 
-    deployer.running_remote = RemoteDefinition(
+    deployer.running_remote = Remote(
         host="127.0.0.1", deploy_dir="~/path/to/deploy/{{stage}}"
     )
 
