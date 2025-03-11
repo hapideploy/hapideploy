@@ -1,4 +1,4 @@
-HabiDeploy
+HapiDeploy
 
 ## Commands
 
