@@ -5,5 +5,6 @@ from .core import (
     LogicException,
     Program,
     RemoteDefinition,
+    TaskDefinition,
     __version__,
 )

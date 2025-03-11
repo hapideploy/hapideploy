@@ -47,24 +47,27 @@ class RemoteDefinition:
     def __init__(
         self,
         host: str,
-        user: str = "forge",
+        user: str = "hapi",
+        port: int = 22,
         deploy_dir: str = "~/deploy/{{stage}}",
         label: str = None,
     ):
         self.host = host
         self.user = user
+        self.port = port
         self.deploy_dir = deploy_dir
         self.label = host if label is None else label
+        self.id = f"{self.user}@{self.host}:{self.port}"
 
     def connect(self):
         return Connection(host=self.host, user=self.user)
 
 
 class TaskDefinition:
-    def __init__(self, name: str, desc: str, call: typing.Callable):
+    def __init__(self, name: str, desc: str, func: typing.Callable):
         self.name = name
         self.desc = desc
-        self.call = call
+        self.func = func
 
 
 class InputOutput:
@@ -94,7 +97,7 @@ class InputOutput:
 
 
 class Deployer:
-    instance = None
+    __instance = None
 
     def __init__(self):
         self.config = Configuration()
@@ -107,13 +110,13 @@ class Deployer:
 
     @staticmethod
     def set_instance(instance):
-        Deployer.instance = instance
+        Deployer.__instance = instance
 
     @staticmethod
     def get_instance():
-        if Deployer.instance is None:
-            Deployer.instance = Deployer()
-        return Deployer.instance
+        if Deployer.__instance is None:
+            Deployer.__instance = Deployer()
+        return Deployer.__instance
 
     def load_io(self, io: InputOutput):
         self.io = io
@@ -121,8 +124,8 @@ class Deployer:
         self.config.put("branch", io.branch)
         self.config.put("stage", io.stage)
 
-    def add_task(self, name: str, desc: str, call: typing.Callable):
-        task = TaskDefinition(name, desc, call)
+    def add_task(self, name: str, desc: str, func: typing.Callable):
+        task = TaskDefinition(name, desc, func)
 
         self.tasks.append(task)
 
@@ -157,8 +160,8 @@ class Deployer:
 
             for remote in remotes:
                 self.running_remote = remote
-                self.io.writeln(f"on [{self.running_remote.label}] task {task.name}")
-                call(self)
+                self.io.writeln(f"[{self.running_remote.label}] task {task.name}")
+                func(self)
 
         return self
 
@@ -171,12 +174,24 @@ class Deployer:
         return True
 
     def run(self, command: str, **kwargs):
-        self.io.writeln(f"on [{self.running_remote.label}] run {command}")
+        self.io.writeln(f"[{self.running_remote.label}] run {command}")
+
+    def log(self, message: str, channel: str = "out"):
+        self.io.writeln(f"[{self.running_remote.label}] {channel} {message}")
 
 
 class Program:
     def __init__(self):
         self.deployer = Deployer()
+
+        # TODO: Register default commands.
+        @self.deployer.typer.command(name="about", help=f"Display program information")
+        def about():
+            print(f"HapiDeploy {__version__}")
+
+        @self.deployer.typer.command(name="list", help=f"List commands")
+        def list():
+            print("List commands")
 
     def start(self):
         self.deployer.typer()
@@ -189,16 +204,10 @@ class Program:
         self.deployer.config.add(key, value)
         return self
 
-    def host(
-        self,
-        name: str,
-        user: str = "forge",
-        deploy_dir: str = "~/deploy/{{stage}}",
-        label: str = None,
-    ):
-        remote = RemoteDefinition(
-            host=name, user=user, deploy_dir=deploy_dir, label=label
-        )
+    def host(self, **kwargs):
+        kwargs["host"] = kwargs.get("name")
+        del kwargs["name"]
+        remote = RemoteDefinition(**kwargs)
         self.deployer.remotes.append(remote)
         return self
 

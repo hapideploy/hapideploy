@@ -10,6 +10,7 @@ packages = [{include = "hapi", from = "src"}]
 python = "^3.9"
 typer = "^0.15.2"
 fabric = "^3.2.2"
+typing-extensions = "^4.12.2"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.5"
