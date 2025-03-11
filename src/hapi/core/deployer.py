@@ -25,6 +25,8 @@ class Deployer(Container):
         self.io = None
         self.running_remote = None
 
+        self.__running = {'cd': None}
+
     @staticmethod
     def set_instance(instance):
         Deployer.__instance = instance
@@ -34,6 +36,7 @@ class Deployer(Container):
         if Deployer.__instance is None:
             Deployer.__instance = Deployer()
         return Deployer.__instance
+
 
     def parse(self, text: str, params: dict = None):
         # TODO: If there is no running remote, should exit?
@@ -118,10 +121,19 @@ class Deployer(Container):
         res = self.run(f"if {command}; then echo {picked}; fi")
         return res.fetch() == picked
 
+    def cd(self, cd: str):
+        self.__running['cd'] = cd
+        return self
+
     def run(self, runnable: str, **kwargs):
         remote = self._detect_running_remote()
 
-        command = self.parse(runnable.strip())
+        cd_dir = self.__running.get('cd')
+
+        if cd_dir is not None:
+            command = self.parse(f'cd {cd_dir} && ({runnable.strip()})')
+        else:
+            command = self.parse(runnable.strip())
 
         if self.io.verbosity > InputOutput.VERBOSITY_NORMAL:
             self.log(channel="run", message=command)
@@ -167,8 +179,7 @@ class Deployer(Container):
         self.log(task.name, channel="task")
 
     def _end_task(self, task):
-        # Do nothing for now
-        pass
+        self.__running['cd'] = None
 
     @staticmethod
     def _extract_curly_braces(text):
