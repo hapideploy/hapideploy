@@ -48,7 +48,9 @@ class Container:
                 continue
 
             if self.has(key) is not True:
-                raise BindingException(f"key {key} is not defined in the container.")
+                raise BindingException(
+                    f'The key "{key}" is not defined in the container.'
+                )
 
             value = self.make(key)
 

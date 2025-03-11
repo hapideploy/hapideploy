@@ -6,50 +6,31 @@ from hapi import Deployer, Program
 def test_constructor():
     app = Program()
 
-    assert isinstance(app.deployer, Deployer)
+    assert isinstance(app, Deployer)
 
 
-def test_the_put_shortcut():
-    app = Program()
-
-    app.put("stage", "production")
-    app.put("repository", "git@github.com:hapideploy/hapideploy.git")
-
-    assert app.deployer.make("stage") == "production"
-    assert app.deployer.make("repository") == "git@github.com:hapideploy/hapideploy.git"
-
-
-def test_the_add_shortcut():
-    app = Program()
-
-    app.add("names", "James")
-    app.add("names", ["John", "Jane"])
-
-    assert app.deployer.make("names") == ["James", "John", "Jane"]
-
-
-def test_the_host_shortcut():
+def test_the_host_method():
     app = Program()
 
     app.host(name="ubuntu-1", user="vagrant", deploy_dir="~/hapideploy/{{stage}}")
-    assert len(app.deployer.remotes) == 1
+    assert len(app.remotes) == 1
 
-    remote = app.deployer.remotes[0]
+    remote = app.remotes[0]
     assert remote.host == "ubuntu-1"
     assert remote.user == "vagrant"
     assert remote.deploy_dir == "~/hapideploy/{{stage}}"
     assert remote.label == "ubuntu-1"
 
 
-def test_the_load_shortcut():
+def test_the_load_method():
     app = Program()
 
     current_dir = os.path.dirname(os.path.realpath(__file__))
 
     app.load(current_dir + "/inventory.yml")
 
-    assert len(app.deployer.remotes) == 3
+    assert len(app.remotes) == 3
 
-    assert app.deployer.remotes[0].host == "ubuntu-1"
-    assert app.deployer.remotes[1].host == "ubuntu-2"
-    assert app.deployer.remotes[2].host == "ubuntu-3"
+    assert app.remotes[0].host == "ubuntu-1"
+    assert app.remotes[1].host == "ubuntu-2"
+    assert app.remotes[2].host == "ubuntu-3"

@@ -6,7 +6,7 @@ import typer
 from fabric import Connection
 from typing_extensions import Annotated
 
-from ..exceptions import RuntimeException
+from ..exceptions import StoppedException
 from .container import Container
 from .io import InputOutput
 from .run_result import RunResult
@@ -20,12 +20,9 @@ class Deployer(Container):
         super().__init__()
         self.remotes = []
         self.tasks = {}
-
         self.typer = typer.Typer()
         self.io = None
-        self.running_remote = None
-
-        self.__running = {'cd': None}
+        self.running = {"remote": None, "cd": None}
 
     @staticmethod
     def set_instance(instance):
@@ -36,7 +33,6 @@ class Deployer(Container):
         if Deployer.__instance is None:
             Deployer.__instance = Deployer()
         return Deployer.__instance
-
 
     def parse(self, text: str, params: dict = None):
         # TODO: If there is no running remote, should exit?
@@ -85,7 +81,7 @@ class Deployer(Container):
             ]
 
             for remote in remotes:
-                self.running_remote = remote
+                self.running["remote"] = remote
                 self.run_task(task)
 
         return self
@@ -121,17 +117,17 @@ class Deployer(Container):
         res = self.run(f"if {command}; then echo {picked}; fi")
         return res.fetch() == picked
 
-    def cd(self, cd: str):
-        self.__running['cd'] = cd
+    def cd(self, dir_path: str):
+        self.running["cd"] = dir_path
         return self
 
-    def run(self, runnable: str, **kwargs):
+    def run(self, runnable: str):
         remote = self._detect_running_remote()
 
-        cd_dir = self.__running.get('cd')
+        cd_dir = self.running.get("cd")
 
         if cd_dir is not None:
-            command = self.parse(f'cd {cd_dir} && ({runnable.strip()})')
+            command = self.parse(f"cd {cd_dir} && ({runnable.strip()})")
         else:
             command = self.parse(runnable.strip())
 
@@ -142,6 +138,9 @@ class Deployer(Container):
         # TODO: Check the run result, raise an informative exception when needed.
         origin = conn.run(command, hide=True)
         res = RunResult(origin)
+
+        if res.fetch() == "":
+            return res
 
         if self.io.verbosity >= InputOutput.VERBOSITY_DEBUG:
             for line in res.lines():
@@ -164,7 +163,7 @@ class Deployer(Container):
             self.log(message, "info")
 
     def stop(self, message: str):
-        raise RuntimeException(self.parse(message))
+        raise StoppedException(self.parse(message))
 
     def _load_io(self, io: InputOutput):
         self.io = io
@@ -173,13 +172,13 @@ class Deployer(Container):
 
     def _detect_running_remote(self):
         # TODO: Throw an exception if no running remote is present.
-        return self.running_remote
+        return self.running["remote"]
 
     def _begin_task(self, task):
         self.log(task.name, channel="task")
 
     def _end_task(self, task):
-        self.__running['cd'] = None
+        self.running["cd"] = None
 
     @staticmethod
     def _extract_curly_braces(text):

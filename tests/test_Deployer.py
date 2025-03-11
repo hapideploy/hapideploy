@@ -23,7 +23,7 @@ def test_it_can_parse_running_remote_deploy_dir():
 
     deployer.put("stage", "production")
 
-    deployer.running_remote = Remote(
+    deployer.running["remote"] = Remote(
         host="127.0.0.1", deploy_dir="~/path/to/deploy/{{stage}}"
     )
 
