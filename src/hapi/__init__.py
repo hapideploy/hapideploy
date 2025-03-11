@@ -2,9 +2,10 @@ from .core import (
     Configuration,
     Deployer,
     InputOutput,
-    LogicException,
     Program,
     RemoteDefinition,
+    RunResult,
     TaskDefinition,
     __version__,
 )
+from .exceptions import LogicException, RuntimeException

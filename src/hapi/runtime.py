@@ -1,5 +1,3 @@
-import typer
-
-from hapi import Deployer, Program, __version__
+from .core import Program
 
 app = Program()
