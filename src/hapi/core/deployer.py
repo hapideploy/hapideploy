@@ -119,8 +119,7 @@ class Deployer:
         self._end_task(task)
 
     def cat(self, file: str) -> str:
-        self.run(f"cat {file}")
-        return "1"
+        return self.run(f"cat {file}").fetch()
 
     def test(self, command: str) -> bool:
         picked = "+" + random.choice(
@@ -137,7 +136,7 @@ class Deployer:
             ]
         )
         res = self.run(f"if {command}; then echo {picked}; fi")
-        return res.trim() == picked
+        return res.fetch() == picked
 
     def run(self, runnable: str, **kwargs):
         remote = self._detect_running_remote()
