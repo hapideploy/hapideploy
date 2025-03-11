@@ -12,14 +12,14 @@ class Program:
 
         self.deployer.set_instance(instance)
 
-        # TODO: Register default commands.
-        @self.deployer.typer.command(name="about", help=f"Display program information")
+        self.add_about_command()
+
+    def add_about_command(self):
+        @self.deployer.typer.command(
+            name="about", help=f"Display this program information"
+        )
         def about():
             print(f"HapiDeploy {__version__}")
-
-        @self.deployer.typer.command(name="list", help=f"List commands")
-        def list():
-            print("List commands")
 
     def start(self):
         # TODO: If there are no remotes, try to load from inventory.yml file

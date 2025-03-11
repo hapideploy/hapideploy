@@ -19,28 +19,27 @@ class Provider:
     def add_deploy(self):
         @self.app.task(name="deploy", desc="Run deployment tasks")
         def deploy_run(dep: Deployer):
-            dep.put("current_file", "{{deploy_dir}}/current")
+            dep.config.put("current_file", "{{deploy_dir}}/current")
 
-            dep.run_task("deploy:start")
-            dep.run_task("deploy:setup")
+            dep.run_tasks(
+                [
+                    "deploy:start",
+                    "deploy:setup",
+                ]
+            )
 
     def add_deploy_start(self):
         @self.app.task(name="deploy:start", desc="Start a new deployment")
         def deploy_start(dep: Deployer):
-            dep.put("name", "HapiDeploy")
-
             release_name = (
                 dep.cat("{{deploy_dir}}/.dep/latest_release")
                 if dep.test("[ -f {{deploy_dir}}/.dep/latest_release ]")
                 else 1
             )
 
-            dep.put("release_name", release_name)
+            dep.config.put("release_name", release_name)
 
-            dep.log(
-                message=r"Deploying {{name}} to {{stage}} (release {{release_name}})",
-                channel="info",
-            )
+            dep.info("Deploying {{name}} to {{stage}} (release {{release_name}})")
 
     def add_deploy_setup(self):
         @self.app.task(name="deploy:setup", desc="Prepare the deploy directory")
@@ -57,3 +56,5 @@ cd {{deploy_dir}};
                 dep.stop(
                     "There is a directory (not symlink) at {{current_file}}.\n Remove this directory so it can be replaced with a symlink for atomic deployments."
                 )
+
+            dep.info("The {{deploy_dir}} is ready for deployment")
