@@ -16,7 +16,11 @@ app.add('writable_dirs', [])
 
 # Hosts
 
-app.host(name='ubuntu-1', user='vagrant', deploy_dir='~/hapideploy/{{stage}}')
+app.load('inventory.yml')
+
+# Tasks
+
+# Hooks
 
 # ========== #
 

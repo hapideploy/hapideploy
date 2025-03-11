@@ -2,14 +2,21 @@
 
 __version__ = "0.1.0"
 
+import random
+import re
 import typing
 
 import typer
+import yaml
 from fabric import Connection
 from typing_extensions import Annotated
 
 
 class LogicException(Exception):
+    pass
+
+
+class RuntimeException(Exception):
     pass
 
 
@@ -35,6 +42,9 @@ class Configuration:
             self.__items[key].append(value)
 
         return self
+
+    def has(self, key: str):
+        return key in self.__items
 
     def find(self, key: str):
         return self.__items.get(key)
@@ -96,6 +106,17 @@ class InputOutput:
         print(line.replace("<success>", "").replace("</success>", ""))
 
 
+class RunResult:
+    def __init__(self, origin):
+        self.origin = origin
+
+        self.__outlog = origin.stdout.strip()
+        self.__errlog = origin.stderr.strip()
+
+    def trim(self):
+        self.__outlog
+
+
 class Deployer:
     __instance = None
 
@@ -117,6 +138,12 @@ class Deployer:
         if Deployer.__instance is None:
             Deployer.__instance = Deployer()
         return Deployer.__instance
+
+    @staticmethod
+    def _extract_curly_braces(text):
+        pattern = r"\{\{([^}]*)\}\}"
+        matches = re.findall(pattern, text)
+        return matches
 
     def load_io(self, io: InputOutput):
         self.io = io
@@ -165,19 +192,63 @@ class Deployer:
 
         return self
 
+    def parse(self, text: str, params: dict = None):
+        remote = self.running_remote
+
+        if remote is not None:
+            text = text.replace("{{deploy_dir}}", remote.deploy_dir)
+
+        keys = self._extract_curly_braces(text)
+
+        for key in keys:
+            if params is not None and key in params:
+                text = text.replace("{{" + key + "}}", str(params[key]))
+                continue
+
+            if self.config.has(key) is not True:
+                raise RuntimeException(f"Configuration key {key} is not defined.")
+
+            value = self.config.find(key)
+
+            if value is not None:
+                text = text.replace("{{" + key + "}}", str(value))
+
+        keys = self._extract_curly_braces(text)
+
+        if len(keys) > 0:
+            return self.parse(text, params)
+
+        return text
+
     def cat(self, file: str) -> str:
         self.run(f"cat {file}")
         return "1"
 
-    def test(self, file: str) -> bool:
-        self.run(f"test {file}")
-        return True
+    def test(self, command: str) -> bool:
+        picked = "+" + random.choice([
+            "accurate",
+            "appropriate",
+            "correct",
+            "legitimate",
+            "precise",
+            "right",
+            "true",
+            "yes",
+            "indeed",
+        ])
+        res = self.run(f"if {command}; then echo {picked}; fi")
+        return res.trim() == picked
 
     def run(self, command: str, **kwargs):
-        self.io.writeln(f"[{self.running_remote.label}] run {command}")
+        parsed_command = self.parse(command)
+        self.io.writeln(f"[{self.running_remote.label}] run {parsed_command}")
+        origin = self.running_remote.connect().run(parsed_command, **kwargs)
+        res = RunResult(origin)
+        return res
 
     def log(self, message: str, channel: str = "out"):
-        self.io.writeln(f"[{self.running_remote.label}] {channel} {message}")
+        parsed = self.parse(message)
+        self.io.writeln(f"[{self.running_remote.label}] {channel} {parsed}")
 
 
 class Program:
@@ -194,6 +265,7 @@ class Program:
             print("List commands")
 
     def start(self):
+        # TODO: If there are no remotes, try to load from inventory.yml file
         self.deployer.typer()
 
     def put(self, key: str, value):
@@ -210,6 +282,20 @@ class Program:
         remote = RemoteDefinition(**kwargs)
         self.deployer.remotes.append(remote)
         return self
+
+    def load(self, file: str = "inventory.yml"):
+        with open(file) as stream:
+            try:
+                loaded_data = yaml.safe_load(stream)
+
+                if isinstance(loaded_data.get("hosts"), dict) is False:
+                    raise RuntimeException(f'"hosts" definition is invalid.')
+
+                for name, data in loaded_data["hosts"].items():
+                    self.host(name=name, **data)
+            except yaml.YAMLError as exc:
+                # TODO: throw RuntimeException
+                print(exc)
 
     def task(self, name: str, desc: str = None):
         desc = desc if desc is not None else name

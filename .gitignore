@@ -5,3 +5,6 @@ dist
 .venv
 
 poetry.lock
+
+deploy.py
+inventory.yml

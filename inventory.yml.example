@@ -1,0 +1,11 @@
+hosts:
+  ubuntu-1:
+    user: vagrant
+    port: 22 # Optional
+    deploy_dir: ~/hapideploy/{{stage}}
+  ubuntu-2:
+    user: vagrant
+    deploy_dir: ~/hapideploy/{{stage}}
+  ubuntu-3:
+    user: vagrant
+    deploy_dir: ~/hapideploy/{{stage}}

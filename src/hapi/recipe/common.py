@@ -1,4 +1,4 @@
-from hapi.core import Deployer, Program
+from ..core import Deployer, Program
 
 
 def bootstrap(app: Program):
@@ -14,16 +14,17 @@ class Provider:
     def boot(self):
         @self.app.task(name="deploy:start", desc="Start a new deployment")
         def deploy_start(dep: Deployer):
-            name = "HapiDeploy"
-            stage = dep.config.find("stage")
+            dep.config.put("name", "HapiDeploy")
 
             release_name = (
-                dep.cat("{{deply_dir}}/.dep/latest_release")
-                if dep.test("{{deply_dir}}/.dep/latest_release")
+                dep.cat("{{deploy_dir}}/.dep/latest_release")
+                if dep.test("[ -d {{deploy_dir}}/.dep ]")
                 else 1
             )
 
+            dep.config.put("release_name", release_name)
+
             dep.log(
-                message=f"Deploying {name} to {stage} (release {release_name})",
+                message=r"Deploying {{name}} to {{stage}} (release {{release_name}})",
                 channel="info",
             )

@@ -1,4 +1,4 @@
-from typer import Typer
+import os
 
 from hapi import Deployer, Program
 
@@ -42,3 +42,17 @@ def test_the_host_shortcut():
     assert remote.user == "vagrant"
     assert remote.deploy_dir == "~/hapideploy/{{stage}}"
     assert remote.label == "ubuntu-1"
+
+
+def test_the_load_shortcut():
+    app = Program()
+
+    current_dir = os.path.dirname(os.path.realpath(__file__))
+
+    app.load(current_dir + "/inventory.yml")
+
+    assert len(app.deployer.remotes) == 3
+
+    assert app.deployer.remotes[0].host == "ubuntu-1"
+    assert app.deployer.remotes[1].host == "ubuntu-2"
+    assert app.deployer.remotes[2].host == "ubuntu-3"

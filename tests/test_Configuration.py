@@ -75,3 +75,13 @@ def test_it_gets_all_values():
         "stage": "production",
         "repository": "git@github.com:hapideploy/hapideploy.git",
     }
+
+
+def test_it_checks_if_a_key_exists():
+    config = Configuration()
+
+    config.put("stage", "production")
+
+    assert config.has("stage") is True
+
+    assert config.has("repository") is False
