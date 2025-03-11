@@ -1,44 +1,32 @@
 import random
-import re
 import typing
 
 import typer
 from fabric import Connection
 from typing_extensions import Annotated
 
-from ..exceptions import StoppedException
+from ..exceptions import RuntimeException, StoppedException
 from .container import Container
 from .io import InputOutput
+from .remote import Remote
 from .run_result import RunResult
 from .task import Task
 
 
 class Deployer(Container):
-    __instance = None
-
     def __init__(self):
         super().__init__()
+        self.typer = typer.Typer()
         self.remotes = []
         self.tasks = {}
-        self.typer = typer.Typer()
+        self.running = {}
         self.io = None
-        self.running = {"remote": None, "cd": None}
 
-    @staticmethod
-    def set_instance(instance):
-        Deployer.__instance = instance
-
-    @staticmethod
-    def get_instance():
-        if Deployer.__instance is None:
-            Deployer.__instance = Deployer()
-        return Deployer.__instance
 
     def parse(self, text: str, params: dict = None):
-        # TODO: If there is no running remote, should exit?
-        remote = self._detect_running_remote()
+        remote = self.running.get('remote')
 
-        if remote is not None:
+        if isinstance(remote, Remote):
             text = text.replace("{{deploy_dir}}", remote.deploy_dir)
 
         return super().parse(text, params)
@@ -117,8 +105,8 @@ class Deployer(Container):
         res = self.run(f"if {command}; then echo {picked}; fi")
         return res.fetch() == picked
 
-    def cd(self, dir_path: str):
-        self.running["cd"] = dir_path
+    def cd(self, path: str):
+        self.running["cd"] = path
         return self
 
     def run(self, runnable: str):
@@ -170,18 +158,16 @@ class Deployer(Container):
         self.put("branch", io.branch)
         self.put("stage", io.stage)
 
-    def _detect_running_remote(self):
-        # TODO: Throw an exception if no running remote is present.
-        return self.running["remote"]
+    def _detect_running_remote(self) -> Remote:
+        remote = self.running.get('remote')
+
+        if isinstance(remote, Remote):
+            return remote
+
+        raise RuntimeException('The running remote is not set.')
 
     def _begin_task(self, task):
         self.log(task.name, channel="task")
 
     def _end_task(self, task):
         self.running["cd"] = None
-
-    @staticmethod
-    def _extract_curly_braces(text):
-        pattern = r"\{\{([^}]*)\}\}"
-        matches = re.findall(pattern, text)
-        return matches

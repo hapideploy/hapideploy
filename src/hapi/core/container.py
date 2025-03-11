@@ -5,9 +5,21 @@ from ..exceptions import BindingException, LogicException
 
 
 class Container:
+    __instance = None
+
     def __init__(self):
         self.__bindings = {}
         self.__items = {}
+
+    @staticmethod
+    def set_instance(instance):
+        Container.__instance = instance
+
+    @staticmethod
+    def get_instance():
+        if Container.__instance is None:
+            Container.__instance = Container()
+        return Container.__instance
 
     def put(self, key: str, value):
         self.__items[key] = value

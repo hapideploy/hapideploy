@@ -11,7 +11,6 @@ from .remote import Remote
 class Program(Deployer):
     def __init__(self):
         super().__init__()
-        self.set_instance(self)
 
         self.add_about_command()
 
