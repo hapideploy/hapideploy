@@ -3,8 +3,10 @@ import re
 import typing
 
 import typer
+from fabric import Connection
 from typing_extensions import Annotated
 
+from ..exceptions import RuntimeException
 from .config import Configuration
 from .io import InputOutput
 from .run_result import RunResult
@@ -17,7 +19,7 @@ class Deployer:
     def __init__(self):
         self.config = Configuration()
         self.remotes = []
-        self.tasks = []
+        self.tasks = {}
 
         self.typer = typer.Typer()
         self.io = None
@@ -39,6 +41,14 @@ class Deployer:
         matches = re.findall(pattern, text)
         return matches
 
+    # Proxy methods
+    def put(self, key: str, value):
+        self.config.put(key, value)
+        return self
+
+    def stop(self, message: str):
+        raise RuntimeException(self.parse(message))
+
     def load_io(self, io: InputOutput):
         self.io = io
 
@@ -48,7 +58,7 @@ class Deployer:
     def add_task(self, name: str, desc: str, func: typing.Callable):
         task = TaskDefinition(name, desc, func)
 
-        self.tasks.append(task)
+        self.tasks[name] = task
 
         @self.typer.command(name=name, help=desc)
         def task_command(
@@ -81,12 +91,26 @@ class Deployer:
 
             for remote in remotes:
                 self.running_remote = remote
-                self.io.writeln(f"[{self.running_remote.label}] task {task.name}")
-                func(self)
+                self.run_task(task)
 
         return self
 
+    def begin_task(self, task):
+        self.log(task.name, channel="task")
+
+    def end_task(self, task):
+        # self.log(f'end {task.name}', channel='task')
+        pass
+
+    def run_task(self, task):
+        # TODO: If there is no running remote, exit?
+        task = task if isinstance(task, TaskDefinition) else self.tasks.get(task)
+        self.begin_task(task)
+        task.func(self)
+        self.end_task(task)
+
     def parse(self, text: str, params: dict = None):
+        # TODO: If there is no running remote, exit?
         remote = self.running_remote
 
         if remote is not None:
@@ -135,13 +159,32 @@ class Deployer:
         res = self.run(f"if {command}; then echo {picked}; fi")
         return res.trim() == picked
 
-    def run(self, command: str, **kwargs):
-        parsed_command = self.parse(command)
-        self.io.writeln(f"[{self.running_remote.label}] run {parsed_command}")
-        origin = self.running_remote.connect().run(parsed_command, **kwargs)
+    def run(self, runnable: str, **kwargs):
+        remote = self._detect_running_remote()
+
+        command = self.parse(runnable.strip())
+        self.log(channel="run", message=command)
+
+        conn = Connection(host=remote.host, user=remote.user, port=remote.port)
+        # TODO: Check the run result, raise an informative exception when needed.
+        origin = conn.run(command, hide=True)
         res = RunResult(origin)
+
+        for line in res.lines():
+            self.log(line)
+
         return res
 
-    def log(self, message: str, channel: str = "out"):
+    def log(self, message: str, channel: str = None):
+        remote = self._detect_running_remote()
+
         parsed = self.parse(message)
-        self.io.writeln(f"[{self.running_remote.label}] {channel} {parsed}")
+
+        if channel:
+            self.io.writeln(f"[{remote.label}] {channel} {parsed}")
+        else:
+            self.io.writeln(f"[{remote.label}] {parsed}")
+
+    def _detect_running_remote(self):
+        # TODO: Throw an exception if no running remote is present.
+        return self.running_remote

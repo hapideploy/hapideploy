@@ -8,7 +8,9 @@ from .remote import RemoteDefinition
 
 class Program:
     def __init__(self):
-        self.deployer = Deployer()
+        self.deployer = instance = Deployer()
+
+        self.deployer.set_instance(instance)
 
         # TODO: Register default commands.
         @self.deployer.typer.command(name="about", help=f"Display program information")

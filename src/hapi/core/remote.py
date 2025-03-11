@@ -1,6 +1,3 @@
-from fabric import Connection
-
-
 class RemoteDefinition:
     def __init__(
         self,
@@ -16,6 +13,3 @@ class RemoteDefinition:
         self.deploy_dir = deploy_dir
         self.label = host if label is None else label
         self.id = f"{self.user}@{self.host}:{self.port}"
-
-    def connect(self):
-        return Connection(host=self.host, user=self.user)
