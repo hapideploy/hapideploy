@@ -8,38 +8,27 @@ from .deployer import Deployer
 from .remote import Remote
 
 
-class Program:
+class Program(Deployer):
     def __init__(self):
-        self.deployer = instance = Deployer()
-
-        self.deployer.set_instance(instance)
+        super().__init__()
+        self.set_instance(self)
 
         self.add_about_command()
 
     def add_about_command(self):
-        @self.deployer.typer.command(
-            name="about", help=f"Display this program information"
-        )
+        @self.typer.command(name="about", help=f"Display this program information")
         def about():
             print(f"HapiDeploy {__version__}")
 
     def start(self):
         # TODO: If there are no remotes, try to load from inventory.yml file
-        self.deployer.typer()
-
-    def put(self, key: str, value):
-        self.deployer.put(key, value)
-        return self
-
-    def add(self, key: str, value):
-        self.deployer.add(key, value)
-        return self
+        self.typer()
 
     def host(self, **kwargs):
         kwargs["host"] = kwargs.get("name")
         del kwargs["name"]
         remote = Remote(**kwargs)
-        self.deployer.remotes.append(remote)
+        self.remotes.append(remote)
         return self
 
     def load(self, file: str = "inventory.yml"):
@@ -60,7 +49,7 @@ class Program:
         desc = desc if desc is not None else name
 
         def caller(func: typing.Callable):
-            self.deployer.add_task(name, desc, func)
+            self.add_task(name, desc, func)
 
             def wrapper(*args, **kwargs):
                 # Do something before the function call
