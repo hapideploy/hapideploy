@@ -2,6 +2,8 @@ import typing
 
 import yaml
 
+from ..core import __version__
+from ..exceptions import RuntimeException
 from .deployer import Deployer
 from .remote import Remote
 
@@ -26,11 +28,11 @@ class Program:
         self.deployer.typer()
 
     def put(self, key: str, value):
-        self.deployer.config.put(key, value)
+        self.deployer.put(key, value)
         return self
 
     def add(self, key: str, value):
-        self.deployer.config.add(key, value)
+        self.deployer.add(key, value)
         return self
 
     def host(self, **kwargs):

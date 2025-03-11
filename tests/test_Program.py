@@ -15,11 +15,8 @@ def test_the_put_shortcut():
     app.put("stage", "production")
     app.put("repository", "git@github.com:hapideploy/hapideploy.git")
 
-    # assert app.deployer.config.find('stage') == 'production'
-
-    assert app.deployer.config.all() == dict(
-        stage="production", repository="git@github.com:hapideploy/hapideploy.git"
-    )
+    assert app.deployer.make("stage") == "production"
+    assert app.deployer.make("repository") == "git@github.com:hapideploy/hapideploy.git"
 
 
 def test_the_add_shortcut():
@@ -28,7 +25,7 @@ def test_the_add_shortcut():
     app.add("names", "James")
     app.add("names", ["John", "Jane"])
 
-    assert app.deployer.config.find("names") == ["James", "John", "Jane"]
+    assert app.deployer.make("names") == ["James", "John", "Jane"]
 
 
 def test_the_host_shortcut():

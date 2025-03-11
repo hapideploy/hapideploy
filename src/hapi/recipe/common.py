@@ -2,10 +2,10 @@ from ..core import Deployer, Program
 
 
 def bootstrap(app: Program):
-    return Provider(app)
+    return CommonProvider(app)
 
 
-class Provider:
+class CommonProvider:
     def __init__(self, app: Program):
         self.app = app
 
@@ -27,19 +27,16 @@ class Provider:
         )
 
     def deploy(self, dep: Deployer):
-        dep.config.put("current_file", "{{deploy_dir}}/current")
+        dep.put("current_file", "{{deploy_dir}}/current")
 
-        try:
-            dep.run_tasks(
-                [
-                    "deploy:start",
-                    "deploy:setup",
-                    "deploy:lock",
-                    "deploy:unlock",
-                ]
-            )
-        except RuntimeException:
-            dep.run_task("deploy:unlock")
+        dep.run_tasks(
+            [
+                "deploy:start",
+                "deploy:setup",
+                "deploy:lock",
+                "deploy:unlock",
+            ]
+        )
 
     def deploy_start(self, dep: Deployer):
         release_name = (
@@ -48,7 +45,7 @@ class Provider:
             else 1
         )
 
-        dep.config.put("release_name", release_name)
+        dep.put("release_name", release_name)
 
         dep.info("Deploying {{name}} to {{stage}} (release {{release_name}})")
 

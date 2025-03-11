@@ -1,5 +1,5 @@
 from .core import (
-    Config,
+    Container,
     Deployer,
     InputOutput,
     Program,

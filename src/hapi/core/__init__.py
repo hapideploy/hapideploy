@@ -2,7 +2,7 @@
 
 __version__ = "0.1.0"
 
-from .config import Config
+from .container import Container
 from .deployer import Deployer
 from .io import InputOutput
 from .program import Program

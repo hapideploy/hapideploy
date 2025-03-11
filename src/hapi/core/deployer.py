@@ -7,17 +7,17 @@ from fabric import Connection
 from typing_extensions import Annotated
 
 from ..exceptions import RuntimeException
-from .config import Config
+from .container import Container
 from .io import InputOutput
 from .run_result import RunResult
 from .task import Task
 
 
-class Deployer:
+class Deployer(Container):
     __instance = None
 
     def __init__(self):
-        self.config = Config()
+        super().__init__()
         self.remotes = []
         self.tasks = {}
 
@@ -42,27 +42,7 @@ class Deployer:
         if remote is not None:
             text = text.replace("{{deploy_dir}}", remote.deploy_dir)
 
-        keys = self._extract_curly_braces(text)
-
-        for key in keys:
-            if params is not None and key in params:
-                text = text.replace("{{" + key + "}}", str(params[key]))
-                continue
-
-            if self.config.has(key) is not True:
-                raise RuntimeException(f"Config key {key} is not defined.")
-
-            value = self.config.find(key)
-
-            if value is not None:
-                text = text.replace("{{" + key + "}}", str(value))
-
-        keys = self._extract_curly_braces(text)
-
-        if len(keys) > 0:
-            return self.parse(text, params)
-
-        return text
+        return super().parse(text, params)
 
     def add_task(self, name: str, desc: str, func: typing.Callable):
         task = Task(name, desc, func)
@@ -176,8 +156,8 @@ class Deployer:
 
     def _load_io(self, io: InputOutput):
         self.io = io
-        self.config.put("branch", io.branch)
-        self.config.put("stage", io.stage)
+        self.put("branch", io.branch)
+        self.put("stage", io.stage)
 
     def _detect_running_remote(self):
         # TODO: Throw an exception if no running remote is present.
