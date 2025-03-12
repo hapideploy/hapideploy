@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "habideploy"
+name = "hapideploy"
 version = "0.1.0"
 description = "HabiDeploy"
 authors = ["Quynh Nguyen <seriquynh@gmail.com>"]

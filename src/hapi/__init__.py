@@ -1,3 +1,6 @@
+"""hapideploy"""
+
+from .__version import __version__
 from .core import (
     Container,
     Deployer,
@@ -6,6 +9,5 @@ from .core import (
     Remote,
     RunResult,
     Task,
-    __version__,
 )
 from .exceptions import LogicException, RuntimeException

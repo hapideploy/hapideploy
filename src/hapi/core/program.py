@@ -2,7 +2,7 @@ import typing
 
 import yaml
 
-from ..core import __version__
+from ..__version import __version__
 from ..exceptions import RuntimeException
 from .deployer import Deployer
 from .remote import Remote

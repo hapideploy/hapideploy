@@ -22,9 +22,8 @@ class Deployer(Container):
         self.running = {}
         self.io = None
 
-
     def parse(self, text: str, params: dict = None):
-        remote = self.running.get('remote')
+        remote = self.running.get("remote")
 
         if isinstance(remote, Remote):
             text = text.replace("{{deploy_dir}}", remote.deploy_dir)
@@ -159,12 +158,12 @@ class Deployer(Container):
         self.put("stage", io.stage)
 
     def _detect_running_remote(self) -> Remote:
-        remote = self.running.get('remote')
+        remote = self.running.get("remote")
 
         if isinstance(remote, Remote):
             return remote
 
-        raise RuntimeException('The running remote is not set.')
+        raise RuntimeException("The running remote is not set.")
 
     def _begin_task(self, task):
         self.log(task.name, channel="task")
