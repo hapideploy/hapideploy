@@ -1,5 +1,7 @@
 import json
 
+from hapi.exceptions import BindingException
+
 from ..core import Deployer, Program
 from ..exceptions import StoppedException
 
@@ -7,11 +9,22 @@ from ..exceptions import StoppedException
 def bootstrap(app: Program):
     return CommonProvider(app)
 
+def bin_git(dep: Deployer):
+    return '/usr/bin/git'
 
 def bin_symlink(dep: Deployer):
     return (
         "ln -nfs --relative" if dep.make("use_relative_symlink") is True else "ln -nfs"
     )
+
+def target(dep: Deployer):
+    branch = dep.make('branch')
+    if branch:
+        return branch
+
+    # TODO: Needs to support tag or revision?
+
+    return 'HEAD'
 
 
 def releases_log(dep: Deployer):
@@ -50,8 +63,6 @@ def releases_list(dep: Deployer):
 
 
 def deploy(dep: Deployer):
-    dep.put("current_file", "{{deploy_dir}}/current")
-
     try:
         dep.run_tasks(
             [
@@ -59,6 +70,7 @@ def deploy(dep: Deployer):
                 "deploy:setup",
                 "deploy:lock",
                 "deploy:release",
+                "deploy:code",
                 "deploy:unlock",
             ]
         )
@@ -127,7 +139,7 @@ def deploy_release(dep: Deployer):
         "created_at": timestamp,
         "release_name": release_name,
         "user": user,
-        "target": dep.make("branch"),
+        "target": dep.make("target"),
     }
 
     candidate_json = json.dumps(candidate)
@@ -177,6 +189,22 @@ def deploy_unlock(dep: Deployer):
 
     dep.info("Deployment process is unlocked.")
 
+def deploy_code(dep: Deployer):
+    git = dep.make('bin/git')
+    repository = dep.make('repository')
+    target = dep.make('target')
+
+    if isinstance(repository, str) is False:
+        raise BindingException.with_key('repository')
+
+    target_with_dir = target
+    if dep.make('sub_directory'):
+        target_with_dir = ':{{sub_directory}}'
+
+    bare = dep.parse('{{deploy_dir}}/.dep/repo');
+
+    dep.info('Code is updated')
+
 
 class CommonProvider:
     def __init__(self, app: Program):
@@ -185,7 +213,14 @@ class CommonProvider:
         self.boot()
 
     def boot(self):
+        self.app.put("current_file", "{{deploy_dir}}/current")
+        self.app.put("update_code_strategy", 'archive')
+        self.app.put('git_ssh_command', 'ssh -o StrictHostKeyChecking=accept-new')
+        self.app.put('sub_directory', False)
+
+        self.app.bind("bin/git", bin_git)
         self.app.bind("bin/symlink", bin_symlink)
+        self.app.bind("target", target)
         self.app.bind("releases_log", releases_log)
         self.app.bind("releases_list", releases_list)
 
@@ -198,6 +233,8 @@ class CommonProvider:
         self.app.add_task(
             "deploy:release", "Prepare the release candidate", deploy_release
         )
+
+        self.app.add_task("deploy:code", "Update code", deploy_code)
 
         self.app.add_task("deploy:lock", "Lock the deployment process", deploy_lock)
         self.app.add_task(

@@ -1,2 +1,4 @@
 class BindingException(Exception):
-    pass
+    @staticmethod
+    def with_key(key: str):
+        return BindingException(f'The key "{key}" is not defined in the container.')
