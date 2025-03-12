@@ -76,7 +76,7 @@ def deploy_start(dep: Deployer):
 
     dep.put("release_name", release_name)
 
-    dep.info("Deploying {{name}} to {{stage}} (release {{release_name}})")
+    dep.info("Deploying {{name}} to {{stage}} (release: {{release_name}})")
 
 
 def deploy_setup(dep: Deployer):
@@ -93,7 +93,9 @@ cd {{deploy_dir}};
             "There is a directory (not symlink) at {{current_file}}.\n Remove this directory so it can be replaced with a symlink for atomic deployments."
         )
 
-    dep.info("The {{deploy_dir}} is ready for deployment")
+    dep.info(
+        "The {{deploy_dir}} directory is ready for deployment (release: {{release_name}})"
+    )
 
 
 def deploy_release(dep: Deployer):
@@ -135,6 +137,12 @@ def deploy_release(dep: Deployer):
 
     dep.run("{{bin/symlink}} " + release_dir + " {{deploy_dir}}/release")
 
+    dep.info(
+        "The {{deploy_dir}}/"
+        + release_dir
+        + " is created and symlinked (release: {{release_name}})"
+    )
+
     releases.insert(0, release_name)
     dep.bind("releases_list", releases)
 
@@ -161,9 +169,7 @@ def deploy_lock(dep: Deployer):
             + 'Execute "deploy:unlock" task to unlock.'
         )
 
-    dep.info(
-        "Deployment process is locked by " + user + " (release_name: {{release_name}})"
-    )
+    dep.info("Deployment process is locked by " + user + " (release: {{release_name}})")
 
 
 def deploy_unlock(dep: Deployer):

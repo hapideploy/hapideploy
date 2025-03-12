@@ -5,6 +5,10 @@ import typer
 from fabric import Connection
 from typing_extensions import Annotated
 
+from hapi.core.run_command import RunCommand
+from hapi.core.run_task import RunTask
+from hapi.log import NoneStyle, StreamStyle
+
 from ..exceptions import RuntimeException, StoppedException
 from .container import Container
 from .io import InputOutput
@@ -17,16 +21,43 @@ class Deployer(Container):
     def __init__(self):
         super().__init__()
         self.typer = typer.Typer()
+        self.logger = NoneStyle()
         self.remotes = []
         self.tasks = {}
         self.running = {}
         self.io = None
 
+        self.__bootstrapped = False
+
+    def bootstrap(self, options: dict):
+        if self.__bootstrapped:
+            return
+
+        self.__bootstrapped = True
+
+        verbosity = InputOutput.NORMAL
+
+        if options.get("quiet"):
+            verbosity = InputOutput.QUIET
+        elif options.get("normal"):
+            verbosity = InputOutput.NORMAL
+        elif options.get("detail"):
+            verbosity = InputOutput.DETAIL
+        elif options.get("debug"):
+            verbosity = InputOutput.DEBUG
+
+        self.io = InputOutput(options.get("selector"), options.get("stage"), verbosity)
+        self.logger = StreamStyle()
+
+    # @overridde
     def parse(self, text: str, params: dict = None):
         remote = self.running.get("remote")
 
         if isinstance(remote, Remote):
             text = text.replace("{{deploy_dir}}", remote.deploy_dir)
+
+        if isinstance(self.io, InputOutput):
+            text = text.replace("{{stage}}", self.io.stage)
 
         return super().parse(text, params)
 
@@ -38,28 +69,33 @@ class Deployer(Container):
         @self.typer.command(name=name, help=desc)
         def task_command(
             selector: str = typer.Argument(default=InputOutput.SELECTOR_DEFAULT),
-            branch: Annotated[
-                str, typer.Option(help="The git repository branch.")
-            ] = InputOutput.BRANCH_DEFAULT,
             stage: Annotated[
-                str, typer.Option(help="The deploy stage.")
+                str, typer.Option(help="The deployment stage")
             ] = InputOutput.STAGE_DEFAULT,
-            verbose: Annotated[bool, typer.Option(help="Print verbose output.")] = None,
-            debug: Annotated[bool, typer.Option(help="Print debug output.")] = None,
             quiet: Annotated[
-                bool, typer.Option(help="Do not print any output.")
-            ] = None,
+                bool, typer.Option(help="Do not print any output messages (level: 0)")
+            ] = False,
+            normal: Annotated[
+                bool,
+                typer.Option(help="Print normal output messages (level: 1)"),
+            ] = False,
+            detail: Annotated[
+                bool, typer.Option(help="Print verbose output message (level: 2")
+            ] = False,
+            debug: Annotated[
+                bool, typer.Option(help="Print debug output messages (level: 3)")
+            ] = False,
         ):
-            if self.io is None:
-                verbosity = InputOutput.VERBOSITY_NORMAL
-                if quiet:
-                    verbosity = InputOutput.VERBOSITY_QUIET
-                elif debug:
-                    verbosity = InputOutput.VERBOSITY_DEBUG
-                elif verbose:
-                    verbosity = InputOutput.VERBOSITY_VERBOSE
-
-                self._load_io(InputOutput(selector, branch, stage, verbosity))
+            self.bootstrap(
+                {
+                    "selector": selector,
+                    "stage": stage,
+                    "quiet": quiet,
+                    "normal": normal,
+                    "detail": detail,
+                    "debug": debug,
+                }
+            )
 
             remotes = [
                 remote
@@ -73,16 +109,24 @@ class Deployer(Container):
 
         return self
 
+    def run_task(self, task):
+        name = task if isinstance(task, str) else task.name
+        task = task if isinstance(task, Task) else self.tasks.get(name)
+
+        if task is None:
+            self.stop(f'Task "{name}" is not defined.')
+
+        remote = self._detect_running_remote()
+
+        run_task = RunTask(remote, task)
+
+        self._before_task(run_task)
+        task.func(self)
+        self._after_task(run_task)
+
     def run_tasks(self, tasks: [str]):
         for task in tasks:
             self.run_task(task)
-
-    def run_task(self, task):
-        # TODO: If there is no running remote, exit?
-        task = task if isinstance(task, Task) else self.tasks.get(task)
-        self._begin_task(task)
-        task.func(self)
-        self._end_task(task)
 
     def cat(self, file: str) -> str:
         return self.run(f"cat {file}").fetch()
@@ -104,58 +148,34 @@ class Deployer(Container):
         res = self.run(f"if {command}; then echo {picked}; fi")
         return res.fetch() == picked
 
-    def cd(self, path: str):
-        self.running["cd"] = path
+    def cd(self, cd_dir: str):
+        self.running["cd"] = cd_dir
         return self
 
-    def run(self, runnable: str):
+    def run(self, command: str):
         remote = self._detect_running_remote()
 
         cd_dir = self.running.get("cd")
 
         if cd_dir is not None:
-            command = self.parse(f"cd {cd_dir} && ({runnable.strip()})")
+            command = self.parse(f"cd {cd_dir} && ({command.strip()})")
         else:
-            command = self.parse(runnable.strip())
+            command = self.parse(command.strip())
 
-        if self.io.verbosity > InputOutput.VERBOSITY_NORMAL:
-            self.log(channel="run", message=command)
+        run_command = RunCommand(remote, command)
+        self._before_run(run_command)
+        run_command.run()
+        self._after_run(run_command)
 
-        conn = Connection(host=remote.host, user=remote.user, port=remote.port)
-        # TODO: Check the run result, raise an informative exception when needed.
-        origin = conn.run(command, hide=True)
-        res = RunResult(origin)
-
-        if res.fetch() == "":
-            return res
-
-        if self.io.verbosity >= InputOutput.VERBOSITY_DEBUG:
-            for line in res.lines():
-                self.log(line)
-
-        return res
-
-    def log(self, message: str, channel: str = None):
-        remote = self._detect_running_remote()
-
-        parsed = self.parse(message)
-
-        if channel:
-            self.io.writeln(f"[{remote.label}] {channel} {parsed}")
-        else:
-            self.io.writeln(f"[{remote.label}] {parsed}")
+        return run_command.res
 
     def info(self, message: str):
-        if self.io.verbosity > InputOutput.VERBOSITY_NORMAL:
-            self.log(message, "info")
+        remote = self._detect_running_remote()
+
+        self.logger.writeln(f"[{remote.label}] info {self.parse(message)}")
 
     def stop(self, message: str):
         raise StoppedException(self.parse(message))
-
-    def _load_io(self, io: InputOutput):
-        self.io = io
-        self.put("branch", io.branch)
-        self.put("stage", io.stage)
 
     def _detect_running_remote(self) -> Remote:
         remote = self.running.get("remote")
@@ -163,10 +183,27 @@ class Deployer(Container):
         if isinstance(remote, Remote):
             return remote
 
-        raise RuntimeException("The running remote is not set.")
+        self.stop("No running remote is set.")
 
-    def _begin_task(self, task):
-        self.log(task.name, channel="task")
+    def _before_task(self, run_task: RunTask):
+        if self.io.verbosity >= InputOutput.NORMAL:
+            self.logger.writeln(
+                f"[%s] task %s" % (run_task.remote.label, run_task.task.name)
+            )
 
-    def _end_task(self, task):
+    def _after_task(self, task):
         self.running["cd"] = None
+
+    def _before_run(self, run_command: RunCommand):
+        if self.io.verbosity >= InputOutput.DETAIL:
+            self.logger.writeln(
+                f"[%s] run %s" % (run_command.remote.label, run_command.command)
+            )
+
+    def _after_run(self, run_command: RunCommand):
+        if self.io.verbosity >= InputOutput.DEBUG:
+            if run_command.res.fetch() == "":
+                return
+
+            for line in run_command.res.lines():
+                self.logger.writeln(f"[%s] %s " % (run_command.remote.label, line))
