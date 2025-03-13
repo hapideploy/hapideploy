@@ -1,6 +1,7 @@
 import pytest
 
-from hapi import Container, LogicException
+from hapi import Container
+from hapi.exceptions import BindingException, LogicException
 
 
 def test_it_puts_a_single_value():
@@ -45,7 +46,7 @@ def test_it_adds_list_values():
     assert container.make("names") == ["James", "Jane", "John", "Doe"]
 
 
-def test_it_adds_values_for_a_non_existing_key():
+def test_it_adds_values_when_key_not_exist():
     container = Container()
     assert container.make("names") is None
 
@@ -54,7 +55,7 @@ def test_it_adds_values_for_a_non_existing_key():
     assert container.make("names") == ["James", "John"]
 
 
-def test_it_raises_a_logic_exception_if_adding_values_for_a_key_is_not_type_of_list():
+def test_it_raises_a_logic_exception_if_adding_values_when_key_not_a_list():
     container = Container()
 
     container.put("name", "James")
@@ -69,8 +70,10 @@ def test_it_checks_if_a_key_exists():
     container = Container()
 
     container.put("stage", "production")
+    container.bind("releases_list", lambda _: None)
 
     assert container.has("stage") is True
+    assert container.has("releases_list")
 
     assert container.has("repository") is False
 
@@ -88,7 +91,7 @@ def test_it_binds_a_callback_to_a_key():
     assert container.make("bin/php") == "/usr/bin/php8.4"
 
 
-def test_it_parses_text():
+def test_it_parses_text_contains_double_curly_braces():
     container = Container()
 
     container.put("release_name", 1)
@@ -108,3 +111,28 @@ def test_it_parses_text():
     )
 
     assert parsed == "cd ~/deploy/releases/1 && /usr/bin/python3 main.py"
+
+
+def test_it_returns_default_if_key_does_not_exist():
+    container = Container()
+
+    value = container.make("foobar", "Foobar does not exist")
+
+    assert value == "Foobar does not exist"
+
+
+def test_it_raises_exception_if_key_does_not_exist():
+    container = Container()
+
+    with pytest.raises(
+        BindingException, match='The key "repository" is not defined in the container.'
+    ):
+        container.parse("{{repository}}")
+
+    with pytest.raises(
+        BindingException, match='The key "repository" is not defined in the container.'
+    ):
+        container.make("repository", throw=True)
+
+    with pytest.raises(LogicException, match="message must be a string"):
+        container.make("message", throw=LogicException("message must be a string"))

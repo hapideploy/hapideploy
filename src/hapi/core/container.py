@@ -46,7 +46,21 @@ class Container:
     def bind(self, key: str, callback: typing.Callable):
         self.__bindings[key] = callback
 
-    def make(self, key: str):
+    def make(self, key: str, default=None, throw=None):
+        if self.has(key) is False:
+            if throw is None or throw is False:
+                return default
+
+            if throw is True:
+                raise BindingException.with_key(key)
+
+            if isinstance(throw, Exception):
+                raise throw
+
+            raise LogicException(
+                f"throw must be either None, bool or an instance of Exception."
+            )
+
         if key in self.__bindings:
             return self.__bindings[key](self)
         return self.__items.get(key)
@@ -60,9 +74,7 @@ class Container:
                 continue
 
             if self.has(key) is not True:
-                raise BindingException(
-                    f'The key "{key}" is not defined in the container.'
-                )
+                raise BindingException.with_key(key)
 
             value = self.make(key)
 

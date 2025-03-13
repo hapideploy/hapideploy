@@ -184,12 +184,8 @@ def deploy_unlock(dep: Deployer):
 
 
 def deploy_code(dep: Deployer):
-    # TODO: Add throw=True parameter to the .make method.
-    if dep.has("repository") is False:
-        raise BindingException.with_key("repository")
-
     git = dep.make("bin/git")
-    repository = dep.make("repository")
+    repository = dep.make("repository", throw=True)
 
     bare = dep.parse("{{deploy_dir}}/.dep/repo")
 
