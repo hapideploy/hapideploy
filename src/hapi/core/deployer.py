@@ -20,9 +20,12 @@ class Deployer(Container):
         self.logger = NoneStyle()
         self.remotes = []
         self.tasks = {}
-        self.running = {}
         self.io = None
 
+        self.running = {}
+        self.selected = []
+
+        self.__current_runner = None
         self.__bootstrapped = False
 
     def bootstrap(self, options: dict):
@@ -45,17 +48,14 @@ class Deployer(Container):
         self.io = InputOutput(options.get("selector"), options.get("stage"), verbosity)
         self.logger = StreamStyle()
 
-    # @override
-    def parse(self, text: str, params: dict = None):
-        remote = self.running.get("remote")
+        self.selected = [
+            remote
+            for remote in self.remotes
+            if self.io.selector == InputOutput.SELECTOR_DEFAULT
+            or remote.label == self.io.selector
+        ]
 
-        if isinstance(remote, Remote):
-            text = text.replace("{{deploy_dir}}", remote.deploy_dir)
-
-        if isinstance(self.io, InputOutput):
-            text = text.replace("{{stage}}", self.io.stage)
-
-        return super().parse(text, params)
+        self.put("stage", self.io.stage)
 
     def add_task(self, name: str, desc: str, func: typing.Callable):
         task = Task(name, desc, func)
@@ -93,37 +93,23 @@ class Deployer(Container):
                 }
             )
 
-            remotes = [
-                remote
-                for remote in self.remotes
-                if selector == InputOutput.SELECTOR_DEFAULT or remote.label == selector
-            ]
-
-            for remote in remotes:
-                self.running["remote"] = remote
-                self.run_task(task)
+            for remote in self.selected:
+                self._run_task(remote, task)
 
         return self
 
-    def run_task(self, task):
-        name = task if isinstance(task, str) else task.name
-        task = task if isinstance(task, Task) else self.tasks.get(name)
+    def add_group(self, name: str, do: list[str], desc: str = None):
+        def func(dep: Deployer):
+            for task_name in do:
+                remote = dep.current_route()
+                task = dep.tasks.get(task_name)
+                self._run_task(remote, task)
 
-        if task is None:
-            self.stop(f'Task "{name}" is not defined.')
+        desc = desc if desc else f'Group "{name}": ' + ", ".join(do)
 
-        remote = self._detect_running_remote()
+        self.add_task(name, desc, func)
 
-        printer = RunPrinter(self.io, self.logger)
-        runner = TaskRunner(printer)
-
-        self._before_task(runner)
-        runner.run(remote, task, self)
-        self._after_task(runner)
-
-    def run_tasks(self, tasks: [str]):
-        for task in tasks:
-            self.run_task(task)
+        return self
 
     def cat(self, file: str) -> str:
         return self.run(f"cat {file}").fetch()
@@ -145,53 +131,67 @@ class Deployer(Container):
         res = self.run(f"if {command}; then echo {picked}; fi")
         return res.fetch() == picked
 
-    def cd(self, cd_dir: str):
-        self.running["cd"] = cd_dir
+    def cd(self, cwd: str):
+        self.running["cd"] = cwd
         return self
 
     def run(self, command: str, **kwargs):
-        remote = self._detect_running_remote()
+        remote = self.current_route()
 
-        cd_dir = self.running.get("cd")
+        cwd = self.running.get("cd")
 
-        if cd_dir is not None:
-            command = self.parse(f"cd {cd_dir} && ({command.strip()})")
+        if cwd is not None:
+            command = self.parse(f"cd {cwd} && ({command.strip()})")
         else:
             command = self.parse(command.strip())
 
         printer = RunPrinter(self.io, self.logger)
-        runner = CommandRunner(printer)
+        runner = CommandRunner(printer, remote, command)
         options = RunOptions(env=kwargs.get("env"))
 
         self._before_command(runner)
-        res = runner.run(remote, command, options)
+        res = runner.run(options)
         self._after_command(runner)
 
         return res
 
     def info(self, message: str):
-        remote = self._detect_running_remote()
+        remote = self.current_route()
 
         self.logger.writeln(f"[{remote.label}] info {self.parse(message)}")
 
     def stop(self, message: str):
         raise StoppedException(self.parse(message))
 
-    def _detect_running_remote(self) -> Remote | None:
-        remote = self.running.get("remote")
+    def run_tasks(self, tasks: [str]):
+        remote = self.current_route()
+        for task in tasks:
+            self._run_task(remote, task)
 
-        if isinstance(remote, Remote):
-            return remote
+    def current_route(self) -> Remote | None:
+        if self.__current_runner:
+            return self.__current_runner.remote
 
         self.stop("No running remote is set.")
 
-    def _before_task(self, _: TaskRunner):
+    def _run_task(self, remote: Remote, task: Task):
+        printer = RunPrinter(self.io, self.logger)
+        runner = TaskRunner(printer, remote, task, self)
+
+        self._before_task(runner)
+        runner.run()
+        self._after_task(runner)
+
+    def _before_task(self, runner: TaskRunner):
+        self.__current_runner = runner
+        self.put("deploy_dir", runner.remote.deploy_dir)
         pass
 
     def _after_task(self, _: TaskRunner):
         self.running["cd"] = None
 
-    def _before_command(self, _: CommandRunner):
+    def _before_command(self, runner: CommandRunner):
+        self.__current_runner = runner
         pass
 
     def _after_command(self, _: CommandRunner):

@@ -75,38 +75,46 @@ class RunResult:
         return self.__output
 
 
-class CommandRunner:
-    def __init__(self, printer: RunPrinter):
-        self.__printer = printer
+class Runner:
+    def __init__(self, printer: RunPrinter, remote: Remote):
+        self.printer = printer
+        self.remote = remote
 
-    def run(
-        self, remote: Remote, command: str, options: RunOptions = None
-    ) -> RunResult:
+
+class CommandRunner(Runner):
+    def __init__(self, printer: RunPrinter, remote: Remote, command: str):
+        super().__init__(printer, remote)
+        self.command = command
+
+    def run(self, options: RunOptions = None) -> RunResult:
         # E.g. [ubuntu] run if [ -f ~/deploy/.dep/latest_release ]; then echo +true; fi
-        self.__printer.print_command(remote, command)
+        self.printer.print_command(self.remote, self.command)
 
         # E.g. [ubuntu] +true
         def callback(_: str, buffer: str):
-            self.__printer.print_buffer(remote, buffer)
+            self.printer.print_buffer(self.remote, buffer)
 
         watcher = LogBuffer(callback)
 
         if options and options.env:
             env_vars = env_stringify(options.env)
-            command = f"export {env_vars}; {command}"
+            command = f"export {env_vars}; {self.command}"
 
-        conn = remote.connect()
+        conn = self.remote.connect()
 
-        origin = conn.run(command, hide=True, watchers=[watcher])
+        origin = conn.run(self.command, hide=True, watchers=[watcher])
 
         return RunResult(origin)
 
 
-class TaskRunner:
-    def __init__(self, printer: RunPrinter):
-        self.__printer = printer
+class TaskRunner(Runner):
+    def __init__(self, printer: RunPrinter, remote: Remote, task: Task, deployer):
+        super().__init__(printer, remote)
 
-    def run(self, remote: Remote, task: Task, deployer):
+        self.task = task
+        self.deployer = deployer
+
+    def run(self):
         # E.g: [ubuntu] task deploy:start
-        self.__printer.print_task(remote, task)
-        task.func(deployer)
+        self.printer.print_task(self.remote, self.task)
+        self.task.func(self.deployer)

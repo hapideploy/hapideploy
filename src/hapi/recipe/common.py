@@ -64,7 +64,8 @@ def deploy(dep: Deployer):
         )
     except StoppedException:
         # TODO: dep.run_task('deploy:failed')
-        dep.run_task("deploy:unlock")
+        # dep.run_task("deploy:unlock")
+        pass
 
 
 def deploy_start(dep: Deployer):
@@ -144,7 +145,6 @@ def deploy_release(dep: Deployer):
     )
 
     releases.insert(0, release_name)
-    dep.bind("releases_list", releases)
 
     if len(releases) >= 2:
         dep.bind("previous_release", "{{deploy_dir}}/releases/" + releases[1])
