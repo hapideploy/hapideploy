@@ -11,5 +11,5 @@ dist
 
 poetry.lock
 
-hapifile.py
+deploy.py
 inventory.yml

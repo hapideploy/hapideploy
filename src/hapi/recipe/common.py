@@ -1,30 +1,41 @@
 import json
+import shlex
 
 from hapi.exceptions import BindingException
 
 from ..core import Deployer, Program
-from ..exceptions import StoppedException
 
 
 def bootstrap(app: Program):
     return CommonProvider(app)
 
-def bin_git(dep: Deployer):
-    return '/usr/bin/git'
+
+def bin_git(_: Deployer):
+    return "/usr/bin/git"
+
 
 def bin_symlink(dep: Deployer):
     return (
         "ln -nfs --relative" if dep.make("use_relative_symlink") is True else "ln -nfs"
     )
 
+
 def target(dep: Deployer):
-    branch = dep.make('branch')
+    branch = dep.make("branch")
     if branch:
         return branch
 
     # TODO: Needs to support tag or revision?
 
-    return 'HEAD'
+    return "HEAD"
+
+
+def release_path(dep: Deployer):
+    if dep.test("[ -h {{deploy_dir}}/release ]"):
+        link = dep.run("readlink {{deploy_dir}}/release").fetch()
+        return link if link[0] == "/" else dep.make("deploy_dir") + "/" + link
+
+    dep.stop('The "release_path" ({{deploy_dir}}/release) does not exist.')
 
 
 def releases_log(dep: Deployer):
@@ -60,24 +71,6 @@ def releases_list(dep: Deployer):
             releases.append(candidate["release_name"])
 
     return releases
-
-
-def deploy(dep: Deployer):
-    try:
-        dep.run_tasks(
-            [
-                "deploy:start",
-                "deploy:setup",
-                "deploy:lock",
-                "deploy:release",
-                "deploy:code",
-                "deploy:unlock",
-            ]
-        )
-    except StoppedException:
-        # TODO: dep.run_task('deploy:failed')
-        # dep.run_task("deploy:unlock")
-        pass
 
 
 def deploy_start(dep: Deployer):
@@ -189,21 +182,54 @@ def deploy_unlock(dep: Deployer):
 
     dep.info("Deployment process is unlocked.")
 
+
 def deploy_code(dep: Deployer):
-    git = dep.make('bin/git')
-    repository = dep.make('repository')
-    target = dep.make('target')
+    # TODO: Add throw=True parameter to the .make method.
+    if dep.has("repository") is False:
+        raise BindingException.with_key("repository")
 
-    if isinstance(repository, str) is False:
-        raise BindingException.with_key('repository')
+    git = dep.make("bin/git")
+    repository = dep.make("repository")
 
-    target_with_dir = target
-    if dep.make('sub_directory'):
-        target_with_dir = ':{{sub_directory}}'
+    bare = dep.parse("{{deploy_dir}}/.dep/repo")
 
-    bare = dep.parse('{{deploy_dir}}/.dep/repo');
+    env = dict(
+        GIT_TERMINAL_PROMPT="0",
+        GIT_SSH_COMMAND=dep.make("git_ssh_command"),
+    )
 
-    dep.info('Code is updated')
+    dep.run(f"[ -d {bare} ] || mkdir -p {bare}")
+    dep.run(
+        f"[ -f {bare}/HEAD ] || {git} clone --mirror {repository} {bare} 2>&1", env=env
+    )
+
+    dep.cd(bare)
+
+    # TODO: Check if remote origin url is changed, clone again.
+    # if dep.run(f"{git} config --get remote.origin.url").fetch() != repository:
+    #     dep.cd('{{deploy_dir}}')
+    #     dep.run("rm -rf bare")
+
+    dep.run(f"{git} remote update 2>&1", env=env)
+
+    target_with_dir = dep.make("target")
+    if isinstance(dep.make("sub_directory"), str):
+        target_with_dir += ":{{sub_directory}}"
+
+    # TODO: Support clone strategy
+    strategy = dep.make("update_code_strategy")
+    if strategy == "archive":
+        dep.run(
+            f"{git} archive {target_with_dir} | tar -x -f - -C {release_path(dep)} 2>&1"
+        )
+    else:
+        dep.stop("Unknown `update_code_strategy` option: {{update_code_strategy}}.")
+
+    # Save git revision in REVISION file.
+    rev = shlex.quote(dep.run(f"{git} rev-list {dep.make('target')} -1").fetch())
+    dep.run("echo " + rev + " > {{release_path}}/REVISION")
+
+    dep.info("Code is updated")
 
 
 class CommonProvider:
@@ -214,17 +240,17 @@ class CommonProvider:
 
     def boot(self):
         self.app.put("current_file", "{{deploy_dir}}/current")
-        self.app.put("update_code_strategy", 'archive')
-        self.app.put('git_ssh_command', 'ssh -o StrictHostKeyChecking=accept-new')
-        self.app.put('sub_directory', False)
+        self.app.put("update_code_strategy", "archive")
+        self.app.put("git_ssh_command", "ssh -o StrictHostKeyChecking=accept-new")
+        self.app.put("sub_directory", False)
 
         self.app.bind("bin/git", bin_git)
         self.app.bind("bin/symlink", bin_symlink)
         self.app.bind("target", target)
+        self.app.bind("release_path", release_path)
         self.app.bind("releases_log", releases_log)
         self.app.bind("releases_list", releases_list)
 
-        self.app.add_task("deploy", "Run deployment tasks", deploy)
         self.app.add_task("deploy:start", "Start the deployment process", deploy_start)
         self.app.add_task(
             "deploy:setup", "Prepare the deployment directory", deploy_setup
@@ -239,4 +265,17 @@ class CommonProvider:
         self.app.add_task("deploy:lock", "Lock the deployment process", deploy_lock)
         self.app.add_task(
             "deploy:unlock", "Unlock the deployment process", deploy_unlock
+        )
+
+        self.app.add_group(
+            "deploy",
+            [
+                "deploy:start",
+                "deploy:setup",
+                "deploy:lock",
+                "deploy:release",
+                "deploy:code",
+                "deploy:unlock",
+            ],
+            "Run deployment tasks",
         )
