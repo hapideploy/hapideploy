@@ -2,18 +2,14 @@ import random
 import typing
 
 import typer
-from fabric import Connection
 from typing_extensions import Annotated
 
-from hapi.core.run_command import RunCommand
-from hapi.core.run_task import RunTask
-from hapi.log import NoneStyle, StreamStyle
-
-from ..exceptions import RuntimeException, StoppedException
+from ..exceptions import StoppedException
+from ..log import NoneStyle, StreamStyle
 from .container import Container
 from .io import InputOutput
+from .process import CommandRunner, RunOptions, RunPrinter, TaskRunner
 from .remote import Remote
-from .run_result import RunResult
 from .task import Task
 
 
@@ -49,7 +45,7 @@ class Deployer(Container):
         self.io = InputOutput(options.get("selector"), options.get("stage"), verbosity)
         self.logger = StreamStyle()
 
-    # @overridde
+    # @override
     def parse(self, text: str, params: dict = None):
         remote = self.running.get("remote")
 
@@ -118,11 +114,12 @@ class Deployer(Container):
 
         remote = self._detect_running_remote()
 
-        run_task = RunTask(remote, task)
+        printer = RunPrinter(self.io, self.logger)
+        runner = TaskRunner(printer)
 
-        self._before_task(run_task)
-        task.func(self)
-        self._after_task(run_task)
+        self._before_task(runner)
+        runner.run(remote, task, self)
+        self._after_task(runner)
 
     def run_tasks(self, tasks: [str]):
         for task in tasks:
@@ -152,7 +149,7 @@ class Deployer(Container):
         self.running["cd"] = cd_dir
         return self
 
-    def run(self, command: str):
+    def run(self, command: str, **kwargs):
         remote = self._detect_running_remote()
 
         cd_dir = self.running.get("cd")
@@ -162,12 +159,15 @@ class Deployer(Container):
         else:
             command = self.parse(command.strip())
 
-        run_command = RunCommand(remote, command)
-        self._before_run(run_command)
-        run_command.run()
-        self._after_run(run_command)
+        printer = RunPrinter(self.io, self.logger)
+        runner = CommandRunner(printer)
+        options = RunOptions(env=kwargs.get("env"))
 
-        return run_command.res
+        self._before_command(runner)
+        res = runner.run(remote, command, options)
+        self._after_command(runner)
+
+        return res
 
     def info(self, message: str):
         remote = self._detect_running_remote()
@@ -177,7 +177,7 @@ class Deployer(Container):
     def stop(self, message: str):
         raise StoppedException(self.parse(message))
 
-    def _detect_running_remote(self) -> Remote:
+    def _detect_running_remote(self) -> Remote | None:
         remote = self.running.get("remote")
 
         if isinstance(remote, Remote):
@@ -185,25 +185,14 @@ class Deployer(Container):
 
         self.stop("No running remote is set.")
 
-    def _before_task(self, run_task: RunTask):
-        if self.io.verbosity >= InputOutput.NORMAL:
-            self.logger.writeln(
-                f"[%s] task %s" % (run_task.remote.label, run_task.task.name)
-            )
+    def _before_task(self, _: TaskRunner):
+        pass
 
-    def _after_task(self, task):
+    def _after_task(self, _: TaskRunner):
         self.running["cd"] = None
 
-    def _before_run(self, run_command: RunCommand):
-        if self.io.verbosity >= InputOutput.DETAIL:
-            self.logger.writeln(
-                f"[%s] run %s" % (run_command.remote.label, run_command.command)
-            )
+    def _before_command(self, _: CommandRunner):
+        pass
 
-    def _after_run(self, run_command: RunCommand):
-        if self.io.verbosity >= InputOutput.DEBUG:
-            if run_command.res.fetch() == "":
-                return
-
-            for line in run_command.res.lines():
-                self.logger.writeln(f"[%s] %s " % (run_command.remote.label, line))
+    def _after_command(self, _: CommandRunner):
+        pass
