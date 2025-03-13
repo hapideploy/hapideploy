@@ -163,11 +163,6 @@ class Deployer(Container):
     def stop(self, message: str):
         raise StoppedException(self.parse(message))
 
-    def run_tasks(self, tasks: [str]):
-        remote = self.current_route()
-        for task in tasks:
-            self._run_task(remote, task)
-
     def current_route(self) -> Remote | None:
         if self.__current_runner:
             return self.__current_runner.remote
@@ -184,7 +179,7 @@ class Deployer(Container):
 
     def _before_task(self, runner: TaskRunner):
         self.__current_runner = runner
-        self.put("deploy_dir", runner.remote.deploy_dir)
+        self.put("deploy_dir", self.parse(runner.remote.deploy_dir))
         pass
 
     def _after_task(self, _: TaskRunner):
