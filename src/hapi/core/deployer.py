@@ -28,24 +28,25 @@ class Deployer(Container):
         self.__current_runner = None
         self.__bootstrapped = False
 
-    def bootstrap(self, options: dict):
+    def bootstrap(self, **kwargs):
         if self.__bootstrapped:
             return
 
-        self.__bootstrapped = True
+        if not self.remotes:
+            self.stop("There are no remotes. Please register at least 1.")
 
         verbosity = InputOutput.NORMAL
 
-        if options.get("quiet"):
+        if kwargs.get("quiet"):
             verbosity = InputOutput.QUIET
-        elif options.get("normal"):
+        elif kwargs.get("normal"):
             verbosity = InputOutput.NORMAL
-        elif options.get("detail"):
+        elif kwargs.get("detail"):
             verbosity = InputOutput.DETAIL
-        elif options.get("debug"):
+        elif kwargs.get("debug"):
             verbosity = InputOutput.DEBUG
 
-        self.io = InputOutput(options.get("selector"), options.get("stage"), verbosity)
+        self.io = InputOutput(kwargs.get("selector"), kwargs.get("stage"), verbosity)
         self.logger = StreamStyle()
 
         self.selected = [
@@ -56,6 +57,8 @@ class Deployer(Container):
         ]
 
         self.put("stage", self.io.stage)
+
+        self.__bootstrapped = True
 
     def add_task(self, name: str, desc: str, func: typing.Callable):
         task = Task(name, desc, func)
@@ -83,14 +86,12 @@ class Deployer(Container):
             ] = False,
         ):
             self.bootstrap(
-                {
-                    "selector": selector,
-                    "stage": stage,
-                    "quiet": quiet,
-                    "normal": normal,
-                    "detail": detail,
-                    "debug": debug,
-                }
+                selector=selector,
+                stage=stage,
+                quiet=quiet,
+                normal=normal,
+                detail=detail,
+                debug=debug,
             )
 
             for remote in self.selected:

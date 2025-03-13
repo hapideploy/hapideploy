@@ -4,6 +4,14 @@ from hapi import Container
 from hapi.exceptions import BindingException, LogicException
 
 
+def test_it_can_get_and_set_instance():
+    deployer = Container()
+
+    Container.set_instance(deployer)
+
+    assert Container.get_instance() == Container.get_instance()
+
+
 def test_it_puts_a_single_value():
     container = Container()
 

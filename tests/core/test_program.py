@@ -9,6 +9,11 @@ def test_constructor():
     assert isinstance(app, Deployer)
 
 
+# TODO: Test if it autoload load inventory.yml if it exists.
+def test_the_start_method():
+    pass
+
+
 def test_the_host_method():
     app = Program()
 

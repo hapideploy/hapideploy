@@ -1,3 +1,4 @@
+import os
 import typing
 
 import yaml
@@ -20,7 +21,11 @@ class Program(Deployer):
             print(f"HapiDeploy {__version__}")
 
     def start(self):
-        # TODO: If there are no remotes, try to load from inventory.yml file
+        inventory_file = os.getcwd() + "/inventory.yml"
+
+        if os.path.isfile(inventory_file):
+            self.load(inventory_file)
+
         self.typer()
 
     def host(self, **kwargs):
@@ -35,7 +40,10 @@ class Program(Deployer):
             try:
                 loaded_data = yaml.safe_load(stream)
 
-                if isinstance(loaded_data.get("hosts"), dict) is False:
+                if (
+                    loaded_data is None
+                    or isinstance(loaded_data.get("hosts"), dict) is False
+                ):
                     raise RuntimeException(f'"hosts" definition is invalid.')
 
                 for name, data in loaded_data["hosts"].items():

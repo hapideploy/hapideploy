@@ -1,6 +1,8 @@
+import pytest
 import typer
 
 from hapi import Container, Deployer
+from hapi.exceptions import StoppedException
 
 
 def test_constructor():
@@ -14,10 +16,8 @@ def test_constructor():
     assert deployer.io is None
 
 
-def test_it_can_get_and_set_instance():
+def test_bootstrap():
     deployer = Deployer()
 
-    Deployer.set_instance(deployer)
-
-    assert deployer == Deployer.get_instance()
-    assert deployer == Deployer.get_instance()
+    with pytest.raises(StoppedException):
+        deployer.bootstrap(selector="all", stage="dev")
