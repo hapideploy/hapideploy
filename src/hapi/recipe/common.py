@@ -1,8 +1,6 @@
 import json
 import shlex
 
-from hapi.exceptions import BindingException
-
 from ..core import Deployer, Program
 
 
@@ -265,6 +263,7 @@ class CommonProvider:
 
         self.app.add_group(
             "deploy",
+            "Run deployment tasks",
             [
                 "deploy:start",
                 "deploy:setup",
@@ -273,5 +272,4 @@ class CommonProvider:
                 "deploy:code",
                 "deploy:unlock",
             ],
-            "Run deployment tasks",
         )

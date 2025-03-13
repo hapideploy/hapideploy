@@ -96,13 +96,15 @@ class CommandRunner(Runner):
 
         watcher = LogBuffer(callback)
 
+        command = self.command
+
         if options and options.env:
             env_vars = env_stringify(options.env)
             command = f"export {env_vars}; {self.command}"
 
         conn = self.remote.connect()
 
-        origin = conn.run(self.command, hide=True, watchers=[watcher])
+        origin = conn.run(command, hide=True, watchers=[watcher])
 
         return RunResult(origin)
 

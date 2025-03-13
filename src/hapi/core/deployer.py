@@ -2,9 +2,10 @@ import random
 import typing
 
 import typer
+import yaml
 from typing_extensions import Annotated
 
-from ..exceptions import StoppedException
+from ..exceptions import RuntimeException, StoppedException
 from ..log import NoneStyle, StreamStyle
 from .container import Container
 from .io import InputOutput
@@ -27,38 +28,6 @@ class Deployer(Container):
 
         self.__current_runner = None
         self.__bootstrapped = False
-
-    def bootstrap(self, **kwargs):
-        if self.__bootstrapped:
-            return
-
-        if not self.remotes:
-            self.stop("There are no remotes. Please register at least 1.")
-
-        verbosity = InputOutput.NORMAL
-
-        if kwargs.get("quiet"):
-            verbosity = InputOutput.QUIET
-        elif kwargs.get("normal"):
-            verbosity = InputOutput.NORMAL
-        elif kwargs.get("detail"):
-            verbosity = InputOutput.DETAIL
-        elif kwargs.get("debug"):
-            verbosity = InputOutput.DEBUG
-
-        self.io = InputOutput(kwargs.get("selector"), kwargs.get("stage"), verbosity)
-        self.logger = StreamStyle()
-
-        self.selected = [
-            remote
-            for remote in self.remotes
-            if self.io.selector == InputOutput.SELECTOR_DEFAULT
-            or remote.label == self.io.selector
-        ]
-
-        self.put("stage", self.io.stage)
-
-        self.__bootstrapped = True
 
     def add_task(self, name: str, desc: str, func: typing.Callable):
         task = Task(name, desc, func)
@@ -99,18 +68,131 @@ class Deployer(Container):
 
         return self
 
-    def add_group(self, name: str, do: list[str], desc: str = None):
+    def add_group(self, name: str, desc: str, names: list[str]):
         def func(dep: Deployer):
-            for task_name in do:
+            for task_name in names:
                 remote = dep.current_route()
                 task = dep.tasks.get(task_name)
                 self._run_task(remote, task)
 
-        desc = desc if desc else f'Group "{name}": ' + ", ".join(do)
+        desc = desc if desc else f'Group "{name}": ' + ", ".join(names)
 
         self.add_task(name, desc, func)
 
         return self
+
+    def task(self, name: str, desc: str = None):
+        desc = desc if desc is not None else name
+
+        def caller(func: typing.Callable):
+            self.add_task(name, desc, func)
+
+            def wrapper(*args, **kwargs):
+                # Do something before the function call
+                print("Before the function call")
+
+                # Call the original function
+                result = func(*args, **kwargs)
+
+                # Do something after the function call
+                print("After the function call")
+                return result
+
+            return wrapper
+
+        return caller
+
+    def host(self, **kwargs):
+        kwargs["host"] = kwargs.get("name")
+        del kwargs["name"]
+        remote = Remote(**kwargs)
+        self.remotes.append(remote)
+        return self
+
+    def load(self, file: str = "inventory.yml"):
+        with open(file) as stream:
+            loaded_data = yaml.safe_load(stream)
+
+            if (
+                loaded_data is None
+                or isinstance(loaded_data.get("hosts"), dict) is False
+            ):
+                raise RuntimeException(f'"hosts" definition is invalid.')
+
+            for name, data in loaded_data["hosts"].items():
+                if data.get("host"):
+                    self.host(
+                        name=data.get("host"),
+                        user=data.get("user"),
+                        port=data.get("port"),
+                        deploy_dir=data.get("deploy_dir"),
+                        pemfile=data.get("pemfile"),
+                        label=name,
+                    )
+                else:
+                    self.host(name=name, **data)
+
+    def bootstrap(self, **kwargs):
+        if self.__bootstrapped:
+            return
+
+        if not self.remotes:
+            self.stop("There are no remotes. Please register at least 1.")
+
+        verbosity = InputOutput.NORMAL
+
+        if kwargs.get("quiet"):
+            verbosity = InputOutput.QUIET
+        elif kwargs.get("normal"):
+            verbosity = InputOutput.NORMAL
+        elif kwargs.get("detail"):
+            verbosity = InputOutput.DETAIL
+        elif kwargs.get("debug"):
+            verbosity = InputOutput.DEBUG
+
+        self.io = InputOutput(kwargs.get("selector"), kwargs.get("stage"), verbosity)
+        self.logger = StreamStyle()
+
+        self.selected = [
+            remote
+            for remote in self.remotes
+            if self.io.selector == InputOutput.SELECTOR_DEFAULT
+            or remote.label == self.io.selector
+        ]
+
+        self.put("stage", self.io.stage)
+
+        self.__bootstrapped = True
+
+    def start(self):
+        import os
+
+        inventory_file = os.getcwd() + "/inventory.yml"
+
+        if os.path.isfile(inventory_file):
+            self.load(inventory_file)
+
+        self.typer()
+
+    def run(self, command: str, **kwargs):
+        remote = self.current_route()
+
+        cwd = self.running.get("cd")
+
+        if cwd is not None:
+            command = self.parse(f"cd {cwd} && ({command.strip()})")
+        else:
+            command = self.parse(command.strip())
+
+        printer = RunPrinter(self.io, self.logger)
+        runner = CommandRunner(printer, remote, command)
+        options = RunOptions(env=kwargs.get("env"))
+
+        self._before_command(runner)
+        res = runner.run(options)
+        self._after_command(runner)
+
+        return res
 
     def cat(self, file: str) -> str:
         return self.run(f"cat {file}").fetch()
@@ -135,26 +217,6 @@ class Deployer(Container):
     def cd(self, cwd: str):
         self.running["cd"] = cwd
         return self
-
-    def run(self, command: str, **kwargs):
-        remote = self.current_route()
-
-        cwd = self.running.get("cd")
-
-        if cwd is not None:
-            command = self.parse(f"cd {cwd} && ({command.strip()})")
-        else:
-            command = self.parse(command.strip())
-
-        printer = RunPrinter(self.io, self.logger)
-        runner = CommandRunner(printer, remote, command)
-        options = RunOptions(env=kwargs.get("env"))
-
-        self._before_command(runner)
-        res = runner.run(options)
-        self._after_command(runner)
-
-        return res
 
     def info(self, message: str):
         remote = self.current_route()
