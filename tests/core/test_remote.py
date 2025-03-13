@@ -1,4 +1,10 @@
-from hapi import Remote
+from hapi import Container, Remote
+
+
+def test_it_inherits_container():
+    remote = Remote(host="app-server")
+
+    assert isinstance(remote, Container)
 
 
 def test_it_requires_host_only():
@@ -57,3 +63,11 @@ def test_it_creates_an_instance_with_label():
     remote = Remote(host="192.168.33.11", label="custom-server")
 
     assert remote.label == "custom-server"
+
+
+def test_it_creates_an_instance_with_pemfile():
+    remote = Remote(
+        host="192.168.33.11", label="custom-server", pemfile="/path/.ssh/id_ed25519"
+    )
+
+    assert remote.pemfile == "/path/.ssh/id_ed25519"
