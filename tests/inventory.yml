@@ -1,9 +1,9 @@
 hosts:
   ubuntu-1:
+    host: 127.0.0.1
     user: vagrant # Optional
-    port: 22 # Optional
-    deploy_dir: ~/hapideploy/{{stage}} # Optional
-  ubuntu-2:
-    deploy_dir: ~/hapideploy/{{stage}}
-  ubuntu-3:
-    deploy_dir: ~/hapideploy/{{stage}}
+    port: 2201 # Optional
+    deploy_dir: ~/custom/{{stage}} # Optional
+    pemfile: /path/to/ssh/id_ed25519
+  10.0.0.1:
+    label: ubuntu-2

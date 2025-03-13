@@ -39,7 +39,17 @@ class Program(Deployer):
                     raise RuntimeException(f'"hosts" definition is invalid.')
 
                 for name, data in loaded_data["hosts"].items():
-                    self.host(name=name, **data)
+                    if data.get("host"):
+                        self.host(
+                            name=data.get("host"),
+                            user=data.get("user"),
+                            port=data.get("port"),
+                            deploy_dir=data.get("deploy_dir"),
+                            pemfile=data.get("pemfile"),
+                            label=name,
+                        )
+                    else:
+                        self.host(name=name, **data)
             except yaml.YAMLError as exc:
                 # TODO: throw RuntimeException
                 print(exc)
