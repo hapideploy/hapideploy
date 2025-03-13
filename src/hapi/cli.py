@@ -1,9 +1,7 @@
-from .__version import __version__
-
+import os
+from pathlib import Path
 
 def start():
-    print(f"HabiDeploy {__version__}")
-
-
-if __name__ == "__main__":
-    start()
+    file = os.getcwd() + '/hapirun.py'
+    code = Path(file).read_text()
+    exec(code)

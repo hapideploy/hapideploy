@@ -28,6 +28,7 @@ class Deployer(Container):
 
         self.__current_runner = None
         self.__bootstrapped = False
+        self.__discovered = []
 
     def add_task(self, name: str, desc: str, func: typing.Callable):
         task = Task(name, desc, func)
@@ -109,8 +110,13 @@ class Deployer(Container):
         self.remotes.append(remote)
         return self
 
-    def load(self, file: str = "inventory.yml"):
+    def discover(self, file: str = "inventory.yml"):
+        if file in self.__discovered:
+            return
+
         with open(file) as stream:
+            self.__discovered.append(file)
+
             loaded_data = yaml.safe_load(stream)
 
             if (
@@ -163,16 +169,6 @@ class Deployer(Container):
         self.put("stage", self.io.stage)
 
         self.__bootstrapped = True
-
-    def start(self):
-        import os
-
-        inventory_file = os.getcwd() + "/inventory.yml"
-
-        if os.path.isfile(inventory_file):
-            self.load(inventory_file)
-
-        self.typer()
 
     def run(self, command: str, **kwargs):
         remote = self.current_route()
