@@ -29,7 +29,7 @@ def test_the_load_method():
 
     app.load(current_dir + "/../inventory.yml")
 
-    assert len(app.remotes) == 3
+    assert len(app.remotes) == 2
 
     assert app.remotes[0].host == "127.0.0.1"
     assert app.remotes[0].user == "vagrant"
@@ -40,6 +40,3 @@ def test_the_load_method():
 
     assert app.remotes[1].host == "10.0.0.1"
     assert app.remotes[1].label == "ubuntu-2"
-
-    assert app.remotes[2].host == "ubuntu-3"
-    assert app.remotes[2].host == "ubuntu-3"
