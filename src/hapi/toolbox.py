@@ -1,4 +1,4 @@
-from .core import Program
+from .core.program import Program
 
 app = Program()
 

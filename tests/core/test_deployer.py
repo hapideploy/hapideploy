@@ -43,12 +43,12 @@ def test_the_host_method():
     assert remote.label == "ubuntu-1"
 
 
-def test_the_load_method():
+def test_the_discover_method():
     deployer = Deployer()
 
     current_dir = os.path.dirname(os.path.realpath(__file__))
 
-    deployer.load(current_dir + "/../inventory.yml")
+    deployer.discover(current_dir + "/../inventory.yml")
 
     assert len(deployer.remotes) == 2
 

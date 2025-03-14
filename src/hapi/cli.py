@@ -1,9 +1,13 @@
-from .__version import __version__
+import os
+from pathlib import Path
+
+from .toolbox import app
 
 
 def start():
-    print(f"HabiDeploy {__version__}")
+    file = os.getcwd() + "/hapirun.py"
+    code = Path(file).read_text()
+    exec(code)
 
-
-if __name__ == "__main__":
-    start()
+    if not app.started():
+        app.start()
