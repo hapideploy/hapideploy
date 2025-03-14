@@ -4,7 +4,7 @@ import typing
 from fabric import Result
 from invoke import StreamWatcher
 
-from ..log import NoneStyle
+from ..log import Logger
 from .io import InputOutput
 from .remote import Remote
 from .task import Task
@@ -37,30 +37,34 @@ class LogBuffer(StreamWatcher):
         return []  # Return an empty list as we don't need to submit any responses
 
 
-class RunPrinter:
-    def __init__(self, io: InputOutput, logger: NoneStyle):
+class Printer:
+    def __init__(self, io: InputOutput, log: Logger):
         self.io = io
-        self.logger = logger
+        self.log = log
 
     def print_task(self, remote: Remote, task: Task):
+        self.log.info(f"[{remote.label}] task {task.name}")
+
         if self.io.verbosity >= InputOutput.NORMAL:
             text = f"[<primary>{remote.label}</primary>] <success>task</success> {task.name}"
             self.io.writeln(text)
             # self.logger.writeln(text)
 
     def print_command(self, remote: Remote, command: str):
+        self.log.info(f"[{remote.label}] run {command}")
+
         if self.io.verbosity >= InputOutput.DETAIL:
             text = (
                 f"[<primary>{remote.label}</primary>] <success>run</success> {command}"
             )
             self.io.writeln(text)
-            # self.logger.writeln(f"[{remote.label}] run {command}")
 
     def print_buffer(self, remote: Remote, buffer: str):
+        self.log.debug(f"[{remote.label}] {buffer}")
+
         if self.io.verbosity >= InputOutput.DEBUG:
             text = f"[<primary>{remote.label}</primary>] {buffer}"
             self.io.writeln(text)
-            # self.logger.writeln(text)
 
 
 class RunOptions:
@@ -84,13 +88,13 @@ class RunResult:
 
 
 class Runner:
-    def __init__(self, printer: RunPrinter, remote: Remote):
+    def __init__(self, printer: Printer, remote: Remote):
         self.printer = printer
         self.remote = remote
 
 
 class CommandRunner(Runner):
-    def __init__(self, printer: RunPrinter, remote: Remote, command: str):
+    def __init__(self, printer: Printer, remote: Remote, command: str):
         super().__init__(printer, remote)
         self.command = command
 
@@ -118,7 +122,7 @@ class CommandRunner(Runner):
 
 
 class TaskRunner(Runner):
-    def __init__(self, printer: RunPrinter, remote: Remote, task: Task, deployer):
+    def __init__(self, printer: Printer, remote: Remote, task: Task, deployer):
         super().__init__(printer, remote)
 
         self.task = task

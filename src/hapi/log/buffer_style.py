@@ -1,14 +1,17 @@
-from .none_style import NoneStyle
+import datetime
+
+from .logger import Logger
 
 
-class BufferStyle(NoneStyle):
+class BufferStyle(Logger):
     def __init__(self):
         super().__init__()
 
         self.buffered = ""
 
-    def do_write(self, text: str = "", newline: bool = False):
-        self.buffered += text + ("\n" if newline else "")
+    def write(self, level: str, message: str, context: dict = None):
+        moment = datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
+        self.buffered += f"[{moment}] {message}\n"
 
     def fetch(self) -> str:
         fetched = self.buffered

@@ -30,8 +30,7 @@ class InputOutput:
         self._do_write(text, True)
 
     def _do_write(self, text: str, newline: bool = False):
-        decorated = self.decorate(text)
-        typer.echo(decorated, nl=newline)
+        raise NotImplemented
 
     def decorate(self, text: str):
         for tag, data in self.replacements.items():
@@ -53,6 +52,12 @@ class InputOutput:
                 text = text.replace(piece, typer.style(surrounded, fg=fg))
 
         return text
+
+
+class ConsoleInputOutput(InputOutput):
+    def _do_write(self, text: str, newline: bool = False):
+        decorated = self.decorate(text)
+        typer.echo(decorated, nl=newline)
 
 
 class CacheInputOutput(InputOutput):
