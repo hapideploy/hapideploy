@@ -1,7 +1,7 @@
-import re
 import typing
 
 from ..exceptions import BindingException, LogicException
+from ..support import extract_curly_braces
 
 
 class Container:
@@ -22,10 +22,22 @@ class Container:
         return Container.__instance
 
     def put(self, key: str, value):
+        """
+        Put a value with its associated key in the container.
+
+        :param str key: The unified key (identifier) in the container.
+        :param value: The value is associated with the given key.
+        """
         self.__items[key] = value
         return self
 
     def add(self, key: str, value):
+        """
+        Append one or more values to the given key in the container.
+
+        :param str key: The unified key (identifier) in the container.
+        :param value: It can be a single value such as int, str or a list.
+        """
         if self.__items.get(key) is None:
             self.__items[key] = []
 
@@ -40,20 +52,46 @@ class Container:
 
         return self
 
-    def has(self, key: str):
-        return key in self.__bindings or key in self.__items
-
     def bind(self, key: str, callback: typing.Callable):
+        """
+        Bind a callback to its key in the container.
+        """
         self.__bindings[key] = callback
+        return self
 
     def resolve(self, key: str):
+        """
+        Bind a callback to its key in the container using decorator.
+
+            @container.resolve
+            def resolve_tools(_)
+                return ['poetry', 'typer', 'fabric']
+
+        :param str key: The unified key (identifier) in the container.
+        """
+
         def caller(func: typing.Callable):
             self.bind(key, func)
 
         return caller
 
-    def make(self, key: str, fallback=None, throw=None):
-        if self.has(key) is False:
+    def has(self, key: str):
+        """
+        Determine if the given key exists in the container.
+
+        :param str key: The key (identifier) needs to be checked.
+        """
+        return key in self.__bindings or key in self.__items
+
+    def make(self, key: str, fallback: any = None, throw=None):
+        """
+        Resolve an item from the container.
+
+        :param str key: The key (identifier) needs to be resolved.
+        :param any fallback: This will be returned if key does not exist.
+        :param bool|Exception throw: Determine if it should raise an exception if key does not exist.
+        """
+        if not self.has(key):
             if throw is None or throw is False:
                 return fallback
 
@@ -72,7 +110,11 @@ class Container:
         return self.__items.get(key)
 
     def parse(self, text: str, **kwargs) -> str:
-        keys = self._extract_curly_braces(text)
+        """
+        Replace keys surrounded by {{ and }} in the text with their values defined in the container.
+        It will throw an exception if keys are not defined.
+        """
+        keys = extract_curly_braces(text)
 
         for key in keys:
             if kwargs.get(key):
@@ -88,9 +130,3 @@ class Container:
                 text = text.replace("{{" + key + "}}", str(value))
 
         return text
-
-    @staticmethod
-    def _extract_curly_braces(text):
-        pattern = r"\{\{([^}]*)\}\}"
-        matches = re.findall(pattern, text)
-        return matches

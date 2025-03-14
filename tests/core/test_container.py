@@ -1,6 +1,6 @@
 import pytest
 
-from hapi import Container
+from hapi.core import Container
 from hapi.exceptions import BindingException, LogicException
 
 
@@ -56,7 +56,7 @@ def test_it_adds_list_values():
 
 def test_it_adds_values_when_key_not_exist():
     container = Container()
-    assert container.make("names") is None
+    assert not container.has("names")
 
     container.add("names", "James")
     container.add("names", "John")
@@ -97,6 +97,17 @@ def test_it_binds_a_callback_to_a_key():
 
     assert container.has("bin/php")
     assert container.make("bin/php") == "/usr/bin/php8.4"
+
+
+def test_it_binds_using_resolve_annotation():
+    container = Container()
+
+    @container.resolve(key="languages")
+    def resolve_name(_):
+        return ["JavaScript", "PHP", "Python", "Go"]
+
+    assert container.has("languages")
+    assert container.make("languages") == ["JavaScript", "PHP", "Python", "Go"]
 
 
 def test_it_parses_text_contains_double_curly_braces():
