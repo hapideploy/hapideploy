@@ -1,10 +1,10 @@
 from .container import Container
 from .deployer import Deployer
-from .io import InputOutput
+from .io import CacheInputOutput, InputOutput
 from .process import (
     CommandRunner,
+    Printer,
     RunOptions,
-    RunPrinter,
     RunResult,
     TaskRunner,
     env_stringify,

@@ -5,27 +5,31 @@ import typer
 from typing_extensions import Annotated
 
 from ..exceptions import StoppedException
-from ..log import NoneStyle, StreamStyle
+from ..log import Logger, NoneStyle
+from ..log.file_style import FileStyle
 from .container import Container
-from .io import InputOutput
-from .process import CommandRunner, RunOptions, RunPrinter, TaskRunner
+from .io import ConsoleInputOutput, InputOutput
+from .process import CommandRunner, Printer, RunOptions, TaskRunner
 from .remote import Remote
 from .task import Task
 
 
 class Deployer(Container):
-    def __init__(self):
+    def __init__(self, io: InputOutput = None, log: Logger = None):
         super().__init__()
-        self.remotes = []
-        self.tasks = {}
-        self.io = None
-        self.logger = NoneStyle()
+        self.io = io if io else ConsoleInputOutput()
+        self.log = log if log else NoneStyle()
 
+        self.__remotes = []
+        self.__tasks = {}
         self.__typer = typer.Typer()
         self.__running = {}
         self.__selected = []
         self.__bootstrapped = False
         self.__started = False
+
+    def remotes(self):
+        return self.__remotes
 
     def started(self):
         return self.__started
@@ -40,7 +44,7 @@ class Deployer(Container):
 
     def add_remote(self, **kwargs):
         remote = Remote(**kwargs)
-        self.remotes.append(remote)
+        self.__remotes.append(remote)
         return self
 
     def add_command(self, name: str, desc: str, func: typing.Callable):
@@ -53,7 +57,7 @@ class Deployer(Container):
     def add_task(self, name: str, desc: str, func: typing.Callable):
         task = Task(name, desc, func)
 
-        self.tasks[name] = task
+        self.__tasks[name] = task
 
         @self.__typer.command(name=name, help=desc)
         def task_command(
@@ -93,7 +97,7 @@ class Deployer(Container):
         def func(dep: Deployer):
             for task_name in names:
                 remote = dep.current_route()
-                task = dep.tasks.get(task_name)
+                task = dep.__tasks.get(task_name)
                 self._run_task(remote, task)
 
         desc = desc if desc else f'Group "{name}": ' + ", ".join(names)
@@ -112,7 +116,7 @@ class Deployer(Container):
         else:
             command = self.parse(command.strip())
 
-        printer = RunPrinter(self.io, self.logger)
+        printer = Printer(self.io, self.log)
         runner = CommandRunner(printer, remote, command)
         options = RunOptions(env=kwargs.get("env"))
 
@@ -149,7 +153,9 @@ class Deployer(Container):
     def info(self, message: str):
         remote = self.current_route()
 
-        self.logger.writeln(f"[{remote.label}] info {self.parse(message)}")
+        self.io.writeln(
+            f"[<primary>{remote.label}</primary>] <success>info</success> {self.parse(message)}"
+        )
 
     def stop(self, message: str):
         raise StoppedException(self.parse(message))
@@ -164,7 +170,7 @@ class Deployer(Container):
         if self.__bootstrapped:
             return
 
-        if not self.remotes:
+        if not self.__remotes:
             self.stop("There are no remotes. Please register at least 1.")
 
         verbosity = InputOutput.NORMAL
@@ -178,12 +184,16 @@ class Deployer(Container):
         elif kwargs.get("debug"):
             verbosity = InputOutput.DEBUG
 
-        self.io = InputOutput(kwargs.get("selector"), kwargs.get("stage"), verbosity)
-        self.logger = StreamStyle()
+        self.io = ConsoleInputOutput(
+            kwargs.get("selector"), kwargs.get("stage"), verbosity
+        )
+
+        if self.has("log_file"):
+            self.log = FileStyle(self.make("log_file"))
 
         self.__selected = [
             remote
-            for remote in self.remotes
+            for remote in self.__remotes
             if self.io.selector == InputOutput.SELECTOR_DEFAULT
             or remote.label == self.io.selector
         ]
@@ -193,7 +203,7 @@ class Deployer(Container):
         self.__bootstrapped = True
 
     def _run_task(self, remote: Remote, task: Task):
-        printer = RunPrinter(self.io, self.logger)
+        printer = Printer(self.io, self.log)
         runner = TaskRunner(printer, remote, task, self)
 
         self._before_task(runner)

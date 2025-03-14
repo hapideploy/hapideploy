@@ -1,16 +1,23 @@
 import pytest
 
-from hapi import Container, Deployer
+from hapi.core import CacheInputOutput, Container, Deployer
+from hapi.core.io import ConsoleInputOutput
 from hapi.exceptions import StoppedException
+from hapi.log import BufferStyle, NoneStyle
 
 
 def test_it_creates_a_deployer_instance():
     deployer = Deployer()
 
     assert isinstance(deployer, Container)
-    assert isinstance(deployer.remotes, list)
-    assert isinstance(deployer.tasks, dict)
-    assert deployer.io is None
+    assert isinstance(deployer.io, ConsoleInputOutput)
+    assert isinstance(deployer.log, NoneStyle)
+
+    deployer = Deployer(CacheInputOutput(), BufferStyle())
+
+    assert isinstance(deployer, Container)
+    assert isinstance(deployer.io, CacheInputOutput)
+    assert isinstance(deployer.log, BufferStyle)
 
 
 def test_bootstrap():
@@ -35,9 +42,9 @@ def test_the_add_remote_method():
         pemfile="/path/to/pemfile",
         deploy_dir="~/hapideploy/{{stage}}",
     )
-    assert len(deployer.remotes) == 1
+    assert len(deployer.remotes()) == 1
 
-    remote = deployer.remotes[0]
+    remote = deployer.remotes()[0]
     assert remote.host == "ubuntu-1"
     assert remote.user == "vagrant"
     assert remote.port == 2201

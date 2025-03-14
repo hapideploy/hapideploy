@@ -1,4 +1,4 @@
-from hapi import Deployer
+from hapi.core import Deployer
 
 from hapi.toolbox import app
 
@@ -13,6 +13,9 @@ app.load(CommonProvider)
 app.put('name', 'Laravel')
 app.put('stage', 'dev')
 app.put('repository', 'https://github.com/laravel/laravel')
+
+app.put('log_style', 'file') # none or buffer
+app.put('log_file', 'hapirun.log')
 
 app.add('languages', ['JavaScript', 'PHP', "Python"])
 app.add('languages', ['Java', 'Go', 'Rust'])

@@ -47,14 +47,14 @@ def test_it_discovers_an_inventory_file():
 
     app.discover(current_dir + "/../inventory.yml")
 
-    assert len(app.remotes) == 2
+    assert len(app.remotes()) == 2
 
-    assert app.remotes[0].host == "127.0.0.1"
-    assert app.remotes[0].user == "vagrant"
-    assert app.remotes[0].port == 2201
-    assert app.remotes[0].deploy_dir == "~/custom/{{stage}}"
-    assert app.remotes[0].label == "ubuntu-1"
-    assert app.remotes[0].pemfile == "/path/to/ssh/id_ed25519"
+    assert app.remotes()[0].host == "127.0.0.1"
+    assert app.remotes()[0].user == "vagrant"
+    assert app.remotes()[0].port == 2201
+    assert app.remotes()[0].deploy_dir == "~/custom/{{stage}}"
+    assert app.remotes()[0].label == "ubuntu-1"
+    assert app.remotes()[0].pemfile == "/path/to/ssh/id_ed25519"
 
-    assert app.remotes[1].host == "10.0.0.1"
-    assert app.remotes[1].label == "ubuntu-2"
+    assert app.remotes()[1].host == "10.0.0.1"
+    assert app.remotes()[1].label == "ubuntu-2"
