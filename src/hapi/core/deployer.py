@@ -149,7 +149,9 @@ class Deployer(Container):
     def info(self, message: str):
         remote = self.current_route()
 
-        self.logger.writeln(f"[{remote.label}] info {self.parse(message)}")
+        self.io.writeln(
+            f"[<primary>{remote.label}</primary>] <success>info</success> {self.parse(message)}"
+        )
 
     def stop(self, message: str):
         raise StoppedException(self.parse(message))

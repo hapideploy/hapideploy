@@ -44,19 +44,21 @@ class RunPrinter:
 
     def print_task(self, remote: Remote, task: Task):
         if self.io.verbosity >= InputOutput.NORMAL:
-            text = f"[{remote.label}] task {task.name}"
+            text = f"[<primary>{remote.label}</primary>] <success>task</success> {task.name}"
             self.io.writeln(text)
             # self.logger.writeln(text)
 
     def print_command(self, remote: Remote, command: str):
         if self.io.verbosity >= InputOutput.DETAIL:
-            text = f"[{remote.label}] run {command}"
+            text = (
+                f"[<primary>{remote.label}</primary>] <success>run</success> {command}"
+            )
             self.io.writeln(text)
             # self.logger.writeln(f"[{remote.label}] run {command}")
 
     def print_buffer(self, remote: Remote, buffer: str):
         if self.io.verbosity >= InputOutput.DEBUG:
-            text = f"[{remote.label}] {buffer}"
+            text = f"[<primary>{remote.label}</primary>] {buffer}"
             self.io.writeln(text)
             # self.logger.writeln(text)
 
