@@ -2,10 +2,9 @@ import random
 import typing
 
 import typer
-import yaml
 from typing_extensions import Annotated
 
-from ..exceptions import RuntimeException, StoppedException
+from ..exceptions import StoppedException
 from ..log import NoneStyle, StreamStyle
 from .container import Container
 from .io import InputOutput
@@ -17,18 +16,15 @@ from .task import Task
 class Deployer(Container):
     def __init__(self):
         super().__init__()
-        self.typer = typer.Typer()
-        self.logger = NoneStyle()
         self.remotes = []
         self.tasks = {}
         self.io = None
+        self.logger = NoneStyle()
 
-        self.running = {}
-        self.selected = []
-
-        self.__current_runner = None
+        self.__typer = typer.Typer()
+        self.__running = {}
+        self.__selected = []
         self.__bootstrapped = False
-        self.__discovered = []
         self.__started = False
 
     def started(self):
@@ -40,14 +36,26 @@ class Deployer(Container):
 
         self.__started = True
 
-        self.typer()
+        self.__typer()
+
+    def add_remote(self, **kwargs):
+        remote = Remote(**kwargs)
+        self.remotes.append(remote)
+        return self
+
+    def add_command(self, name: str, desc: str, func: typing.Callable):
+        @self.__typer.command(name=name, help=desc)
+        def general_command():
+            func(self)
+
+        return self
 
     def add_task(self, name: str, desc: str, func: typing.Callable):
         task = Task(name, desc, func)
 
         self.tasks[name] = task
 
-        @self.typer.command(name=name, help=desc)
+        @self.__typer.command(name=name, help=desc)
         def task_command(
             selector: str = typer.Argument(default=InputOutput.SELECTOR_DEFAULT),
             stage: Annotated[
@@ -67,7 +75,7 @@ class Deployer(Container):
                 bool, typer.Option(help="Print debug output messages (level: 3)")
             ] = False,
         ):
-            self.bootstrap(
+            self._bootstrap(
                 selector=selector,
                 stage=stage,
                 quiet=quiet,
@@ -76,7 +84,7 @@ class Deployer(Container):
                 debug=debug,
             )
 
-            for remote in self.selected:
+            for remote in self.__selected:
                 self._run_task(remote, task)
 
         return self
@@ -94,98 +102,10 @@ class Deployer(Container):
 
         return self
 
-    def task(self, name: str, desc: str = None):
-        desc = desc if desc is not None else name
-
-        def caller(func: typing.Callable):
-            self.add_task(name, desc, func)
-
-            def wrapper(*args, **kwargs):
-                # Do something before the function call
-                print("Before the function call")
-
-                # Call the original function
-                result = func(*args, **kwargs)
-
-                # Do something after the function call
-                print("After the function call")
-                return result
-
-            return wrapper
-
-        return caller
-
-    def host(self, **kwargs):
-        kwargs["host"] = kwargs.get("name")
-        del kwargs["name"]
-        remote = Remote(**kwargs)
-        self.remotes.append(remote)
-        return self
-
-    def discover(self, file: str = "inventory.yml"):
-        if file in self.__discovered:
-            return
-
-        with open(file) as stream:
-            self.__discovered.append(file)
-
-            loaded_data = yaml.safe_load(stream)
-
-            if (
-                loaded_data is None
-                or isinstance(loaded_data.get("hosts"), dict) is False
-            ):
-                raise RuntimeException(f'"hosts" definition is invalid.')
-
-            for name, data in loaded_data["hosts"].items():
-                if data.get("host"):
-                    self.host(
-                        name=data.get("host"),
-                        user=data.get("user"),
-                        port=data.get("port"),
-                        deploy_dir=data.get("deploy_dir"),
-                        pemfile=data.get("pemfile"),
-                        label=name,
-                    )
-                else:
-                    self.host(name=name, **data)
-
-    def bootstrap(self, **kwargs):
-        if self.__bootstrapped:
-            return
-
-        if not self.remotes:
-            self.stop("There are no remotes. Please register at least 1.")
-
-        verbosity = InputOutput.NORMAL
-
-        if kwargs.get("quiet"):
-            verbosity = InputOutput.QUIET
-        elif kwargs.get("normal"):
-            verbosity = InputOutput.NORMAL
-        elif kwargs.get("detail"):
-            verbosity = InputOutput.DETAIL
-        elif kwargs.get("debug"):
-            verbosity = InputOutput.DEBUG
-
-        self.io = InputOutput(kwargs.get("selector"), kwargs.get("stage"), verbosity)
-        self.logger = StreamStyle()
-
-        self.selected = [
-            remote
-            for remote in self.remotes
-            if self.io.selector == InputOutput.SELECTOR_DEFAULT
-            or remote.label == self.io.selector
-        ]
-
-        self.put("stage", self.io.stage)
-
-        self.__bootstrapped = True
-
     def run(self, command: str, **kwargs):
         remote = self.current_route()
 
-        cwd = self.running.get("cd")
+        cwd = self.__running.get("cd")
 
         if cwd is not None:
             command = self.parse(f"cd {cwd} && ({command.strip()})")
@@ -223,7 +143,7 @@ class Deployer(Container):
         return res.fetch() == picked
 
     def cd(self, cwd: str):
-        self.running["cd"] = cwd
+        self.__running["cd"] = cwd
         return self
 
     def info(self, message: str):
@@ -235,10 +155,42 @@ class Deployer(Container):
         raise StoppedException(self.parse(message))
 
     def current_route(self) -> Remote | None:
-        if self.__current_runner:
-            return self.__current_runner.remote
+        if self.__running["remote"]:
+            return self.__running["remote"]
 
         self.stop("No running remote is set.")
+
+    def _bootstrap(self, **kwargs):
+        if self.__bootstrapped:
+            return
+
+        if not self.remotes:
+            self.stop("There are no remotes. Please register at least 1.")
+
+        verbosity = InputOutput.NORMAL
+
+        if kwargs.get("quiet"):
+            verbosity = InputOutput.QUIET
+        elif kwargs.get("normal"):
+            verbosity = InputOutput.NORMAL
+        elif kwargs.get("detail"):
+            verbosity = InputOutput.DETAIL
+        elif kwargs.get("debug"):
+            verbosity = InputOutput.DEBUG
+
+        self.io = InputOutput(kwargs.get("selector"), kwargs.get("stage"), verbosity)
+        self.logger = StreamStyle()
+
+        self.__selected = [
+            remote
+            for remote in self.remotes
+            if self.io.selector == InputOutput.SELECTOR_DEFAULT
+            or remote.label == self.io.selector
+        ]
+
+        self.put("stage", self.io.stage)
+
+        self.__bootstrapped = True
 
     def _run_task(self, remote: Remote, task: Task):
         printer = RunPrinter(self.io, self.logger)
@@ -249,15 +201,15 @@ class Deployer(Container):
         self._after_task(runner)
 
     def _before_task(self, runner: TaskRunner):
-        self.__current_runner = runner
+        self.__running["remote"] = runner.remote
+        self.__running["task"] = runner.task
         self.put("deploy_dir", self.parse(runner.remote.deploy_dir))
         pass
 
     def _after_task(self, _: TaskRunner):
-        self.running["cd"] = None
+        self.__running["cd"] = None
 
     def _before_command(self, runner: CommandRunner):
-        self.__current_runner = runner
         pass
 
     def _after_command(self, _: CommandRunner):

@@ -46,10 +46,16 @@ class Container:
     def bind(self, key: str, callback: typing.Callable):
         self.__bindings[key] = callback
 
-    def make(self, key: str, default=None, throw=None):
+    def resolve(self, key: str):
+        def caller(func: typing.Callable):
+            self.bind(key, func)
+
+        return caller
+
+    def make(self, key: str, fallback=None, throw=None):
         if self.has(key) is False:
             if throw is None or throw is False:
-                return default
+                return fallback
 
             if throw is True:
                 raise BindingException.with_key(key)
@@ -65,12 +71,12 @@ class Container:
             return self.__bindings[key](self)
         return self.__items.get(key)
 
-    def parse(self, text: str, params: dict = None):
+    def parse(self, text: str, **kwargs) -> str:
         keys = self._extract_curly_braces(text)
 
         for key in keys:
-            if params is not None and key in params:
-                text = text.replace("{{" + key + "}}", str(params[key]))
+            if kwargs.get(key):
+                text = text.replace("{{" + key + "}}", str(kwargs.get(key)))
                 continue
 
             if self.has(key) is not True:

@@ -121,7 +121,7 @@ def test_it_parses_text_contains_double_curly_braces():
     assert parsed == "cd ~/deploy/releases/1 && /usr/bin/python3 main.py"
 
 
-def test_it_returns_default_if_key_does_not_exist():
+def test_it_returns_fallback_if_key_does_not_exist():
     container = Container()
 
     value = container.make("foobar", "Foobar does not exist")
