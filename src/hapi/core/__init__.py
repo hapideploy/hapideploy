@@ -9,6 +9,6 @@ from .process import (
     TaskRunner,
     env_stringify,
 )
-from .program import Program
+from .program import Program, Provider
 from .remote import Remote
 from .task import Task

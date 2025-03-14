@@ -1,11 +1,7 @@
 import json
 import shlex
 
-from ..core import Deployer, Program
-
-
-def bootstrap(app: Program):
-    return CommonProvider(app)
+from ..core import Deployer, Provider
 
 
 def bin_git(_: Deployer):
@@ -226,13 +222,8 @@ def deploy_code(dep: Deployer):
     dep.info("Code is updated")
 
 
-class CommonProvider:
-    def __init__(self, app: Program):
-        self.app = app
-
-        self.boot()
-
-    def boot(self):
+class CommonProvider(Provider):
+    def register(self):
         self.app.put("current_file", "{{deploy_dir}}/current")
         self.app.put("update_code_strategy", "archive")
         self.app.put("git_ssh_command", "ssh -o StrictHostKeyChecking=accept-new")

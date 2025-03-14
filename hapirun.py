@@ -1,13 +1,57 @@
-# from hapi import Deployer
+from hapi import Deployer
 
 from hapi.toolbox import app
 
-from hapi.recipe.common import bootstrap
+from hapi.recipe.common import CommonProvider
 
-bootstrap(app)
+# Providers
+
+app.load(CommonProvider)
+
+# Configuration
 
 app.put('name', 'Laravel')
 app.put('stage', 'dev')
 app.put('repository', 'https://github.com/laravel/laravel')
 
-app.start()
+app.add('languages', ['JavaScript', 'PHP', "Python"])
+app.add('languages', ['Java', 'Go', 'Rust'])
+app.add('languages', 'Bash')
+
+@app.resolve(key='colors')
+def resolve_colors(dep: Deployer):
+    dep.info('Resolving "colors"')
+    return ['Red', 'Green', 'Blue']
+
+# Tasks or Commands
+
+@app.command(name='config:list', desc='List defined configuration items')
+def config_list(dep: Deployer):
+    print(dep.parse('name is {{name}}'))
+
+@app.task(name='deploy:sample', desc='This is a sample task')
+def deploy_sample(dep: Deployer):
+    if not dep.test('[ -d {{deploy_dir}}/shared/storage ]'):
+        dep.info('{{deploy_dir}}/shared/storage does not exist or is not a directory')
+
+    dep.cd('{{deploy_dir}}')
+    dep.run('ls -lah')
+
+    dep.info('languages:')
+    print(dep.make('languages'))
+    print(dep.make('colors'))
+
+
+app.group('ship', 'We must ship', [
+    'deploy'
+])
+
+# Hooks
+
+# app.before('deploy:code', 'composer:install')
+
+# app.after('composer:install', 'npm:install')
+
+# Start the Hapi program
+if __name__ == '__main__':
+    app.start()
