@@ -3,6 +3,7 @@ import os
 from ..__version import __version__
 from .deployer import Deployer
 
+
 class Program(Deployer):
     def __init__(self):
         super().__init__()
@@ -19,4 +20,4 @@ class Program(Deployer):
 
         self.discover(inventory_file)
 
-        self.typer()
+        super().start()

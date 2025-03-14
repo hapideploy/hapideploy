@@ -29,6 +29,18 @@ class Deployer(Container):
         self.__current_runner = None
         self.__bootstrapped = False
         self.__discovered = []
+        self.__started = False
+
+    def started(self):
+        return self.__started
+
+    def start(self):
+        if self.__started:
+            return
+
+        self.__started = True
+
+        self.typer()
 
     def add_task(self, name: str, desc: str, func: typing.Callable):
         task = Task(name, desc, func)
