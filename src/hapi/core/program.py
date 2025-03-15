@@ -15,12 +15,22 @@ class Program(Deployer):
         self.__discovered = []
 
         self.add_about_command()
+        self.command_task_list()
 
     def add_about_command(self):
         def about(_):
             print(f"HapiDeploy {__version__}")
 
         self.add_command("about", "Display this program information", about)
+
+    def command_task_list(self):
+        def task_list(dep: Deployer):
+            tasks = dep.tasks().all()
+
+            for task in tasks:
+                dep.io.writeln(f'<primary>{task.name}</primary>  {task.desc}')
+
+        self.add_command("task:list", "List tasks", task_list)
 
     def start(self):
         inventory_file = os.getcwd() + "/inventory.yml"

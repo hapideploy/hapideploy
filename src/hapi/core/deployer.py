@@ -11,7 +11,7 @@ from .container import Container
 from .io import ConsoleInputOutput, InputOutput
 from .process import CommandRunner, Printer, RunOptions, TaskRunner
 from .remote import Remote
-from .task import Task
+from .task import Task, TaskBag
 
 
 class Deployer(Container):
@@ -21,8 +21,9 @@ class Deployer(Container):
         self.log = log if log else NoneStyle()
         self.printer = Printer(self.io, self.log)
 
+        self.__tasks = TaskBag('name')
+
         self.__remotes = []
-        self.__tasks = {}
         self.__typer = typer.Typer()
         self.__running = {}
         self.__selected = []
@@ -31,6 +32,9 @@ class Deployer(Container):
 
     def remotes(self):
         return self.__remotes
+
+    def tasks(self):
+        return self.__tasks
 
     def started(self):
         return self.__started
@@ -58,7 +62,7 @@ class Deployer(Container):
     def add_task(self, name: str, desc: str, func: typing.Callable):
         task = Task(name, desc, func)
 
-        self.__tasks[name] = task
+        self.__tasks.add(task)
 
         @self.__typer.command(name=name, help=desc)
         def task_command(
@@ -98,7 +102,7 @@ class Deployer(Container):
         def func(dep: Deployer):
             for task_name in names:
                 remote = dep.current_route()
-                task = dep.__tasks.get(task_name)
+                task = dep.tasks().find(task_name)
                 self._run_task(remote, task)
 
         desc = desc if desc else f'Group "{name}": ' + ", ".join(names)
@@ -164,6 +168,16 @@ class Deployer(Container):
 
         self.stop("No running remote is set.")
 
+    def before(self, name: str, do):
+        task = self.__tasks.find(name)
+        task.before = do if isinstance(do, list) else [do]
+        return self
+
+    def after(self, name: str, do):
+        task = self.__tasks.find(name)
+        task.after = do if isinstance(do, list) else [do]
+        return self
+
     def _bootstrap(self, **kwargs):
         if self.__bootstrapped:
             return
@@ -202,6 +216,13 @@ class Deployer(Container):
 
         self.__bootstrapped = True
 
+    def _do_run_tasks(self, remote: Remote, names: list[str]):
+        if len(names) == 0:
+            return
+        for name in names:
+            task = self.__tasks.find(name)
+            self._run_task(remote, task)
+
     def _run_task(self, remote: Remote, task: Task):
         runner = TaskRunner(self.printer, remote, task, self)
 
@@ -210,13 +231,15 @@ class Deployer(Container):
         self._after_task(runner)
 
     def _before_task(self, runner: TaskRunner):
+        self._do_run_tasks(runner.remote, runner.task.before)
         self.__running["remote"] = runner.remote
         self.__running["task"] = runner.task
         self.put("deploy_dir", self.parse(runner.remote.deploy_dir))
         pass
 
-    def _after_task(self, _: TaskRunner):
+    def _after_task(self, runner: TaskRunner):
         self.__running["cwd"] = None
+        self._do_run_tasks(runner.remote, runner.task.after)
 
     def _before_command(self, runner: CommandRunner):
         pass
