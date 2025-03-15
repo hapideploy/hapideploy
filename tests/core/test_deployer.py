@@ -10,21 +10,21 @@ def test_it_creates_a_deployer_instance():
     deployer = Deployer()
 
     assert isinstance(deployer, Container)
-    assert isinstance(deployer.io, ConsoleInputOutput)
-    assert isinstance(deployer.log, NoneStyle)
+    assert isinstance(deployer.io(), ConsoleInputOutput)
+    assert isinstance(deployer.log(), NoneStyle)
 
     deployer = Deployer(CacheInputOutput(), BufferStyle())
 
     assert isinstance(deployer, Container)
-    assert isinstance(deployer.io, CacheInputOutput)
-    assert isinstance(deployer.log, BufferStyle)
+    assert isinstance(deployer.io(), CacheInputOutput)
+    assert isinstance(deployer.log(), BufferStyle)
 
 
 def test_bootstrap():
     deployer = Deployer()
 
     with pytest.raises(StoppedException):
-        deployer._bootstrap(selector="all", stage="dev")
+        deployer.bootstrap(selector="all", stage="dev")
 
 
 # TODO: Test if it autoload load inventory.yml if it exists.

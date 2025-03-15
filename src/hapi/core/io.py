@@ -13,9 +13,11 @@ class InputOutput:
     STAGE_DEFAULT = "dev"
 
     def __init__(self, selector: str = None, stage: str = None, verbosity: int = None):
-        self.selector = selector if selector else InputOutput.SELECTOR_DEFAULT
-        self.stage = stage if stage else InputOutput.STAGE_DEFAULT
-        self.verbosity = verbosity if verbosity else InputOutput.NORMAL
+        self.selector = (
+            selector if selector is not None else InputOutput.SELECTOR_DEFAULT
+        )
+        self.stage = stage if stage is not None else InputOutput.STAGE_DEFAULT
+        self.verbosity = verbosity if verbosity is not None else InputOutput.NORMAL
 
         self.replacements = dict(
             primary=[r"\<primary\>([^}]*)\<\/primary\>", typer.colors.CYAN],
@@ -25,6 +27,9 @@ class InputOutput:
             warning=[r"\<warning\>([^}]*)\<\/warning\>", typer.colors.YELLOW],
             danger=[r"\<danger\>([^}]*)\<\/danger\>", typer.colors.RED],
         )
+
+    def debug(self) -> bool:
+        return self.verbosity == InputOutput.DEBUG
 
     def write(self, text: str = ""):
         self._do_write(text, False)

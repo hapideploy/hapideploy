@@ -1,7 +1,15 @@
 import re
+import shlex
 import typing
 
 from .exceptions import ItemNotFound
+
+
+def env_stringify(env: dict) -> str:
+    items = []
+    for name, value in env.items():
+        items.append(f"%s=%s" % (name, shlex.quote(str(value))))
+    return " ".join(items)
 
 
 def extract_curly_braces(text):

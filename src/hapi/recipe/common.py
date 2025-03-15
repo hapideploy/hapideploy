@@ -1,7 +1,6 @@
 import json
 import shlex
 
-from .. import InputOutput
 from ..core import Deployer, Provider
 
 
@@ -212,7 +211,8 @@ def deploy_code(dep: Deployer):
     strategy = dep.make("update_code_strategy")
     if strategy == "archive":
         dep.run(
-            f"{git} archive {target_with_dir} | tar -x -f - -C {release_path(dep)} 2>&1"
+            "%s archive %s | tar -x -f - -C {{release_path}} 2>&1"
+            % (git, target_with_dir)
         )
     else:
         dep.stop("Unknown `update_code_strategy` option: {{update_code_strategy}}.")
@@ -243,7 +243,7 @@ def deploy_shared(dep: Deployer):
 
     shared_path = "{{deploy_dir}}/shared"
 
-    copy_verbosity = "v" if dep.io.verbosity == InputOutput.DEBUG else ""
+    copy_verbosity = "v" if dep.io().debug() else ""
 
     # Share directories
     for item_dir in shared_dir_items:

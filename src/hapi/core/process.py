@@ -1,20 +1,14 @@
-import shlex
+import random
 import typing
 
 from fabric import Result
 from invoke import StreamWatcher
 
 from ..log import Logger
+from ..support import env_stringify
 from .io import InputOutput
 from .remote import Remote
 from .task import Task
-
-
-def env_stringify(env: dict) -> str:
-    items = []
-    for name, value in env.items():
-        items.append(f"%s=%s" % (name, shlex.quote(str(value))))
-    return " ".join(items)
 
 
 class LogBuffer(StreamWatcher):
@@ -45,6 +39,12 @@ class Printer:
     def print(self, remote: Remote, message: str):
         self.io.writeln(f"[<primary>{remote.label}</primary>] {message}")
 
+    def print_info(self, remote: Remote, message: str):
+        self.log.debug(f"[{remote.label}] INFO {message}")
+
+        if self.io.verbosity > InputOutput.QUIET:
+            self.print(remote, f"<info>INFO</info> {message}")
+
     def print_task(self, remote: Remote, task: Task):
         self.log.debug(f"[{remote.label}] TASK {task.name}")
 
@@ -64,13 +64,8 @@ class Printer:
             self.io.writeln(f"[<primary>{remote.label}</primary>] {buffer}")
 
 
-class RunOptions:
-    def __init__(self, env: dict = None):
-        self.env = env
-
-
 class RunResult:
-    def __init__(self, origin: Result):
+    def __init__(self, origin: Result = None):
         self.origin = origin
 
         self.__output = None
@@ -85,47 +80,95 @@ class RunResult:
 
 
 class Runner:
-    def __init__(self, printer: Printer, remote: Remote):
-        self.printer = printer
-        self.remote = remote
+    def __init__(self, deployer):
+        self.deployer = deployer
 
+    def printer(self):
+        return Printer(self.deployer.io(), self.deployer.log())
 
-class CommandRunner(Runner):
-    def __init__(self, printer: Printer, remote: Remote, command: str):
-        super().__init__(printer, remote)
-        self.command = command
+    def run_task(self, remote: Remote, task: Task):
+        self._before_task(remote, task)
+        self.printer().print_task(remote, task)
+        task.func(self.deployer)
+        self._after_task(remote, task)
 
-    def run(self, options: RunOptions = None) -> RunResult:
-        # E.g. [ubuntu] run if [ -f ~/deploy/.dep/latest_release ]; then echo +true; fi
-        self.printer.print_command(self.remote, self.command)
+    def _before_task(self, remote: Remote, task: Task):
+        self.deployer.put("current_remote", remote)
+        self.deployer.put("current_task", task)
+        self.deployer.put("deploy_dir", self.deployer.parse(remote.deploy_dir))
+        self.run_tasks(remote, task.before)
 
-        # E.g. [ubuntu] +true
+    def _after_task(self, remote: Remote, task: Task):
+        remote.put("location", None)
+        self.run_tasks(remote, task.after)
+
+    def run_tasks(self, remote: Remote, names: list[str]):
+        if len(names) == 0:
+            return
+        for name in names:
+            task = self.deployer.tasks().find(name)
+            self.run_task(remote, task)
+
+    def _do_run_command(self, remote: Remote, command: str, **kwargs):
         def callback(_: str, buffer: str):
-            self.printer.print_buffer(self.remote, buffer)
+            self.printer().print_buffer(remote, buffer)
 
         watcher = LogBuffer(callback)
 
-        command = self.command
+        if kwargs.get("env"):
+            env_vars = env_stringify(kwargs.get("env"))
+            command = f"export {env_vars}; {command}"
 
-        if options and options.env:
-            env_vars = env_stringify(options.env)
-            command = f"export {env_vars}; {self.command}"
-
-        conn = self.remote.connect()
+        conn = remote.connect()
 
         origin = conn.run(command, hide=True, watchers=[watcher])
 
-        return RunResult(origin)
+        res = RunResult(origin)
 
+        return res
 
-class TaskRunner(Runner):
-    def __init__(self, printer: Printer, remote: Remote, task: Task, deployer):
-        super().__init__(printer, remote)
+    def run_command(self, remote: Remote, command: str, **kwargs):
+        location = remote.make("location")
 
-        self.task = task
-        self.deployer = deployer
+        if location is not None:
+            command = self.deployer.parse(f"cd {location} && ({command.strip()})")
+        else:
+            command = self.deployer.parse(command.strip())
 
-    def run(self):
-        # E.g: [ubuntu] task deploy:start
-        self.printer.print_task(self.remote, self.task)
-        self.task.func(self.deployer)
+        self._before_command(remote, command, **kwargs)
+
+        self.printer().print_command(remote, command)
+
+        res = self._do_run_command(remote, command, **kwargs)
+
+        self._after_command(remote, command, **kwargs)
+
+        return res
+
+    def run_test(self, remote: Remote, command: str, **kwargs):
+        # picked = random.choice(
+        #     [
+        #         "accurate",
+        #         "appropriate",
+        #         "correct",
+        #         "legitimate",
+        #         "precise",
+        #         "right",
+        #         "true",
+        #         "yes",
+        #         "indeed",
+        #     ]
+        # )
+        picked = "+true"
+        command = f"if {command}; then echo {picked}; fi"
+        res = self.run_command(remote, command, **kwargs)
+        return res.fetch() == picked
+
+    def run_cat(self, remote: Remote, file: str, **kwargs):
+        return self.run_command(remote, f"cat {file}", **kwargs).fetch()
+
+    def _before_command(self, remote: Remote, command: str, **kwargs):
+        pass
+
+    def _after_command(self, remote: Remote, command: str, **kwargs):
+        pass
