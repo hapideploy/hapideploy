@@ -42,9 +42,9 @@ def test_the_add_remote_method():
         pemfile="/path/to/pemfile",
         deploy_dir="~/hapideploy/{{stage}}",
     )
-    assert len(deployer.remotes()) == 1
+    assert len(deployer.remotes().all()) == 1
 
-    remote = deployer.remotes()[0]
+    remote = deployer.remotes().all()[0]
     assert remote.host == "ubuntu-1"
     assert remote.user == "vagrant"
     assert remote.port == 2201

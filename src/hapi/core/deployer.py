@@ -10,7 +10,7 @@ from ..log.file_style import FileStyle
 from .container import Container
 from .io import ConsoleInputOutput, InputOutput
 from .process import CommandRunner, Printer, RunOptions, TaskRunner
-from .remote import Remote
+from .remote import Remote, RemoteBag
 from .task import Task, TaskBag
 
 
@@ -21,20 +21,20 @@ class Deployer(Container):
         self.log = log if log else NoneStyle()
         self.printer = Printer(self.io, self.log)
 
-        self.__tasks = TaskBag('name')
+        self.__tasks = TaskBag()
+        self.__remotes = RemoteBag()
 
-        self.__remotes = []
         self.__typer = typer.Typer()
         self.__running = {}
         self.__selected = []
         self.__bootstrapped = False
         self.__started = False
 
-    def remotes(self):
-        return self.__remotes
-
     def tasks(self):
         return self.__tasks
+
+    def remotes(self):
+        return self.__remotes
 
     def started(self):
         return self.__started
@@ -49,7 +49,7 @@ class Deployer(Container):
 
     def add_remote(self, **kwargs):
         remote = Remote(**kwargs)
-        self.__remotes.append(remote)
+        self.remotes().add(remote)
         return self
 
     def add_command(self, name: str, desc: str, func: typing.Callable):
@@ -182,7 +182,9 @@ class Deployer(Container):
         if self.__bootstrapped:
             return
 
-        if not self.__remotes:
+        self.__bootstrapped = True
+
+        if self.remotes().empty():
             self.stop("There are no remotes. Please register at least 1.")
 
         verbosity = InputOutput.NORMAL
@@ -205,16 +207,12 @@ class Deployer(Container):
 
         self.printer = Printer(self.io, self.log)
 
-        self.__selected = [
-            remote
-            for remote in self.__remotes
-            if self.io.selector == InputOutput.SELECTOR_DEFAULT
+        self.__selected = self.remotes().filter(
+            lambda remote: self.io.selector == InputOutput.SELECTOR_DEFAULT
             or remote.label == self.io.selector
-        ]
+        )
 
         self.put("stage", self.io.stage)
-
-        self.__bootstrapped = True
 
     def _do_run_tasks(self, remote: Remote, names: list[str]):
         if len(names) == 0:

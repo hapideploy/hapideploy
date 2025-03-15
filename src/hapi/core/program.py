@@ -28,7 +28,7 @@ class Program(Deployer):
             tasks = dep.tasks().all()
 
             for task in tasks:
-                dep.io.writeln(f'<primary>{task.name}</primary>  {task.desc}')
+                dep.io.writeln(f"<primary>{task.name}</primary>  {task.desc}")
 
         self.add_command("task:list", "List tasks", task_list)
 

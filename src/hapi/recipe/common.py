@@ -229,7 +229,7 @@ def deploy_env(dep: Deployer):
 
     if dep.test("[ ! -e .env ] && [ -f {{dotenv_example}} ]"):
         dep.run("cp {{dotenv_example}} .env")
-        dep.info('.env is created')
+        dep.info(".env is created")
 
 
 def deploy_shared(dep: Deployer):
@@ -310,7 +310,7 @@ def deploy_shared(dep: Deployer):
             % (shared_path, item_file, item_file)
         )
 
-    dep.info('Shared directories and files.')
+    dep.info("Shared directories and files.")
 
 
 class CommonProvider(Provider):

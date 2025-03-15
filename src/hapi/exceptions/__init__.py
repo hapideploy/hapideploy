@@ -10,3 +10,20 @@ class InvalidProviderClass(TypeError):
 
 class InvalidHostsDefinition(Exception):
     pass
+
+
+class ItemNotFound(Exception):
+    pass
+
+
+class TaskNotFound(ItemNotFound):
+    @staticmethod
+    def with_name(name: str):
+        return TaskNotFound(f"Task {name} is not found.")
+
+
+class RemoteNotFound(ItemNotFound):
+    pass
+    # @staticmethod
+    # def with_name(name: str):
+    #     return TaskNotFound(f'Remote {key} is not found.')
