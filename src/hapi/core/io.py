@@ -20,6 +20,9 @@ class InputOutput:
         self.replacements = dict(
             primary=[r"\<primary\>([^}]*)\<\/primary\>", typer.colors.CYAN],
             success=[r"\<success\>([^}]*)\<\/success\>", typer.colors.GREEN],
+            info=[r"\<info\>([^}]*)\<\/info\>", typer.colors.BLUE],
+            comment=[r"\<comment\>([^}]*)\<\/comment\>", typer.colors.YELLOW],
+            warning=[r"\<warning\>([^}]*)\<\/warning\>", typer.colors.YELLOW],
             danger=[r"\<danger\>([^}]*)\<\/danger\>", typer.colors.RED],
         )
 
@@ -48,7 +51,7 @@ class InputOutput:
                 l = text.find(f"<{tag}>")
                 r = text.find(f"</{tag}>")
                 piece = text[l : r + len(f"</{tag}>")]
-                surrounded = piece.strip(f"<{tag}>").strip(f"</{tag}>")
+                surrounded = piece.replace(f"<{tag}>", "").replace(f"</{tag}>", "")
                 text = text.replace(piece, typer.style(surrounded, fg=fg))
 
         return text

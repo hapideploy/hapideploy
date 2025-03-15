@@ -19,9 +19,9 @@ def test_it_creates_an_io_instance():
 def test_it_decorates_text():
     io = InputOutput()
 
-    text = "IO should support <primary>PRIMARY</primary>, <success>SUCCESS</success> and <danger>DANGER</danger>."
+    text = "IO should support <primary>primary</primary>, <success>success</success>, <info>info</info>, <comment>comment</comment>, <warning>warning</warning> and <danger>danger</danger>."
 
-    expected = f"IO should support {typer.style('PRIMARY', fg=typer.colors.CYAN)}, {typer.style('SUCCESS', fg=typer.colors.GREEN)} and {typer.style('DANGER', fg=typer.colors.RED)}."
+    expected = f"IO should support {typer.style('primary', fg=typer.colors.CYAN)}, {typer.style('success', fg=typer.colors.GREEN)}, {typer.style('info', fg=typer.colors.BLUE)}, {typer.style('comment', fg=typer.colors.YELLOW)}, {typer.style('warning', fg=typer.colors.YELLOW)} and {typer.style('danger', fg=typer.colors.RED)}."
 
     decorated = io.decorate(text)
 

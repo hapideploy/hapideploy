@@ -19,6 +19,7 @@ class Deployer(Container):
         super().__init__()
         self.io = io if io else ConsoleInputOutput()
         self.log = log if log else NoneStyle()
+        self.printer = Printer(self.io, self.log)
 
         self.__remotes = []
         self.__tasks = {}
@@ -116,8 +117,7 @@ class Deployer(Container):
         else:
             command = self.parse(command.strip())
 
-        printer = Printer(self.io, self.log)
-        runner = CommandRunner(printer, remote, command)
+        runner = CommandRunner(self.printer, remote, command)
         options = RunOptions(env=kwargs.get("env"))
 
         self._before_command(runner)
@@ -153,9 +153,7 @@ class Deployer(Container):
     def info(self, message: str):
         remote = self.current_route()
 
-        self.io.writeln(
-            f"[<primary>{remote.label}</primary>] <success>info</success> {self.parse(message)}"
-        )
+        self.printer.print(remote, f"<info>INFO</info> {self.parse(message)}")
 
     def stop(self, message: str):
         raise StoppedException(self.parse(message))
@@ -191,6 +189,8 @@ class Deployer(Container):
         if self.has("log_file"):
             self.log = FileStyle(self.make("log_file"))
 
+        self.printer = Printer(self.io, self.log)
+
         self.__selected = [
             remote
             for remote in self.__remotes
@@ -203,8 +203,7 @@ class Deployer(Container):
         self.__bootstrapped = True
 
     def _run_task(self, remote: Remote, task: Task):
-        printer = Printer(self.io, self.log)
-        runner = TaskRunner(printer, remote, task, self)
+        runner = TaskRunner(self.printer, remote, task, self)
 
         self._before_task(runner)
         runner.run()

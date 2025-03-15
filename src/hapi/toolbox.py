@@ -31,6 +31,7 @@ app.set_instance(app)
 # app.test(command) -> from Deployer
 # app.cd(location) -> from Deployer
 # app.info('Display an info message.') -> from Deployer
+# app.warn('Display a warn message.') -> from Deployer
 # app.stop('Something went wrong.') -> from Deployer
 # app.current_route() -> from Deployer
 

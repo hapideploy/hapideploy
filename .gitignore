@@ -11,7 +11,8 @@ dist
 
 poetry.lock
 
-hapirun.log
+*.log
+
 deploy.py
 inventory.yml
 
