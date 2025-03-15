@@ -1,7 +1,7 @@
-from hapi import Task
+from hapi.core.task import Task
 
 
-def test_constructor():
+def test_it_creates_a_task_instance():
     def task_func():
         return "Detect the new release name"
 
@@ -12,3 +12,7 @@ def test_constructor():
     assert task.func == task_func
 
     assert task.func() == task_func()
+
+
+# def test_task_bag():
+#     tasks = TaskBag()

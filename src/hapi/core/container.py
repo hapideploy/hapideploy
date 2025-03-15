@@ -116,6 +116,9 @@ class Container:
         """
         keys = extract_curly_braces(text)
 
+        if len(keys) == 0:
+            return text
+
         for key in keys:
             if kwargs.get(key):
                 text = text.replace("{{" + key + "}}", str(kwargs.get(key)))
@@ -129,4 +132,4 @@ class Container:
             if value is not None:
                 text = text.replace("{{" + key + "}}", str(value))
 
-        return text
+        return self.parse(text)

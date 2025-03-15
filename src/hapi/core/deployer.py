@@ -9,25 +9,35 @@ from ..log import Logger, NoneStyle
 from ..log.file_style import FileStyle
 from .container import Container
 from .io import ConsoleInputOutput, InputOutput
-from .process import CommandRunner, Printer, RunOptions, TaskRunner
-from .remote import Remote
-from .task import Task
+from .process import Printer, Runner
+from .remote import Remote, RemoteBag
+from .task import Task, TaskBag
 
 
 class Deployer(Container):
     def __init__(self, io: InputOutput = None, log: Logger = None):
         super().__init__()
-        self.io = io if io else ConsoleInputOutput()
-        self.log = log if log else NoneStyle()
-        self.printer = Printer(self.io, self.log)
+        self.__io = io if io else ConsoleInputOutput()
+        self.__log = log if log else NoneStyle()
+        self.__runner = Runner(self)
 
-        self.__remotes = []
-        self.__tasks = {}
+        # TODO: self.__commands = CommandBag()
+        self.__tasks = TaskBag()
+        self.__remotes = RemoteBag()
+
         self.__typer = typer.Typer()
-        self.__running = {}
         self.__selected = []
         self.__bootstrapped = False
         self.__started = False
+
+    def io(self):
+        return self.__io
+
+    def log(self):
+        return self.__log
+
+    def tasks(self):
+        return self.__tasks
 
     def remotes(self):
         return self.__remotes
@@ -45,8 +55,8 @@ class Deployer(Container):
 
     def add_remote(self, **kwargs):
         remote = Remote(**kwargs)
-        self.__remotes.append(remote)
-        return self
+        self.remotes().add(remote)
+        return remote
 
     def add_command(self, name: str, desc: str, func: typing.Callable):
         @self.__typer.command(name=name, help=desc)
@@ -58,7 +68,7 @@ class Deployer(Container):
     def add_task(self, name: str, desc: str, func: typing.Callable):
         task = Task(name, desc, func)
 
-        self.__tasks[name] = task
+        self.__tasks.add(task)
 
         @self.__typer.command(name=name, help=desc)
         def task_command(
@@ -80,7 +90,7 @@ class Deployer(Container):
                 bool, typer.Option(help="Print debug output messages (level: 3)")
             ] = False,
         ):
-            self._bootstrap(
+            self.bootstrap(
                 selector=selector,
                 stage=stage,
                 quiet=quiet,
@@ -90,7 +100,7 @@ class Deployer(Container):
             )
 
             for remote in self.__selected:
-                self._run_task(remote, task)
+                self.__runner.run_task(remote, task)
 
         return self
 
@@ -98,8 +108,8 @@ class Deployer(Container):
         def func(dep: Deployer):
             for task_name in names:
                 remote = dep.current_route()
-                task = dep.__tasks.get(task_name)
-                self._run_task(remote, task)
+                task = dep.tasks().find(task_name)
+                self.__runner.run_task(remote, task)
 
         desc = desc if desc else f'Group "{name}": ' + ", ".join(names)
 
@@ -107,68 +117,55 @@ class Deployer(Container):
 
         return self
 
-    def run(self, command: str, **kwargs):
+    def run_task(self, name: str):
         remote = self.current_route()
+        task = self.tasks().find(name)
 
-        cwd = self.__running.get("cwd")
+        self.__runner.run_task(remote, task)
 
-        if cwd is not None:
-            command = self.parse(f"cd {cwd} && ({command.strip()})")
-        else:
-            command = self.parse(command.strip())
-
-        runner = CommandRunner(self.printer, remote, command)
-        options = RunOptions(env=kwargs.get("env"))
-
-        self._before_command(runner)
-        res = runner.run(options)
-        self._after_command(runner)
-
-        return res
-
-    def cat(self, file: str) -> str:
-        return self.run(f"cat {file}").fetch()
+    def run(self, command: str, **kwargs):
+        return self.__runner.run_command(self.current_route(), command, **kwargs)
 
     def test(self, command: str) -> bool:
-        picked = "+" + random.choice(
-            [
-                "accurate",
-                "appropriate",
-                "correct",
-                "legitimate",
-                "precise",
-                "right",
-                "true",
-                "yes",
-                "indeed",
-            ]
-        )
-        res = self.run(f"if {command}; then echo {picked}; fi")
-        return res.fetch() == picked
+        return self.__runner.run_test(self.current_route(), command)
 
-    def cd(self, cwd: str):
-        self.__running["cwd"] = self.parse(cwd)
+    def cat(self, file: str) -> str:
+        return self.__runner.run_cat(self.current_route(), file)
+
+    def cd(self, location: str):
+        self.current_route().put("location", self.parse(location))
         return self
 
     def info(self, message: str):
-        remote = self.current_route()
-
-        self.printer.print(remote, f"<info>INFO</info> {self.parse(message)}")
+        printer = Printer(self.__io, self.__log)
+        printer.print_info(self.current_route(), self.parse(message))
 
     def stop(self, message: str):
         raise StoppedException(self.parse(message))
 
-    def current_route(self) -> Remote | None:
-        if self.__running["remote"]:
-            return self.__running["remote"]
+    def current_route(self) -> Remote:
+        if not self.has("current_remote"):
+            self.stop("No running remote is set.")
 
-        self.stop("No running remote is set.")
+        return self.make("current_remote")
 
-    def _bootstrap(self, **kwargs):
+    def before(self, name: str, do):
+        task = self.__tasks.find(name)
+        task.before = do if isinstance(do, list) else [do]
+        return self
+
+    def after(self, name: str, do):
+        task = self.__tasks.find(name)
+        task.after = do if isinstance(do, list) else [do]
+        return self
+
+    def bootstrap(self, **kwargs):
         if self.__bootstrapped:
             return
 
-        if not self.__remotes:
+        self.__bootstrapped = True
+
+        if self.remotes().empty():
             self.stop("There are no remotes. Please register at least 1.")
 
         verbosity = InputOutput.NORMAL
@@ -182,44 +179,21 @@ class Deployer(Container):
         elif kwargs.get("debug"):
             verbosity = InputOutput.DEBUG
 
-        self.io = ConsoleInputOutput(
+        self.__io = ConsoleInputOutput(
             kwargs.get("selector"), kwargs.get("stage"), verbosity
         )
 
         if self.has("log_file"):
-            self.log = FileStyle(self.make("log_file"))
+            self.__log = FileStyle(self.make("log_file"))
 
-        self.printer = Printer(self.io, self.log)
+        self.__selected = self.remotes().filter(
+            lambda remote: self.__io.selector == InputOutput.SELECTOR_DEFAULT
+            or remote.label == self.__io.selector
+        )
 
-        self.__selected = [
-            remote
-            for remote in self.__remotes
-            if self.io.selector == InputOutput.SELECTOR_DEFAULT
-            or remote.label == self.io.selector
-        ]
+        self.put("stage", self.__io.stage)
 
-        self.put("stage", self.io.stage)
+        if isinstance(kwargs.get("runner"), Runner):
+            self.__runner = kwargs.get("runner")
 
-        self.__bootstrapped = True
-
-    def _run_task(self, remote: Remote, task: Task):
-        runner = TaskRunner(self.printer, remote, task, self)
-
-        self._before_task(runner)
-        runner.run()
-        self._after_task(runner)
-
-    def _before_task(self, runner: TaskRunner):
-        self.__running["remote"] = runner.remote
-        self.__running["task"] = runner.task
-        self.put("deploy_dir", self.parse(runner.remote.deploy_dir))
-        pass
-
-    def _after_task(self, _: TaskRunner):
-        self.__running["cwd"] = None
-
-    def _before_command(self, runner: CommandRunner):
-        pass
-
-    def _after_command(self, _: CommandRunner):
-        pass
+        return self

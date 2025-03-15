@@ -1,7 +1,6 @@
 import json
 import shlex
 
-from .. import InputOutput
 from ..core import Deployer, Provider
 
 
@@ -212,7 +211,8 @@ def deploy_code(dep: Deployer):
     strategy = dep.make("update_code_strategy")
     if strategy == "archive":
         dep.run(
-            f"{git} archive {target_with_dir} | tar -x -f - -C {release_path(dep)} 2>&1"
+            "%s archive %s | tar -x -f - -C {{release_path}} 2>&1"
+            % (git, target_with_dir)
         )
     else:
         dep.stop("Unknown `update_code_strategy` option: {{update_code_strategy}}.")
@@ -229,6 +229,7 @@ def deploy_env(dep: Deployer):
 
     if dep.test("[ ! -e .env ] && [ -f {{dotenv_example}} ]"):
         dep.run("cp {{dotenv_example}} .env")
+        dep.info(".env is created")
 
 
 def deploy_shared(dep: Deployer):
@@ -242,7 +243,7 @@ def deploy_shared(dep: Deployer):
 
     shared_path = "{{deploy_dir}}/shared"
 
-    copy_verbosity = "v" if dep.io.verbosity == InputOutput.DEBUG else ""
+    copy_verbosity = "v" if dep.io().debug() else ""
 
     # Share directories
     for item_dir in shared_dir_items:
@@ -308,6 +309,8 @@ def deploy_shared(dep: Deployer):
             "{{bin/symlink}} %s/%s {{release_path}}/%s"
             % (shared_path, item_file, item_file)
         )
+
+    dep.info("Shared directories and files.")
 
 
 class CommonProvider(Provider):
@@ -411,6 +414,8 @@ class CommonProvider(Provider):
                 dep.run(f"{sudo} chmod {recursive} {chmod_mode} {dirs}")
             else:
                 dep.stop(f"Unsupported [writable_mode]: {mode}")
+
+            dep.info("Make directories and files writable")
 
         self.app.add_task(
             "deploy:writable", "Make directories and files writable", deploy_writable
