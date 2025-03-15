@@ -26,8 +26,8 @@ app.add('shared_files', [])
 app.add('writable_dirs', [])
 
 app.put('writable_use_sudo', True)
-# app.put('writable_mode', 'chmod')
-# app.put('writable_chmod_mode', '0600')
+app.put('writable_mode', 'chmod')
+app.put('writable_chmod_mode', '0755')
 # app.put('writable_mode', 'user')
 # app.put('writable_user', 'www-data')
 # app.put('writable_mode', 'group')
@@ -35,6 +35,8 @@ app.put('writable_use_sudo', True)
 # app.put('writable_mode', 'user:group')
 # app.put('writable_user', 'vagrant')
 # app.put('writable_group', 'vagrant')
+
+app.put('use_atomic_symlink', True)
 
 @app.resolve(key='colors')
 def resolve_colors(dep: Deployer):

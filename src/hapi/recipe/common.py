@@ -36,12 +36,10 @@ def release_path(dep: Deployer):
 def releases_log(dep: Deployer):
     import json
 
-    dep.cd("{{deploy_dir}}")
-
-    if dep.test("[ -f .dep/releases_log ]") is False:
+    if dep.test("[ -f {{deploy_dir}}/.dep/releases_log ]") is False:
         return []
 
-    lines = dep.run("tail -n 300 .dep/releases_log").fetch().split("\n")
+    lines = dep.run("tail -n 300 {{deploy_dir}}/.dep/releases_log").fetch().split("\n")
     releases = []
     for line in lines:
         releases.insert(0, json.loads(line))
@@ -49,12 +47,15 @@ def releases_log(dep: Deployer):
 
 
 def releases_list(dep: Deployer):
-    dep.cd("{{deploy_dir}}")
-
-    if dep.test('[ -d releases ] && [ "$(ls -A releases)" ]') is False:
+    if (
+        dep.test(
+            '[ -d {{deploy_dir}}/releases ] && [ "$(ls -A {{deploy_dir}}/releases)" ]'
+        )
+        is False
+    ):
         return []
 
-    ll = dep.run("cd releases && ls -t -1 -d */").fetch().split("\n")
+    ll = dep.run("cd {{deploy_dir}}/releases && ls -t -1 -d */").fetch().split("\n")
     ll = list(map(lambda x: x.strip("/"), ll))
 
     release_items = dep.make("releases_log")
@@ -62,8 +63,8 @@ def releases_list(dep: Deployer):
     releases = []
 
     for candidate in release_items:
-        if candidate["release_name"] in ll:
-            releases.append(candidate["release_name"])
+        if str(candidate["release_name"]) in ll:
+            releases.append(str(candidate["release_name"]))
 
     return releases
 
@@ -125,7 +126,7 @@ def deploy_release(dep: Deployer):
 
     candidate = {
         "created_at": timestamp,
-        "release_name": release_name,
+        "release_name": str(release_name),
         "user": user,
         "target": dep.make("target"),
     }
@@ -353,6 +354,9 @@ class CommonProvider(Provider):
         self.bind_writable()
 
         self.task_deploy_writable()
+        self.task_deploy_symlink()
+        self.task_deploy_clean()
+        self.task_deploy_success()
 
         self.task_deploy()
 
@@ -412,6 +416,56 @@ class CommonProvider(Provider):
             "deploy:writable", "Make directories and files writable", deploy_writable
         )
 
+    def task_deploy_symlink(self):
+        def deploy_symlink(dep: Deployer):
+            current_path = dep.make("current_path")
+
+            if dep.make("use_atomic_symlink", False):
+                dep.run("mv -T {{deploy_dir}}/release " + current_path)
+            else:
+                # Atomic override symlink.
+                dep.run(
+                    "cd {{deploy_dir}} && {{bin/symlink}} {{release_path}} "
+                    + current_path
+                )
+                # Remove release link.
+                dep.run("cd {{deploy_dir}} && rm release")
+
+        self.app.add_task(
+            "deploy:symlink", "Creates the symlink to release", deploy_symlink
+        )
+
+    def task_deploy_clean(self):
+        def deploy_clean(dep: Deployer):
+            keep = dep.make("keep_releases", 3)
+
+            dep.run("cd {{deploy_dir}} && if [ -e release ]; then rm release; fi")
+
+            releases = dep.make("releases_list")
+
+            if keep < len(releases):
+                sudo = "sudo" if dep.make("clean_use_sudo", False) else ""
+                releases = dep.make("releases_list")
+                deploy_dir = dep.make("deploy_dir")
+                for release_name in releases[keep:]:
+                    dep.run(f"{sudo} rm -rf {deploy_dir}/releases/{release_name}")
+
+        self.app.add_task(
+            "deploy:clean",
+            "Clean deployment process, E.g. remove old release candidates",
+            deploy_clean,
+        )
+
+    def task_deploy_success(self):
+        def deploy_success(dep: Deployer):
+            dep.info("Successfully deployed!")
+
+        self.app.add_task(
+            "deploy:success",
+            "Announce the deployment process is suceed",
+            deploy_success,
+        )
+
     def task_deploy(self):
         self.app.add_group(
             "deploy",
@@ -425,6 +479,10 @@ class CommonProvider(Provider):
                 "deploy:env",
                 "deploy:shared",
                 "deploy:writable",
+                # custom tasks
+                "deploy:symlink",
                 "deploy:unlock",
+                "deploy:clean",
+                "deploy:success",
             ],
         )

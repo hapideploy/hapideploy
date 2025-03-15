@@ -11,5 +11,9 @@ dist
 
 poetry.lock
 
+hapirun.log
 deploy.py
 inventory.yml
+
+deploy.php
+deployer.phar
