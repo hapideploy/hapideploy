@@ -109,7 +109,7 @@ class Deployer(Container):
     def run(self, command: str, **kwargs):
         remote = self.current_route()
 
-        cwd = self.__running.get("cd")
+        cwd = self.__running.get("cwd")
 
         if cwd is not None:
             command = self.parse(f"cd {cwd} && ({command.strip()})")
@@ -147,7 +147,7 @@ class Deployer(Container):
         return res.fetch() == picked
 
     def cd(self, cwd: str):
-        self.__running["cd"] = cwd
+        self.__running["cwd"] = self.parse(cwd)
         return self
 
     def info(self, message: str):
@@ -217,7 +217,7 @@ class Deployer(Container):
         pass
 
     def _after_task(self, _: TaskRunner):
-        self.__running["cd"] = None
+        self.__running["cwd"] = None
 
     def _before_command(self, runner: CommandRunner):
         pass

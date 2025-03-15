@@ -2,11 +2,11 @@ from hapi.core import Deployer
 
 from hapi.toolbox import app
 
-from hapi.recipe.common import CommonProvider
+from hapi.recipe.laravel import Laravel
 
 # Providers
 
-app.load(CommonProvider)
+app.load(Laravel)
 
 # Configuration
 
@@ -20,6 +20,9 @@ app.put('log_file', 'hapirun.log')
 app.add('languages', ['JavaScript', 'PHP', "Python"])
 app.add('languages', ['Java', 'Go', 'Rust'])
 app.add('languages', 'Bash')
+
+app.add('shared_dirs', [])
+app.add('shared_files', [])
 
 @app.resolve(key='colors')
 def resolve_colors(dep: Deployer):

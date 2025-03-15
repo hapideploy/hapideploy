@@ -1,6 +1,7 @@
 import json
 import shlex
 
+from .. import InputOutput
 from ..core import Deployer, Provider
 
 
@@ -88,9 +89,9 @@ cd {{deploy_dir}};
 
     dep.run(command)
 
-    if dep.test("[ ! -L {{current_file}} ] && [ -d {{current_file}} ]"):
+    if dep.test("[ ! -L {{current_path}} ] && [ -d {{current_path}} ]"):
         dep.stop(
-            "There is a directory (not symlink) at {{current_file}}.\n Remove this directory so it can be replaced with a symlink for atomic deployments."
+            "There is a directory (not symlink) at {{current_path}}.\n Remove this directory so it can be replaced with a symlink for atomic deployments."
         )
 
     dep.info(
@@ -113,7 +114,7 @@ def deploy_release(dep: Deployer):
             f'Release name "{release_name}" already exists.\nIt can be overridden via:\n -o release_name={release_name}'
         )
 
-    dep.run("echo {{release_name}} > {{deploy_dir}}/.dep/latest_release")
+    dep.run("echo {{release_name}} > .dep/latest_release")
 
     import time
 
@@ -222,9 +223,96 @@ def deploy_code(dep: Deployer):
     dep.info("Code is updated")
 
 
+def deploy_env(dep: Deployer):
+    dep.cd("{{release_path}}")
+
+    if dep.test("[ ! -e .env ] && [ -f {{dotenv_example}} ]"):
+        dep.run("cp {{dotenv_example}} .env")
+
+
+def deploy_shared(dep: Deployer):
+    shared_dir_items = dep.make("shared_dirs", [])
+
+    for a in shared_dir_items:
+        for b in shared_dir_items:
+
+            if a != b and (a.rstrip("/") + "/").find(b.rstrip("/") + "/") == 0:
+                raise Exception(f"Can not share same directories {a} and {b}")
+
+    shared_path = "{{deploy_dir}}/shared"
+
+    copy_verbosity = "v" if dep.io.verbosity == InputOutput.DEBUG else ""
+
+    # Share directories
+    for item_dir in shared_dir_items:
+        item_dir = item_dir.strip("/")
+
+        if not dep.test(f"[ -d {shared_path}/{item_dir} ]"):
+            dep.run(f"mkdir -p {shared_path}/{item_dir}")
+
+            if dep.test("[ -d $(echo {{release_path}}/" + item_dir + ") ]"):
+                segments = item_dir.split("/")
+                segments.pop()
+                dirname = "/".join(segments)
+                dep.run(
+                    "cp -r"
+                    + copy_verbosity
+                    + " {{release_path}}/"
+                    + item_dir
+                    + " "
+                    + shared_path
+                    + "/"
+                    + dirname
+                )
+
+        dep.run("rm -rf {{release_path}}/" + item_dir)
+
+        dep.run("mkdir -p `dirname {{release_path}}/" + item_dir + "`")
+
+        dep.run(
+            "{{bin/symlink}} %s/%s {{release_path}}/%s"
+            % (shared_path, item_dir, item_dir)
+        )
+
+    shared_file_items = dep.make("shared_files", [])
+
+    # Share files
+    for item_file in shared_file_items:
+        segments = dep.parse(item_file).split("/")
+        segments.pop()
+        dirname = "/".join(segments)
+
+        if not dep.test("[ -d %s/%s ]" % (shared_path, dirname)):
+            dep.run(
+                "cp -r%s {{release_path}}/%s %s/%s"
+                % (copy_verbosity, item_file, shared_path, item_file)
+            )
+
+        dep.run(
+            "if [ -f $(echo {{release_path}}/%s) ]; then rm -rf {{release_path}}/%s; fi"
+            % (item_file, item_file)
+        )
+
+        dep.run(
+            "if [ ! -d $(echo {{release_path}}/%s) ]; then mkdir -p {{release_path}}/%s;fi"
+            % (dirname, dirname)
+        )
+
+        dep.run(
+            "[ -f %s/%s ] || touch %s/%s"
+            % (shared_path, item_file, shared_path, item_file)
+        )
+
+        dep.run(
+            "{{bin/symlink}} %s/%s {{release_path}}/%s"
+            % (shared_path, item_file, item_file)
+        )
+
+
 class CommonProvider(Provider):
     def register(self):
-        self.app.put("current_file", "{{deploy_dir}}/current")
+        self.app.put("dotenv_example", ".env.example")
+        self.app.put("current_path", "{{deploy_dir}}/current")
         self.app.put("update_code_strategy", "archive")
         self.app.put("git_ssh_command", "ssh -o StrictHostKeyChecking=accept-new")
         self.app.put("sub_directory", False)
@@ -247,6 +335,14 @@ class CommonProvider(Provider):
 
         self.app.add_task("deploy:code", "Update code", deploy_code)
 
+        self.app.add_task("deploy:env", "Configure .env file", deploy_env)
+
+        self.app.add_task(
+            "deploy:shared",
+            "Create symlinks for shared directories and files",
+            deploy_shared,
+        )
+
         self.app.add_task("deploy:lock", "Lock the deployment process", deploy_lock)
         self.app.add_task(
             "deploy:unlock", "Unlock the deployment process", deploy_unlock
@@ -261,6 +357,8 @@ class CommonProvider(Provider):
                 "deploy:lock",
                 "deploy:release",
                 "deploy:code",
+                "deploy:env",
+                "deploy:shared",
                 "deploy:unlock",
             ],
         )
