@@ -9,7 +9,7 @@ app.set_instance(app)
 # Group 1: Load service providers
 # app.load(SampleProvider) -> from Program
 # app.discover('/path/to/inventory.yml') -> from Program
-# app.remote(host='127.0.0.1', port=2200, user=vagrant, pemfile='/path/to/pemfile', deploy_dir='~/deploy/{{stage}}') -> from Program
+# app.remote(host='127.0.0.1', port=2200, user=vagrant, pemfile='/path/to/pemfile').put('deploy_path', '~/deploy/{{stage}}') -> from Program
 
 # Group 2:
 # app.put(key, value) -> from Container

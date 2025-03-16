@@ -13,7 +13,6 @@ def test_it_requires_host_only():
     assert remote.host == "app-server"
     assert remote.user == "hapi"
     assert remote.port == 22
-    assert remote.deploy_dir == "~/deploy/{{stage}}"
     assert remote.label == "app-server"
     assert remote.key == "hapi@app-server:22"
 
@@ -51,12 +50,6 @@ def test_it_creates_an_instance_with_port():
 
     assert remote.port == 2222
     assert remote.key == "hapi@192.168.33.11:2222"
-
-
-def test_it_creates_an_instance_with_deploy_dir():
-    remote = Remote(host="192.168.33.11", deploy_dir="~/custom/{{stage}}")
-
-    assert remote.deploy_dir == "~/custom/{{stage}}"
 
 
 def test_it_creates_an_instance_with_label():

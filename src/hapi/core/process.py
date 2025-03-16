@@ -109,7 +109,9 @@ class Runner:
     def _before_task(self, remote: Remote, task: Task):
         self.deployer.put("current_remote", remote)
         self.deployer.put("current_task", task)
-        self.deployer.put("deploy_dir", self.deployer.parse(remote.deploy_dir))
+        self.deployer.put(
+            "deploy_path", self.deployer.parse(remote.make("deploy_path"))
+        )
         self.run_tasks(remote, task.before)
 
     def _after_task(self, remote: Remote, task: Task):
@@ -141,13 +143,19 @@ class Runner:
 
         return res
 
-    def run_command(self, remote: Remote, command: str, **kwargs):
+    def parse_command(self, remote: Remote, command: str, **kwargs):
         cwd = remote.make("cwd")
 
         if cwd is not None:
-            command = self.deployer.parse(f"cd {cwd} && ({command.strip()})")
-        else:
-            command = self.deployer.parse(command.strip())
+            command = f"cd {cwd} && ({command.strip()})"
+            command = self.deployer.parse(command)
+
+        command = remote.parse(command, throw=False, recursive=False)
+        command = self.deployer.parse(command)
+        return command
+
+    def run_command(self, remote: Remote, command: str, **kwargs):
+        command = self.parse_command(remote, command, **kwargs)
 
         self._before_command(remote, command, **kwargs)
 

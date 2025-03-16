@@ -124,7 +124,7 @@ class Container:
                 text = text.replace("{{" + key + "}}", str(kwargs.get(key)))
                 continue
 
-            if self.has(key) is not True:
+            if not self.has(key) and kwargs.get("throw"):
                 raise BindingException.with_key(key)
 
             value = self.make(key)
@@ -132,4 +132,7 @@ class Container:
             if value is not None:
                 text = text.replace("{{" + key + "}}", str(value))
 
-        return self.parse(text)
+        if kwargs.get("recursive") is True:
+            return self.parse(text)
+
+        return text

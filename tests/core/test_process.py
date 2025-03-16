@@ -23,15 +23,16 @@ def test_runner_run_command_method():
     container = Deployer(CacheInputOutput(), NoneStyle())
 
     container.put("stage", "testing")
-    container.put("deploy_dir", "~/deploy/{{stage}}")
 
     runner = DummyRunner(container)
 
     remote = Remote(
-        host="127.0.0.1", port=2201, user="vagrant", deploy_dir="~/deploy/{{stage}}"
-    )
+        host="127.0.0.1",
+        port=2201,
+        user="vagrant",
+    ).put("deploy_path", "~/deploy/{{stage}}")
 
-    runner.run_command(remote, "mkdir -p {{deploy_dir}}/.dep")
+    runner.run_command(remote, "mkdir -p {{deploy_path}}/.dep")
 
     assert container.make("run") == ["mkdir -p ~/deploy/testing/.dep"]
 
@@ -40,15 +41,16 @@ def test_runner_run_test_method():
     container = Deployer(CacheInputOutput(), NoneStyle())
 
     container.put("stage", "testing")
-    container.put("deploy_dir", "~/deploy/{{stage}}")
 
     runner = DummyRunner(container)
 
     remote = Remote(
-        host="127.0.0.1", port=2201, user="vagrant", deploy_dir="~/deploy/{{stage}}"
-    )
+        host="127.0.0.1",
+        port=2201,
+        user="vagrant",
+    ).put("deploy_path", "~/deploy/{{stage}}")
 
-    runner.run_test(remote, "[ ! -d {{deploy_dir}}/.dep ]")
+    runner.run_test(remote, "[ ! -d {{deploy_path}}/.dep ]")
 
     command = container.make("run")[0]
 
@@ -65,15 +67,14 @@ def test_runner_run_cat_method():
     container = Deployer(CacheInputOutput(), NoneStyle())
 
     container.put("stage", "testing")
-    container.put("deploy_dir", "~/deploy/{{stage}}")
 
     runner = DummyRunner(container)
 
-    remote = Remote(
-        host="127.0.0.1", port=2201, user="vagrant", deploy_dir="~/deploy/{{stage}}"
+    remote = Remote(host="127.0.0.1", port=2201, user="vagrant").put(
+        "deploy_path", "~/deploy/{{stage}}"
     )
 
-    runner.run_cat(remote, "{{deploy_dir}}/.dep/latest_release")
+    runner.run_cat(remote, "{{deploy_path}}/.dep/latest_release")
 
     assert container.make("run") == ["cat ~/deploy/testing/.dep/latest_release"]
 
@@ -82,15 +83,14 @@ def test_runner_remote_cwd():
     container = Deployer(CacheInputOutput(), NoneStyle())
 
     container.put("stage", "testing")
-    container.put("deploy_dir", "~/deploy/{{stage}}")
 
     runner = DummyRunner(container)
 
-    remote = Remote(
-        host="127.0.0.1", port=2201, user="vagrant", deploy_dir="~/deploy/{{stage}}"
+    remote = Remote(host="127.0.0.1", port=2201, user="vagrant").put(
+        "deploy_path", "~/deploy/{{stage}}"
     )
 
-    remote.put("cwd", "{{deploy_dir}}")
+    remote.put("cwd", "{{deploy_path}}")
 
     runner.run_command(remote, "mkdir -p .dep")
     runner.run_test(remote, "[ ! -d .dep ]")
