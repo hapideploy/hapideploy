@@ -60,18 +60,22 @@ class Program(Deployer):
             ):
                 raise InvalidHostsDefinition(f'"hosts" definition is invalid.')
 
-            for host, data in loaded_data["hosts"].items():
-                if data.get("host"):
-                    self.add_remote(
-                        host=data.get("host"),
-                        user=data.get("user"),
-                        port=data.get("port"),
-                        deploy_dir=data.get("deploy_dir"),
-                        pemfile=data.get("pemfile"),
-                        label=host,
-                    )
+            for key, data in loaded_data["hosts"].items():
+                if data.get("host") is None:
+                    data["host"] = key
                 else:
-                    self.add_remote(host=host, **data)
+                    data["label"] = key
+
+                bindings = data.get("with")
+
+                if bindings is not None:
+                    del data["with"]
+
+                remote = self.add_remote(**data)
+
+                if isinstance(bindings, dict):
+                    for k, v in bindings.items():
+                        remote.put(k, v)
 
     def remote(self, **kwargs):
         return super().add_remote(**kwargs)

@@ -3,7 +3,8 @@ hosts:
     host: 127.0.0.1
     user: vagrant # Optional
     port: 2201 # Optional
-    deploy_dir: ~/custom/{{stage}} # Optional
     pemfile: /path/to/ssh/id_ed25519
+    with:
+      deploy_path: ~/custom/{{stage}} # Optional
   10.0.0.1:
     label: ubuntu-2

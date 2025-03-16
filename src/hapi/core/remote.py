@@ -13,7 +13,6 @@ class Remote(Container):
         host: str,
         user: str = "hapi",
         port: int = 22,
-        deploy_dir: str = "~/deploy/{{stage}}",
         label: str = None,
         pemfile: str = None,
     ):
@@ -22,7 +21,6 @@ class Remote(Container):
         self.host = host
         self.user = user
         self.port = port
-        self.deploy_dir = deploy_dir
         self.label = host if label is None else label
         self.pemfile = pemfile
         self.key = f"{self.user}@{self.host}:{self.port}"

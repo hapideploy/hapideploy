@@ -146,7 +146,7 @@ def test_it_raises_exception_if_key_does_not_exist():
     with pytest.raises(
         BindingException, match='The key "repository" is not defined in the container.'
     ):
-        container.parse("{{repository}}")
+        container.parse("{{repository}}", throw=True)
 
     with pytest.raises(
         BindingException, match='The key "repository" is not defined in the container.'

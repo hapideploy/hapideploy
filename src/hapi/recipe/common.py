@@ -25,20 +25,20 @@ def target(dep: Deployer):
 
 
 def release_path(dep: Deployer):
-    if dep.test("[ -h {{deploy_dir}}/release ]"):
-        link = dep.run("readlink {{deploy_dir}}/release").fetch()
-        return link if link[0] == "/" else dep.make("deploy_dir") + "/" + link
+    if dep.test("[ -h {{deploy_path}}/release ]"):
+        link = dep.run("readlink {{deploy_path}}/release").fetch()
+        return link if link[0] == "/" else dep.make("deploy_path") + "/" + link
 
-    dep.stop('The "release_path" ({{deploy_dir}}/release) does not exist.')
+    dep.stop('The "release_path" ({{deploy_path}}/release) does not exist.')
 
 
 def releases_log(dep: Deployer):
     import json
 
-    if dep.test("[ -f {{deploy_dir}}/.dep/releases_log ]") is False:
+    if dep.test("[ -f {{deploy_path}}/.dep/releases_log ]") is False:
         return []
 
-    lines = dep.run("tail -n 300 {{deploy_dir}}/.dep/releases_log").fetch().split("\n")
+    lines = dep.run("tail -n 300 {{deploy_path}}/.dep/releases_log").fetch().split("\n")
     releases = []
     for line in lines:
         releases.insert(0, json.loads(line))
@@ -48,13 +48,13 @@ def releases_log(dep: Deployer):
 def releases_list(dep: Deployer):
     if (
         dep.test(
-            '[ -d {{deploy_dir}}/releases ] && [ "$(ls -A {{deploy_dir}}/releases)" ]'
+            '[ -d {{deploy_path}}/releases ] && [ "$(ls -A {{deploy_path}}/releases)" ]'
         )
         is False
     ):
         return []
 
-    ll = dep.run("cd {{deploy_dir}}/releases && ls -t -1 -d */").fetch().split("\n")
+    ll = dep.run("cd {{deploy_path}}/releases && ls -t -1 -d */").fetch().split("\n")
     ll = list(map(lambda x: x.strip("/"), ll))
 
     release_items = dep.make("releases_log")
@@ -70,8 +70,8 @@ def releases_list(dep: Deployer):
 
 def deploy_start(dep: Deployer):
     release_name = (
-        int(dep.cat("{{deploy_dir}}/.dep/latest_release")) + 1
-        if dep.test("[ -f {{deploy_dir}}/.dep/latest_release ]")
+        int(dep.cat("{{deploy_path}}/.dep/latest_release")) + 1
+        if dep.test("[ -f {{deploy_path}}/.dep/latest_release ]")
         else 1
     )
 
@@ -81,8 +81,8 @@ def deploy_start(dep: Deployer):
 
 
 def deploy_setup(dep: Deployer):
-    command = """[ -d {{deploy_dir}} ] || mkdir -p {{deploy_dir}};
-cd {{deploy_dir}};
+    command = """[ -d {{deploy_path}} ] || mkdir -p {{deploy_path}};
+cd {{deploy_path}};
 [ -d .dep ] || mkdir .dep;
 [ -d releases ] || mkdir releases;
 [ -d shared ] || mkdir shared;"""
@@ -95,12 +95,12 @@ cd {{deploy_dir}};
         )
 
     dep.info(
-        "The {{deploy_dir}} directory is ready for deployment (release: {{release_name}})"
+        "The {{deploy_path}} directory is ready for deployment (release: {{release_name}})"
     )
 
 
 def deploy_release(dep: Deployer):
-    dep.cd("{{deploy_dir}}")
+    dep.cd("{{deploy_path}}")
 
     if dep.test("[ -h release ]"):
         dep.run("rm release")
@@ -136,10 +136,10 @@ def deploy_release(dep: Deployer):
 
     dep.run(f"mkdir -p {release_dir}")
 
-    dep.run("{{bin/symlink}} " + release_dir + " {{deploy_dir}}/release")
+    dep.run("{{bin/symlink}} " + release_dir + " {{deploy_path}}/release")
 
     dep.info(
-        "The {{deploy_dir}}/"
+        "The {{deploy_path}}/"
         + release_dir
         + " is created and symlinked (release: {{release_name}})"
     )
@@ -147,7 +147,7 @@ def deploy_release(dep: Deployer):
     releases.insert(0, release_name)
 
     if len(releases) >= 2:
-        dep.bind("previous_release", "{{deploy_dir}}/releases/" + releases[1])
+        dep.bind("previous_release", "{{deploy_path}}/releases/" + releases[1])
 
 
 def deploy_lock(dep: Deployer):
@@ -155,13 +155,13 @@ def deploy_lock(dep: Deployer):
 
     user = getpass.getuser()
     locked = dep.run(
-        "[ -f {{deploy_dir}}/.dep/deploy.lock ] && echo +locked || echo "
+        "[ -f {{deploy_path}}/.dep/deploy.lock ] && echo +locked || echo "
         + user
-        + " > {{deploy_dir}}/.dep/deploy.lock"
+        + " > {{deploy_path}}/.dep/deploy.lock"
     ).fetch()
 
     if locked == "+locked":
-        locked_user = dep.run("cat {{deploy_dir}}/.dep/deploy.lock").fetch()
+        locked_user = dep.run("cat {{deploy_path}}/.dep/deploy.lock").fetch()
         dep.stop(
             "Deployment process is locked by "
             + locked_user
@@ -173,7 +173,7 @@ def deploy_lock(dep: Deployer):
 
 
 def deploy_unlock(dep: Deployer):
-    dep.run("rm -f {{deploy_dir}}/.dep/deploy.lock")
+    dep.run("rm -f {{deploy_path}}/.dep/deploy.lock")
 
     dep.info("Deployment process is unlocked.")
 
@@ -182,7 +182,7 @@ def deploy_code(dep: Deployer):
     git = dep.make("bin/git")
     repository = dep.make("repository", throw=True)
 
-    bare = dep.parse("{{deploy_dir}}/.dep/repo")
+    bare = dep.parse("{{deploy_path}}/.dep/repo")
 
     env = dict(
         GIT_TERMINAL_PROMPT="0",
@@ -198,7 +198,7 @@ def deploy_code(dep: Deployer):
 
     # TODO: Check if remote origin url is changed, clone again.
     # if dep.run(f"{git} config --get remote.origin.url").fetch() != repository:
-    #     dep.cd('{{deploy_dir}}')
+    #     dep.cd('{{deploy_path}}')
     #     dep.run("rm -rf bare")
 
     dep.run(f"{git} remote update 2>&1", env=env)
@@ -241,7 +241,7 @@ def deploy_shared(dep: Deployer):
             if a != b and (a.rstrip("/") + "/").find(b.rstrip("/") + "/") == 0:
                 raise Exception(f"Can not share same directories {a} and {b}")
 
-    shared_path = "{{deploy_dir}}/shared"
+    shared_path = "{{deploy_path}}/shared"
 
     copy_verbosity = "v" if dep.io().debug() else ""
 
@@ -316,7 +316,7 @@ def deploy_shared(dep: Deployer):
 class CommonProvider(Provider):
     def register(self):
         self.app.put("dotenv_example", ".env.example")
-        self.app.put("current_path", "{{deploy_dir}}/current")
+        self.app.put("current_path", "{{deploy_path}}/current")
         self.app.put("update_code_strategy", "archive")
         self.app.put("git_ssh_command", "ssh -o StrictHostKeyChecking=accept-new")
         self.app.put("sub_directory", False)
@@ -426,15 +426,15 @@ class CommonProvider(Provider):
             current_path = dep.make("current_path")
 
             if dep.make("use_atomic_symlink", False):
-                dep.run("mv -T {{deploy_dir}}/release " + current_path)
+                dep.run("mv -T {{deploy_path}}/release " + current_path)
             else:
                 # Atomic override symlink.
                 dep.run(
-                    "cd {{deploy_dir}} && {{bin/symlink}} {{release_path}} "
+                    "cd {{deploy_path}} && {{bin/symlink}} {{release_path}} "
                     + current_path
                 )
                 # Remove release link.
-                dep.run("cd {{deploy_dir}} && rm release")
+                dep.run("cd {{deploy_path}} && rm release")
 
         self.app.add_task(
             "deploy:symlink", "Creates the symlink to release", deploy_symlink
@@ -444,16 +444,16 @@ class CommonProvider(Provider):
         def deploy_clean(dep: Deployer):
             keep = dep.make("keep_releases", 3)
 
-            dep.run("cd {{deploy_dir}} && if [ -e release ]; then rm release; fi")
+            dep.run("cd {{deploy_path}} && if [ -e release ]; then rm release; fi")
 
             releases = dep.make("releases_list")
 
             if keep < len(releases):
                 sudo = "sudo" if dep.make("clean_use_sudo", False) else ""
                 releases = dep.make("releases_list")
-                deploy_dir = dep.make("deploy_dir")
+                deploy_path = dep.make("deploy_path")
                 for release_name in releases[keep:]:
-                    dep.run(f"{sudo} rm -rf {deploy_dir}/releases/{release_name}")
+                    dep.run(f"{sudo} rm -rf {deploy_path}/releases/{release_name}")
 
         self.app.add_task(
             "deploy:clean",

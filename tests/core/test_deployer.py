@@ -56,8 +56,7 @@ def test_the_add_remote_method():
         user="vagrant",
         port=2201,
         pemfile="/path/to/pemfile",
-        deploy_dir="~/hapideploy/{{stage}}",
-    )
+    ).put("deploy_path", "~/hapideploy/{{stage}}")
     assert len(deployer.remotes().all()) == 1
 
     remote = deployer.remotes().all()[0]
@@ -65,7 +64,7 @@ def test_the_add_remote_method():
     assert remote.user == "vagrant"
     assert remote.port == 2201
     assert remote.label == "ubuntu-1"
-    assert remote.deploy_dir == "~/hapideploy/{{stage}}"
+    assert remote.make("deploy_path") == "~/hapideploy/{{stage}}"
 
 
 def test_run_task_method():
@@ -74,9 +73,10 @@ def test_run_task_method():
     def sample(dep: Deployer):
         dep.put("sample", "sample is called.")
 
-    remote = deployer.add_remote(
-        host="127.0.0.1", port=2201, user="vagrant", deploy_dir="~/deploy/{{stage}}"
+    remote = deployer.add_remote(host="127.0.0.1", port=2201, user="vagrant").put(
+        "deploy_path", "~/deploy/{{stage}}"
     )
+
     deployer.add_task("sample", "This is a sample task", sample)
 
     deployer.put("current_remote", remote)
