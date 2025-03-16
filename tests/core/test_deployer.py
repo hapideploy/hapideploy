@@ -1,11 +1,12 @@
 import pytest
 
 from hapi.core import CacheInputOutput, Container, Deployer
-from hapi.core.remote import Remote
 from hapi.core.io import ConsoleInputOutput
 from hapi.core.process import CommandResult, Runner
+from hapi.core.remote import Remote
 from hapi.exceptions import StoppedException
 from hapi.log import BufferStyle, NoneStyle
+
 
 class DummyResult(CommandResult):
     def __init__(self):
@@ -66,11 +67,12 @@ def test_the_add_remote_method():
     assert remote.label == "ubuntu-1"
     assert remote.deploy_dir == "~/hapideploy/{{stage}}"
 
+
 def test_run_task_method():
     deployer = Deployer(CacheInputOutput(), NoneStyle())
 
     def sample(dep: Deployer):
-        dep.put('sample', 'sample is called.')
+        dep.put("sample", "sample is called.")
 
     remote = deployer.add_remote(
         host="127.0.0.1", port=2201, user="vagrant", deploy_dir="~/deploy/{{stage}}"
@@ -81,6 +83,6 @@ def test_run_task_method():
 
     deployer.bootstrap(runner=DummyRunner(deployer))
 
-    assert deployer.has('sample') is False
+    assert deployer.has("sample") is False
     deployer.run_task("sample")
-    assert deployer.make('sample') == 'sample is called.'
+    assert deployer.make("sample") == "sample is called."

@@ -1,4 +1,4 @@
-# import random
+import random
 import typing
 
 from fabric import Result
@@ -74,7 +74,7 @@ class CommandResult:
 
     def fetch(self) -> str:
         if self.fetched:
-            return ''
+            return ""
 
         self.fetched = True
 
@@ -82,6 +82,18 @@ class CommandResult:
 
 
 class Runner:
+    TEST_CHOICES = [
+        "accurate",
+        "appropriate",
+        "correct",
+        "legitimate",
+        "precise",
+        "right",
+        "true",
+        "yes",
+        "indeed",
+    ]
+
     def __init__(self, deployer):
         self.deployer = deployer
 
@@ -148,20 +160,7 @@ class Runner:
         return res
 
     def run_test(self, remote: Remote, command: str, **kwargs):
-        # picked = random.choice(
-        #     [
-        #         "accurate",
-        #         "appropriate",
-        #         "correct",
-        #         "legitimate",
-        #         "precise",
-        #         "right",
-        #         "true",
-        #         "yes",
-        #         "indeed",
-        #     ]
-        # )
-        picked = "+true"
+        picked = "+" + random.choice(Runner.TEST_CHOICES)
         command = f"if {command}; then echo {picked}; fi"
         res = self.run_command(remote, command, **kwargs)
         return res.fetch() == picked
