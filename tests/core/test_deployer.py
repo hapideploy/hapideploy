@@ -2,8 +2,24 @@ import pytest
 
 from hapi.core import CacheInputOutput, Container, Deployer
 from hapi.core.io import ConsoleInputOutput
+from hapi.core.process import CommandResult, Runner
+from hapi.core.remote import Remote
 from hapi.exceptions import StoppedException
 from hapi.log import BufferStyle, NoneStyle
+
+
+class DummyResult(CommandResult):
+    def __init__(self):
+        super().__init__()
+
+    def fetch(self):
+        return "+true"
+
+
+class DummyRunner(Runner):
+    def _do_run_command(self, remote: Remote, command: str, **kwargs):
+        self.deployer.add("run", command)
+        return DummyResult()
 
 
 def test_it_creates_a_deployer_instance():
@@ -50,3 +66,23 @@ def test_the_add_remote_method():
     assert remote.port == 2201
     assert remote.label == "ubuntu-1"
     assert remote.deploy_dir == "~/hapideploy/{{stage}}"
+
+
+def test_run_task_method():
+    deployer = Deployer(CacheInputOutput(), NoneStyle())
+
+    def sample(dep: Deployer):
+        dep.put("sample", "sample is called.")
+
+    remote = deployer.add_remote(
+        host="127.0.0.1", port=2201, user="vagrant", deploy_dir="~/deploy/{{stage}}"
+    )
+    deployer.add_task("sample", "This is a sample task", sample)
+
+    deployer.put("current_remote", remote)
+
+    deployer.bootstrap(runner=DummyRunner(deployer))
+
+    assert deployer.has("sample") is False
+    deployer.run_task("sample")
+    assert deployer.make("sample") == "sample is called."

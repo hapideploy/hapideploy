@@ -64,22 +64,36 @@ class Printer:
             self.io.writeln(f"[<primary>{remote.label}</primary>] {buffer}")
 
 
-class RunResult:
+class CommandResult:
     def __init__(self, origin: Result = None):
         self.origin = origin
 
+        self.fetched = False
+
         self.__output = None
 
-    def lines(self):
-        return self.fetch().split("\n")
+    def fetch(self) -> str:
+        if self.fetched:
+            return ""
 
-    def fetch(self):
-        if self.__output is None:
-            self.__output = self.origin.stdout.strip()
-        return self.__output
+        self.fetched = True
+
+        return self.origin.stdout.strip()
 
 
 class Runner:
+    TEST_CHOICES = [
+        "accurate",
+        "appropriate",
+        "correct",
+        "legitimate",
+        "precise",
+        "right",
+        "true",
+        "yes",
+        "indeed",
+    ]
+
     def __init__(self, deployer):
         self.deployer = deployer
 
@@ -99,7 +113,7 @@ class Runner:
         self.run_tasks(remote, task.before)
 
     def _after_task(self, remote: Remote, task: Task):
-        remote.put("location", None)
+        remote.put("cwd", None)
         self.run_tasks(remote, task.after)
 
     def run_tasks(self, remote: Remote, names: list[str]):
@@ -123,15 +137,15 @@ class Runner:
 
         origin = conn.run(command, hide=True, watchers=[watcher])
 
-        res = RunResult(origin)
+        res = CommandResult(origin)
 
         return res
 
     def run_command(self, remote: Remote, command: str, **kwargs):
-        location = remote.make("location")
+        cwd = remote.make("cwd")
 
-        if location is not None:
-            command = self.deployer.parse(f"cd {location} && ({command.strip()})")
+        if cwd is not None:
+            command = self.deployer.parse(f"cd {cwd} && ({command.strip()})")
         else:
             command = self.deployer.parse(command.strip())
 
@@ -146,20 +160,7 @@ class Runner:
         return res
 
     def run_test(self, remote: Remote, command: str, **kwargs):
-        # picked = random.choice(
-        #     [
-        #         "accurate",
-        #         "appropriate",
-        #         "correct",
-        #         "legitimate",
-        #         "precise",
-        #         "right",
-        #         "true",
-        #         "yes",
-        #         "indeed",
-        #     ]
-        # )
-        picked = "+true"
+        picked = "+" + random.choice(Runner.TEST_CHOICES)
         command = f"if {command}; then echo {picked}; fi"
         res = self.run_command(remote, command, **kwargs)
         return res.fetch() == picked
