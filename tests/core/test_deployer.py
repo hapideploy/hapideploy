@@ -1,6 +1,6 @@
 import pytest
 
-from hapi.core import CacheInputOutput, Container, Deployer
+from hapi.core import ArrayInputOutput, Container, Deployer
 from hapi.core.io import ConsoleInputOutput
 from hapi.core.process import CommandResult, Runner
 from hapi.core.remote import Remote
@@ -18,7 +18,7 @@ class DummyResult(CommandResult):
 
 class DummyRunner(Runner):
     def _do_run_command(self, remote: Remote, command: str, **kwargs):
-        self.deployer.add("run", command)
+        self.container.add("run", command)
         return DummyResult()
 
 
@@ -29,10 +29,10 @@ def test_it_creates_a_deployer_instance():
     assert isinstance(deployer.io(), ConsoleInputOutput)
     assert isinstance(deployer.log(), NoneStyle)
 
-    deployer = Deployer(CacheInputOutput(), BufferStyle())
+    deployer = Deployer(ArrayInputOutput(), BufferStyle())
 
     assert isinstance(deployer, Container)
-    assert isinstance(deployer.io(), CacheInputOutput)
+    assert isinstance(deployer.io(), ArrayInputOutput)
     assert isinstance(deployer.log(), BufferStyle)
 
 
@@ -68,7 +68,7 @@ def test_the_add_remote_method():
 
 
 def test_run_task_method():
-    deployer = Deployer(CacheInputOutput(), NoneStyle())
+    deployer = Deployer(ArrayInputOutput(), NoneStyle())
 
     def sample(dep: Deployer):
         dep.put("sample", "sample is called.")
@@ -81,7 +81,9 @@ def test_run_task_method():
 
     deployer.put("current_remote", remote)
 
-    deployer.bootstrap(runner=DummyRunner(deployer))
+    deployer.bootstrap(
+        runner=DummyRunner(deployer, deployer.tasks(), deployer.io(), deployer.log())
+    )
 
     assert deployer.has("sample") is False
     deployer.run_task("sample")

@@ -18,11 +18,11 @@ class Deployer(Container):
         super().__init__()
         self.__io = io if io else ConsoleInputOutput()
         self.__log = log if log else NoneStyle()
-        self.__runner = Runner(self)
+        self.__runner = None
 
         # TODO: self.__commands = CommandBag()
-        self.__tasks = TaskBag()
         self.__remotes = RemoteBag()
+        self.__tasks = TaskBag()
 
         self.__typer = typer.Typer()
         self.__selected = []
@@ -41,8 +41,52 @@ class Deployer(Container):
     def remotes(self):
         return self.__remotes
 
-    def started(self):
-        return self.__started
+    def bootstrap(self, **kwargs):
+        if self.__bootstrapped:
+            return
+
+        self.__bootstrapped = True
+
+        if self.remotes().empty():
+            self.stop("There are no remotes. Please register at least 1.")
+
+        verbosity = InputOutput.NORMAL
+
+        if kwargs.get("quiet"):
+            verbosity = InputOutput.QUIET
+        elif kwargs.get("normal"):
+            verbosity = InputOutput.NORMAL
+        elif kwargs.get("detail"):
+            verbosity = InputOutput.DETAIL
+        elif kwargs.get("debug"):
+            verbosity = InputOutput.DEBUG
+
+        self.__io = ConsoleInputOutput(
+            kwargs.get("selector"), kwargs.get("stage"), verbosity
+        )
+
+        if self.has("log_file"):
+            self.__log = FileStyle(self.make("log_file"))
+
+        self.__selected = self.remotes().filter(
+            lambda remote: self.__io.selector == InputOutput.SELECTOR_DEFAULT
+            or remote.label == self.__io.selector
+        )
+
+        if self.__log is None:
+            self.__log = NoneStyle()
+
+        if isinstance(kwargs.get("runner"), Runner):
+            self.__runner = kwargs.get("runner")
+        else:
+            self.__runner = Runner(self, self.__tasks, self.__io, self.__log)
+
+        self.put("stage", self.__io.stage)
+
+        return self
+
+    def bootstrapped(self) -> bool:
+        return self.__bootstrapped
 
     def start(self):
         if self.__started:
@@ -52,10 +96,22 @@ class Deployer(Container):
 
         self.__typer()
 
-    def add_remote(self, **kwargs):
-        remote = Remote(**kwargs)
-        self.remotes().add(remote)
-        return remote
+    def started(self) -> bool:
+        return self.__started
+
+    # Public API methods
+
+    def current_route(self) -> Remote:
+        if not self.has("current_remote"):
+            self.stop("The is no current remote.")
+
+        return self.make("current_remote")
+
+    def current_task(self) -> Task:
+        if not self.has("current_task"):
+            self.stop("There is no current task.")
+
+        return self.make("current_task")
 
     def add_command(self, name: str, desc: str, func: typing.Callable):
         @self.__typer.command(name=name, help=desc)
@@ -63,6 +119,11 @@ class Deployer(Container):
             func(self)
 
         return self
+
+    def add_remote(self, **kwargs):
+        remote = Remote(**kwargs)
+        self.remotes().add(remote)
+        return remote
 
     def add_task(self, name: str, desc: str, func: typing.Callable):
         task = Task(name, desc, func)
@@ -136,17 +197,10 @@ class Deployer(Container):
         return self
 
     def info(self, message: str):
-        printer = Printer(self.__io, self.__log)
-        printer.print_info(self.current_route(), self.parse(message))
+        Printer(self, self.__io, self.__log).print_info(self.current_route(), message)
 
     def stop(self, message: str):
         raise StoppedException(self.parse(message))
-
-    def current_route(self) -> Remote:
-        if not self.has("current_remote"):
-            self.stop("No running remote is set.")
-
-        return self.make("current_remote")
 
     def before(self, name: str, do):
         task = self.__tasks.find(name)
@@ -156,43 +210,4 @@ class Deployer(Container):
     def after(self, name: str, do):
         task = self.__tasks.find(name)
         task.after = do if isinstance(do, list) else [do]
-        return self
-
-    def bootstrap(self, **kwargs):
-        if self.__bootstrapped:
-            return
-
-        self.__bootstrapped = True
-
-        if self.remotes().empty():
-            self.stop("There are no remotes. Please register at least 1.")
-
-        verbosity = InputOutput.NORMAL
-
-        if kwargs.get("quiet"):
-            verbosity = InputOutput.QUIET
-        elif kwargs.get("normal"):
-            verbosity = InputOutput.NORMAL
-        elif kwargs.get("detail"):
-            verbosity = InputOutput.DETAIL
-        elif kwargs.get("debug"):
-            verbosity = InputOutput.DEBUG
-
-        self.__io = ConsoleInputOutput(
-            kwargs.get("selector"), kwargs.get("stage"), verbosity
-        )
-
-        if self.has("log_file"):
-            self.__log = FileStyle(self.make("log_file"))
-
-        self.__selected = self.remotes().filter(
-            lambda remote: self.__io.selector == InputOutput.SELECTOR_DEFAULT
-            or remote.label == self.__io.selector
-        )
-
-        self.put("stage", self.__io.stage)
-
-        if isinstance(kwargs.get("runner"), Runner):
-            self.__runner = kwargs.get("runner")
-
         return self

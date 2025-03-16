@@ -1,7 +1,7 @@
 import pytest
 
 from hapi import CommandResult
-from hapi.core import CacheInputOutput, Deployer, Remote, Runner
+from hapi.core import ArrayInputOutput, Deployer, Remote, Runner
 from hapi.log import NoneStyle
 
 
@@ -15,16 +15,16 @@ class DummyResult(CommandResult):
 
 class DummyRunner(Runner):
     def _do_run_command(self, remote: Remote, command: str, **kwargs):
-        self.deployer.add("run", command)
+        self.container.add("run", command)
         return DummyResult()
 
 
 def test_runner_run_command_method():
-    container = Deployer(CacheInputOutput(), NoneStyle())
+    container = Deployer(ArrayInputOutput(), NoneStyle())
 
     container.put("stage", "testing")
 
-    runner = DummyRunner(container)
+    runner = DummyRunner(container, container.tasks(), container.io(), container.log())
 
     remote = Remote(
         host="127.0.0.1",
@@ -38,11 +38,11 @@ def test_runner_run_command_method():
 
 
 def test_runner_run_test_method():
-    container = Deployer(CacheInputOutput(), NoneStyle())
+    container = Deployer(ArrayInputOutput(), NoneStyle())
 
     container.put("stage", "testing")
 
-    runner = DummyRunner(container)
+    runner = DummyRunner(container, container.tasks(), container.io(), container.log())
 
     remote = Remote(
         host="127.0.0.1",
@@ -64,11 +64,11 @@ def test_runner_run_test_method():
 
 
 def test_runner_run_cat_method():
-    container = Deployer(CacheInputOutput(), NoneStyle())
+    container = Deployer(ArrayInputOutput(), NoneStyle())
 
     container.put("stage", "testing")
 
-    runner = DummyRunner(container)
+    runner = DummyRunner(container, container.tasks(), container.io(), container.log())
 
     remote = Remote(host="127.0.0.1", port=2201, user="vagrant").put(
         "deploy_path", "~/deploy/{{stage}}"
@@ -80,11 +80,11 @@ def test_runner_run_cat_method():
 
 
 def test_runner_remote_cwd():
-    container = Deployer(CacheInputOutput(), NoneStyle())
+    container = Deployer(ArrayInputOutput(), NoneStyle())
 
     container.put("stage", "testing")
 
-    runner = DummyRunner(container)
+    runner = DummyRunner(container, container.tasks(), container.io(), container.log())
 
     remote = Remote(host="127.0.0.1", port=2201, user="vagrant").put(
         "deploy_path", "~/deploy/{{stage}}"

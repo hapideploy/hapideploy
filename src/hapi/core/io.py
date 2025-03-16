@@ -68,7 +68,7 @@ class ConsoleInputOutput(InputOutput):
         typer.echo(decorated, nl=newline)
 
 
-class CacheInputOutput(InputOutput):
+class ArrayInputOutput(InputOutput):
     def __init__(self, selector: str = None, stage: str = None, verbosity: int = None):
         super().__init__(selector, stage, verbosity)
 
