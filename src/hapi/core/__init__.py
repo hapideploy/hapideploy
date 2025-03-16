@@ -4,7 +4,7 @@ from .io import CacheInputOutput, InputOutput
 from .process import (
     Printer,
     Runner,
-    RunResult,
+    CommandResult,
 )
 from .program import Program, Provider
 from .remote import Remote

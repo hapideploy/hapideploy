@@ -1,9 +1,9 @@
-from hapi import RunResult
+from hapi import CommandResult
 from hapi.core import CacheInputOutput, Deployer, Remote, Runner
 from hapi.log import NoneStyle
 
 
-class DummyResult(RunResult):
+class DummyResult(CommandResult):
     def __init__(self):
         super().__init__()
 
@@ -16,38 +16,76 @@ class DummyRunner(Runner):
         self.deployer.add("run", command)
         return DummyResult()
 
+def test_runner_run_command_method():
+    container = Deployer(CacheInputOutput(), NoneStyle())
 
-def test_run_command():
-    deployer = Deployer(CacheInputOutput(), NoneStyle())
+    container.put('stage', 'testing')
+    container.put('deploy_dir', '~/deploy/{{stage}}')
 
-    def sample(dep: Deployer):
-        dep.run("mkdir -p {{deploy_dir}}/.dep")  # run[0]
-        dep.test("[ ! -d {{deploy_dir}}/.dep ]")  # run[1]
-        dep.cat("{{deploy_dir}}/.dep/latest_release")  # run[2]
+    runner = DummyRunner(container)
 
-        dep.cd("{{deploy_dir}}")
-
-        dep.run("mkdir -p .dep")  # run[3]
-        dep.test("[ ! -d .dep ]")  # run[4]
-        dep.cat(".dep/latest_release")  # run[2]
-
-    remote = deployer.add_remote(
+    remote = Remote(
         host="127.0.0.1", port=2201, user="vagrant", deploy_dir="~/deploy/{{stage}}"
     )
-    deployer.add_task("sample", "This is a sample task", sample)
 
-    deployer.put("current_remote", remote)
+    runner.run_command(remote, 'mkdir -p {{deploy_dir}}/.dep')
 
-    deployer.bootstrap(runner=DummyRunner(deployer))
+    assert container.make('run') == ['mkdir -p ~/deploy/testing/.dep']
 
-    deployer.run_task("sample")
+def test_runner_run_test_method():
+    container = Deployer(CacheInputOutput(), NoneStyle())
 
-    run = deployer.make("run")
+    container.put('stage', 'testing')
+    container.put('deploy_dir', '~/deploy/{{stage}}')
 
-    assert run[0] == "mkdir -p ~/deploy/dev/.dep"
-    assert run[1] == "if [ ! -d ~/deploy/dev/.dep ]; then echo +true; fi"
-    assert run[2] == "cat ~/deploy/dev/.dep/latest_release"
+    runner = DummyRunner(container)
 
-    assert run[3] == "cd ~/deploy/dev && (mkdir -p .dep)"
-    assert run[4] == "cd ~/deploy/dev && (if [ ! -d .dep ]; then echo +true; fi)"
-    assert run[5] == "cd ~/deploy/dev && (cat .dep/latest_release)"
+    remote = Remote(
+        host="127.0.0.1", port=2201, user="vagrant", deploy_dir="~/deploy/{{stage}}"
+    )
+
+    runner.run_test(remote, '[ ! -d {{deploy_dir}}/.dep ]')
+
+    assert container.make('run') == ['if [ ! -d ~/deploy/testing/.dep ]; then echo +true; fi']
+
+def test_runner_run_cat_method():
+    container = Deployer(CacheInputOutput(), NoneStyle())
+
+    container.put('stage', 'testing')
+    container.put('deploy_dir', '~/deploy/{{stage}}')
+
+    runner = DummyRunner(container)
+
+    remote = Remote(
+        host="127.0.0.1", port=2201, user="vagrant", deploy_dir="~/deploy/{{stage}}"
+    )
+
+    runner.run_cat(remote, '{{deploy_dir}}/.dep/latest_release')
+
+    assert container.make('run') == ['cat ~/deploy/testing/.dep/latest_release']
+
+def test_runner_remote_cwd():
+    container = Deployer(CacheInputOutput(), NoneStyle())
+
+    container.put('stage', 'testing')
+    container.put('deploy_dir', '~/deploy/{{stage}}')
+
+    runner = DummyRunner(container)
+
+    remote = Remote(
+        host="127.0.0.1", port=2201, user="vagrant", deploy_dir="~/deploy/{{stage}}"
+    )
+
+    remote.put('cwd', '{{deploy_dir}}')
+
+    runner.run_command(remote, 'mkdir -p .dep')
+    runner.run_test(remote, '[ ! -d .dep ]')
+    runner.run_cat(remote, '.dep/latest_release')
+
+    run = container.make('run')
+
+    assert run == [
+        'cd ~/deploy/testing && (mkdir -p .dep)',
+        'cd ~/deploy/testing && (if [ ! -d .dep ]; then echo +true; fi)',
+        'cd ~/deploy/testing && (cat .dep/latest_release)',
+    ]

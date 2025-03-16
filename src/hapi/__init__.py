@@ -7,7 +7,7 @@ from .core import (
     InputOutput,
     Program,
     Remote,
-    RunResult,
+    CommandResult,
     Task,
 )
 from .exceptions import LogicException, RuntimeException

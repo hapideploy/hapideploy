@@ -132,8 +132,8 @@ class Deployer(Container):
     def cat(self, file: str) -> str:
         return self.__runner.run_cat(self.current_route(), file)
 
-    def cd(self, location: str):
-        self.current_route().put("location", self.parse(location))
+    def cd(self, cwd: str):
+        self.current_route().put("cwd", self.parse(cwd))
         return self
 
     def info(self, message: str):
