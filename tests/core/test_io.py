@@ -6,8 +6,8 @@ from hapi.core.io import ArrayInputOutput
 
 def test_it_creates_an_io_instance():
     io = InputOutput()
-    assert io.selector == InputOutput.SELECTOR_DEFAULT
-    assert io.stage == InputOutput.STAGE_DEFAULT
+    assert io.selector == InputOutput.SELECTOR_ALL
+    assert io.stage == InputOutput.STAGE_DEV
     assert io.verbosity == InputOutput.NORMAL
 
     io = InputOutput("ubuntu-1", "production", InputOutput.DEBUG)

@@ -147,7 +147,7 @@ def deploy_release(dep: Deployer):
     releases.insert(0, release_name)
 
     if len(releases) >= 2:
-        dep.bind("previous_release", "{{deploy_path}}/releases/" + releases[1])
+        dep.put("previous_release", "{{deploy_path}}/releases/" + releases[1])
 
 
 def deploy_lock(dep: Deployer):
@@ -328,27 +328,31 @@ class CommonProvider(Provider):
         self.app.bind("releases_log", releases_log)
         self.app.bind("releases_list", releases_list)
 
-        self.app.add_task("deploy:start", "Start the deployment process", deploy_start)
-        self.app.add_task(
+        self.app.register_task(
+            "deploy:start", "Start the deployment process", deploy_start
+        )
+        self.app.register_task(
             "deploy:setup", "Prepare the deployment directory", deploy_setup
         )
 
-        self.app.add_task(
+        self.app.register_task(
             "deploy:release", "Prepare the release candidate", deploy_release
         )
 
-        self.app.add_task("deploy:code", "Update code", deploy_code)
+        self.app.register_task("deploy:code", "Update code", deploy_code)
 
-        self.app.add_task("deploy:env", "Configure .env file", deploy_env)
+        self.app.register_task("deploy:env", "Configure .env file", deploy_env)
 
-        self.app.add_task(
+        self.app.register_task(
             "deploy:shared",
             "Create symlinks for shared directories and files",
             deploy_shared,
         )
 
-        self.app.add_task("deploy:lock", "Lock the deployment process", deploy_lock)
-        self.app.add_task(
+        self.app.register_task(
+            "deploy:lock", "Lock the deployment process", deploy_lock
+        )
+        self.app.register_task(
             "deploy:unlock", "Unlock the deployment process", deploy_unlock
         )
 
@@ -417,7 +421,7 @@ class CommonProvider(Provider):
 
             dep.info("Make directories and files writable")
 
-        self.app.add_task(
+        self.app.register_task(
             "deploy:writable", "Make directories and files writable", deploy_writable
         )
 
@@ -436,7 +440,7 @@ class CommonProvider(Provider):
                 # Remove release link.
                 dep.run("cd {{deploy_path}} && rm release")
 
-        self.app.add_task(
+        self.app.register_task(
             "deploy:symlink", "Creates the symlink to release", deploy_symlink
         )
 
@@ -455,7 +459,7 @@ class CommonProvider(Provider):
                 for release_name in releases[keep:]:
                     dep.run(f"{sudo} rm -rf {deploy_path}/releases/{release_name}")
 
-        self.app.add_task(
+        self.app.register_task(
             "deploy:clean",
             "Clean deployment process, E.g. remove old release candidates",
             deploy_clean,
@@ -465,14 +469,14 @@ class CommonProvider(Provider):
         def deploy_success(dep: Deployer):
             dep.info("Successfully deployed!")
 
-        self.app.add_task(
+        self.app.register_task(
             "deploy:success",
             "Announce the deployment process is suceed",
             deploy_success,
         )
 
     def task_deploy(self):
-        self.app.add_group(
+        self.app.register_group(
             "deploy",
             "Run deployment tasks",
             [

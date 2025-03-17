@@ -3,7 +3,7 @@ import random
 from fabric import Result
 from invoke import StreamWatcher
 
-from ..exceptions import ParsingRecurredKey
+from ..exceptions import ParsingRecurredKey, StoppedException
 from ..log import Logger
 from ..support import env_stringify, extract_curly_braces
 from .container import Container
@@ -75,12 +75,10 @@ class Runner:
         "indeed",
     ]
 
-    def __init__(
-        self, container: Container, tasks: TaskBag, io: InputOutput, log: Logger
-    ):
+    def __init__(self, container: Container, tasks: TaskBag, printer: Printer):
         self.container = container
         self.tasks = tasks
-        self.printer = Printer(io, log)
+        self.printer = printer
 
         self.__parsing_stack = {}
 
@@ -106,21 +104,17 @@ class Runner:
 
         return self.parse(text, remote)
 
-    def info(self, remote: Remote, message: str):
-        message = self.parse(message, remote)
-        self.printer.print_info(remote, message)
-
-    def run_task(self, remote: Remote, task: Task):
-        self._before_run_task(remote, task)
+    def exec(self, remote: Remote, task: Task):
+        self._before_exec(remote, task)
         task.func(self.container)
-        self._after_run_task(remote, task)
+        self._after_exec(remote, task)
 
-    def run_tasks(self, remote: Remote, names: list[str]):
+    def exec_tasks(self, remote: Remote, names: list[str]):
         if len(names) == 0:
             return
         for name in names:
             task = self.tasks.find(name)
-            self.run_task(remote, task)
+            self.exec(remote, task)
 
     def parse_command(self, remote: Remote, command: str, **kwargs):
         cwd = remote.make("cwd")
@@ -134,29 +128,39 @@ class Runner:
 
         return command
 
-    def run_command(self, remote: Remote, command: str, **kwargs):
+    def run(self, remote: Remote, command: str, **kwargs):
         command = self.parse_command(remote, command, **kwargs)
 
-        self._before_run_command(remote, command, **kwargs)
+        self._before_run(remote, command, **kwargs)
 
         self.printer.print_command(remote, command)
 
-        res = self._do_run_command(remote, command, **kwargs)
+        res = self._do_run(remote, command, **kwargs)
 
-        self._after_run_command(remote, command, **kwargs)
+        self._after_run(remote, command, **kwargs)
 
         return res
 
-    def run_test(self, remote: Remote, command: str, **kwargs):
+    def test(self, remote: Remote, command: str, **kwargs):
         picked = "+" + random.choice(Runner.TEST_CHOICES)
         command = f"if {command}; then echo {picked}; fi"
-        res = self.run_command(remote, command, **kwargs)
+        res = self.run(remote, command, **kwargs)
         return res.fetch() == picked
 
-    def run_cat(self, remote: Remote, file: str, **kwargs):
-        return self.run_command(remote, f"cat {file}", **kwargs).fetch()
+    def cat(self, remote: Remote, file: str, **kwargs):
+        return self.run(remote, f"cat {file}", **kwargs).fetch()
 
-    def _do_run_command(self, remote: Remote, command: str, **kwargs):
+    def cd(self, remote: Remote, cwd: str):
+        return remote.put("cwd", self.parse(cwd, remote))
+
+    def info(self, remote: Remote, message: str):
+        message = self.parse(message, remote)
+        self.printer.print_info(remote, message)
+
+    def stop(self, remote: Remote, message: str):
+        raise StoppedException(self.parse(message))
+
+    def _do_run(self, remote: Remote, command: str, **kwargs):
         def callback(_: str, buffer: str):
             self.printer.print_buffer(remote, buffer)
 
@@ -194,20 +198,17 @@ class Runner:
 
         return res
 
-    def _before_run_task(self, remote: Remote, task: Task):
+    def _before_exec(self, remote: Remote, task: Task):
         self.printer.print_task(remote, task)
 
-        self.container.put("current_remote", remote)
-        self.container.put("current_task", task)
+        self.exec_tasks(remote, task.before)
 
-        self.run_tasks(remote, task.before)
-
-    def _after_run_task(self, remote: Remote, task: Task):
+    def _after_exec(self, remote: Remote, task: Task):
         remote.put("cwd", None)
-        self.run_tasks(remote, task.after)
+        self.exec_tasks(remote, task.after)
 
-    def _before_run_command(self, remote: Remote, command: str, **kwargs):
+    def _before_run(self, remote: Remote, command: str, **kwargs):
         pass
 
-    def _after_run_command(self, remote: Remote, command: str, **kwargs):
+    def _after_run(self, remote: Remote, command: str, **kwargs):
         pass

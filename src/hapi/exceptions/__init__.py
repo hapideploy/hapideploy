@@ -16,6 +16,12 @@ class ItemNotFound(Exception):
     pass
 
 
+class CommandNotFound(ItemNotFound):
+    @staticmethod
+    def with_name(name: str):
+        return CommandNotFound(f"Command {name} is not found.")
+
+
 class TaskNotFound(ItemNotFound):
     @staticmethod
     def with_name(name: str):

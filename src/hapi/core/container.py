@@ -75,7 +75,7 @@ class Container:
 
         return caller
 
-    def has(self, key: str):
+    def has(self, key: str) -> bool:
         """
         Determine if the given key exists in the container.
 

@@ -21,7 +21,7 @@ class Program(Deployer):
         def about(_):
             print(f"HapiDeploy {__version__}")
 
-        self.add_command("about", "Display this program information", about)
+        self.register_command("about", "Display this program information", about)
 
     def command_task_list(self):
         def task_list(dep: Deployer):
@@ -30,7 +30,7 @@ class Program(Deployer):
             for task in tasks:
                 dep.io().writeln(f"<primary>{task.name}</primary>  {task.desc}")
 
-        self.add_command("task:list", "List tasks", task_list)
+        self.register_command("task:list", "List tasks", task_list)
 
     def start(self):
         inventory_file = os.getcwd() + "/inventory.yml"
@@ -71,39 +71,36 @@ class Program(Deployer):
                 if bindings is not None:
                     del data["with"]
 
-                remote = self.add_remote(**data)
+                remote = self.register_remote(**data)
 
                 if isinstance(bindings, dict):
                     for k, v in bindings.items():
                         remote.put(k, v)
 
     def remote(self, **kwargs):
-        return super().add_remote(**kwargs)
+        return super().register_remote(**kwargs)
 
-    def put(self, key: str, value):
-        return super().put(key, value)
+    def group(self, name: str, desc: str, do: list[str]):
+        return self.register_group(name, desc, do)
 
-    def add(self, key: str, value):
-        return super().add(key, value)
+    def before(self, name: str, do):
+        return super().register_before(name, do)
 
-    def make(self, key: str, fallback=None, throw=None):
-        return super().make(key, fallback, throw)
-
-    def parse(self, text: str, **kwargs) -> str:
-        return super().parse(text, **kwargs)
+    def after(self, name: str, do):
+        return super().register_after(name, do)
 
     def resolve(self, key: str):
         return super().resolve(key)
 
     def command(self, name: str, desc: str):
         def caller(func: typing.Callable):
-            self.add_command(name, desc, func)
+            self.register_command(name, desc, func)
 
         return caller
 
     def task(self, name: str, desc: str):
         def caller(func: typing.Callable):
-            self.add_task(name, desc, func)
+            self.register_task(name, desc, func)
 
             def wrapper(*args, **kwargs):
                 # Do something before the function call
@@ -119,9 +116,6 @@ class Program(Deployer):
             return wrapper
 
         return caller
-
-    def group(self, name: str, desc: str, do: list[str]):
-        return self.add_group(name, desc, do)
 
 
 class Provider:
