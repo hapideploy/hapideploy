@@ -27,7 +27,7 @@ def target(dep: Deployer):
 def release_path(dep: Deployer):
     if dep.test("[ -h {{deploy_path}}/release ]"):
         link = dep.run("readlink {{deploy_path}}/release").fetch()
-        return link if link[0] == "/" else dep.make("deploy_path") + "/" + link
+        return link if link[0] == "/" else dep.parse("{{deploy_path}}" + "/" + link)
 
     dep.stop('The "release_path" ({{deploy_path}}/release) does not exist.')
 

@@ -110,28 +110,6 @@ def test_it_binds_using_resolve_annotation():
     assert container.make("languages") == ["JavaScript", "PHP", "Python", "Go"]
 
 
-def test_it_parses_text_contains_double_curly_braces():
-    container = Container()
-
-    container.put("release_name", 1)
-
-    assert (
-        container.parse("cd ~/deploy/release/{{release_name}}")
-        == "cd ~/deploy/release/1"
-    )
-
-    container.put("stage", "production")
-    container.put("release_name", "1")
-    container.put("release_dir", "~/deploy//{{stage}}/releases/{{release_name}}")
-    container.put("bin/python", "/usr/bin/python3")
-
-    parsed = container.parse(
-        "cd ~/deploy/releases/{{release_name}} && {{bin/python}} main.py"
-    )
-
-    assert parsed == "cd ~/deploy/releases/1 && /usr/bin/python3 main.py"
-
-
 def test_it_returns_fallback_if_key_does_not_exist():
     container = Container()
 
@@ -142,11 +120,6 @@ def test_it_returns_fallback_if_key_does_not_exist():
 
 def test_it_raises_exception_if_key_does_not_exist():
     container = Container()
-
-    with pytest.raises(
-        BindingException, match='The key "repository" is not defined in the container.'
-    ):
-        container.parse("{{repository}}", throw=True)
 
     with pytest.raises(
         BindingException, match='The key "repository" is not defined in the container.'

@@ -1,7 +1,7 @@
 import typer
 
 from hapi import InputOutput
-from hapi.core.io import CacheInputOutput
+from hapi.core.io import ArrayInputOutput
 
 
 def test_it_creates_an_io_instance():
@@ -29,7 +29,7 @@ def test_it_decorates_text():
 
 
 def test_it_caches_output():
-    io = CacheInputOutput()
+    io = ArrayInputOutput()
     io.writeln("This is the line 1.")
     io.writeln("This is the line 2.")
     io.writeln("This is the line 3.")

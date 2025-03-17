@@ -27,3 +27,9 @@ class RemoteNotFound(ItemNotFound):
     # @staticmethod
     # def with_name(name: str):
     #     return TaskNotFound(f'Remote {key} is not found.')
+
+
+class ParsingRecurredKey(Exception):
+    @staticmethod
+    def with_key(key: str):
+        return ParsingRecurredKey(f"The key [{key}] is a recurred key when parsing.")
