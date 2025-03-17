@@ -37,7 +37,12 @@ app.put('writable_group', 'www-data')
 # app.put('writable_user', 'vagrant')
 # app.put('writable_group', 'vagrant')
 
-# Tasks or Commands
+# Commands
+@app.command(name='config:show', desc='Show a configuration key')
+def command_config_show(dep: Deployer):
+    dep.io().writeln('Hello World')
+
+# Tasks
 
 @app.task(name='composer:install', desc='Install Composer packages')
 def composer_install(dep: Deployer):

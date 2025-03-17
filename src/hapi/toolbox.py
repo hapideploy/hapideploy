@@ -33,6 +33,6 @@ app.set_instance(app)
 # app.info('Display an info message.') -> from Deployer
 # app.warn('Display a warn message.') -> from Deployer
 # app.stop('Something went wrong.') -> from Deployer
-# app.current_route() -> from Deployer
+# app.current_remote() -> from Deployer
 
 # app.start()
