@@ -108,31 +108,3 @@ class Container:
         if key in self.__bindings:
             return self.__bindings[key](self)
         return self.__items.get(key)
-
-    def parse(self, text: str, **kwargs) -> str:
-        """
-        Replace keys surrounded by {{ and }} in the text with their values defined in the container.
-        It will throw an exception if keys are not defined.
-        """
-        keys = extract_curly_braces(text)
-
-        if len(keys) == 0:
-            return text
-
-        for key in keys:
-            if kwargs.get(key):
-                text = text.replace("{{" + key + "}}", str(kwargs.get(key)))
-                continue
-
-            if not self.has(key) and kwargs.get("throw"):
-                raise BindingException.with_key(key)
-
-            value = self.make(key)
-
-            if value is not None:
-                text = text.replace("{{" + key + "}}", str(value))
-
-        if kwargs.get("recursive") is True:
-            return self.parse(text)
-
-        return text

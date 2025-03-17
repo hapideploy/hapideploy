@@ -48,7 +48,7 @@ class Deployer(Container):
         self.__bootstrapped = True
 
         if self.remotes().empty():
-            self.stop("There are no remotes. Please register at least 1.")
+            raise StoppedException("There are no remotes. Please register at least 1.")
 
         verbosity = InputOutput.NORMAL
 
@@ -101,8 +101,8 @@ class Deployer(Container):
 
     # Public API methods
 
-    def current_route(self) -> Remote:
-        if not self.has("current_remote"):
+    def current_route(self, **kwargs) -> Remote:
+        if not self.has("current_remote") and kwargs.get("throw") is True:
             self.stop("The is no current remote.")
 
         return self.make("current_remote")
@@ -183,6 +183,9 @@ class Deployer(Container):
 
         self.__runner.run_task(remote, task)
 
+    def parse(self, text: str, **kwargs) -> str:
+        return self.__runner.parse(text, self.current_route(throw=False))
+
     def run(self, command: str, **kwargs):
         return self.__runner.run_command(self.current_route(), command, **kwargs)
 
@@ -197,7 +200,7 @@ class Deployer(Container):
         return self
 
     def info(self, message: str):
-        Printer(self, self.__io, self.__log).print_info(self.current_route(), message)
+        self.__runner.info(self.current_route(), message)
 
     def stop(self, message: str):
         raise StoppedException(self.parse(message))

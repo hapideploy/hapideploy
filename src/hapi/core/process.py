@@ -3,8 +3,9 @@ import random
 from fabric import Result
 from invoke import StreamWatcher
 
+from ..exceptions import ParsingRecurredKey
 from ..log import Logger
-from ..support import env_stringify
+from ..support import env_stringify, extract_curly_braces
 from .container import Container
 from .io import InputOutput
 from .remote import Remote
@@ -12,13 +13,11 @@ from .task import Task, TaskBag
 
 
 class Printer:
-    def __init__(self, container: Container, io: InputOutput, log: Logger):
-        self.container = container
+    def __init__(self, io: InputOutput, log: Logger):
         self.io = io
         self.log = log
 
     def _do_print(self, remote: Remote, message: str):
-        message = self.container.parse(message, throw=False, recursive=False)
         self.io.writeln(f"[<primary>{remote.label}</primary>] {message}")
 
     def print_info(self, remote: Remote, message: str):
@@ -81,7 +80,35 @@ class Runner:
     ):
         self.container = container
         self.tasks = tasks
-        self.printer = Printer(container, io, log)
+        self.printer = Printer(io, log)
+
+        self.__parsing_stack = {}
+
+    def parse(self, text: str, remote: Remote = None) -> str:
+        keys = extract_curly_braces(text)
+
+        if len(keys) == 0:
+            return text
+
+        for key in keys:
+            if remote and remote.has(key):
+                text = text.replace("{{" + key + "}}", remote.make(key))
+                if key in self.__parsing_stack:
+                    del self.__parsing_stack[key]
+            elif self.container.has(key):
+                text = text.replace("{{" + key + "}}", str(self.container.make(key)))
+                if key in self.__parsing_stack:
+                    del self.__parsing_stack[key]
+            elif key in self.__parsing_stack:
+                raise ParsingRecurredKey.with_key(key)
+            else:
+                self.__parsing_stack[key] = True
+
+        return self.parse(text, remote)
+
+    def info(self, remote: Remote, message: str):
+        message = self.parse(message, remote)
+        self.printer.print_info(remote, message)
 
     def run_task(self, remote: Remote, task: Task):
         self._before_run_task(remote, task)
@@ -103,7 +130,7 @@ class Runner:
         else:
             command = command.strip()
 
-        command = self.container.parse(command, throw=False, recursive=False)
+        command = self.parse(command, remote)
 
         return command
 
@@ -172,9 +199,6 @@ class Runner:
 
         self.container.put("current_remote", remote)
         self.container.put("current_task", task)
-        self.container.put(
-            "deploy_path", self.container.parse(remote.make("deploy_path"))
-        )
 
         self.run_tasks(remote, task.before)
 
