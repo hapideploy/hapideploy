@@ -6,7 +6,7 @@ from typing_extensions import Annotated
 from ..log import FileStyle
 from .container import Container
 from .io import InputOutput
-from .proxy import Proxy
+from .proxy import Context, Proxy
 from .remote import Remote
 from .task import Task
 
@@ -60,6 +60,9 @@ class Deployer(Container):
         self.__proxy.started = True
 
         self.__proxy.typer()
+
+    def context(self) -> Context:
+        return self.__proxy.context(True)
 
     def io(self):
         return self.__proxy.io
@@ -134,19 +137,23 @@ class Deployer(Container):
                     debug=debug,
                 )
 
+            self.__proxy.current_task = task
+
             for remote in self.__proxy.selected:
                 self.__proxy.current_remote = remote
-                self.__proxy.current_task = task
-                self.__proxy.runner().exec(remote, task)
+
+                self.__proxy.context().exec(task)
+
+            self.__proxy.current_task = task
 
         return task
 
     def register_group(self, name: str, desc: str, names: list[str]):
         def func(dep: Deployer):
             for task_name in names:
-                remote = dep.current_remote()
                 task = dep.tasks().find(task_name)
-                self.__proxy.runner().exec(remote, task)
+                self.__proxy.current_task = task
+                self.__proxy.context().exec(task)
 
         self.register_task(name, desc, func)
 
@@ -162,45 +169,29 @@ class Deployer(Container):
         task.after = do if isinstance(do, list) else [do]
         return self
 
-    def put(self, key: str, value):
-        return super().put(key, value)
+    def check(self, key: str) -> bool:
+        return self.__proxy.context().check(key)
 
-    def add(self, key: str, value):
-        return super().add(key, value)
-
-    def bind(self, key: str, callback: typing.Callable):
-        return super().bind(key, callback)
-
-    def has(self, key: str) -> bool:
-        remote = self.current_remote(throw=False)
-
-        return True if remote and remote.has(key) else super().has(key)
-
-    def make(self, key: str, fallback: any = None, throw=None):
-        remote = self.current_remote(throw=False)
-
-        if remote and remote.has(key):
-            return remote.make(key, fallback, throw)
-
-        return super().make(key, fallback, throw)
+    def cook(self, key: str, fallback=None):
+        return self.__proxy.context().cook(key, fallback)
 
     def parse(self, text: str) -> str:
-        return self.__proxy.runner().parse(text, self.current_remote(throw=False))
+        return self.__proxy.context().parse(text)
 
     def run(self, command: str, **kwargs):
-        return self.__proxy.runner().run(self.current_remote(), command, **kwargs)
+        return self.__proxy.context().run(command, **kwargs)
 
     def test(self, command: str) -> bool:
-        return self.__proxy.runner().test(self.current_remote(), command)
+        return self.__proxy.context().test(command)
 
     def cat(self, file: str) -> str:
-        return self.__proxy.runner().cat(self.current_remote(), file)
+        return self.__proxy.context().cat(file)
 
     def cd(self, cwd: str):
-        self.__proxy.runner().cd(self.current_remote(), cwd)
+        self.__proxy.context().cd(cwd)
 
     def info(self, message: str):
-        self.__proxy.runner().info(self.current_remote(), message)
+        self.__proxy.context().info(message)
 
     def stop(self, message: str):
-        self.__proxy.runner().stop(self.current_remote(), message)
+        self.__proxy.context().stop(message)

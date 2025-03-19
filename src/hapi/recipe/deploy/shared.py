@@ -4,7 +4,7 @@ from ..binding import release_path as resolve_release_path
 
 
 def deploy_shared(dep: Deployer):
-    shared_dir_items = dep.make("shared_dirs", [])
+    shared_dir_items = dep.cook("shared_dirs", [])
 
     for a in shared_dir_items:
         for b in shared_dir_items:
@@ -39,7 +39,7 @@ def deploy_shared(dep: Deployer):
 
         dep.run(f"{bin_symlink} {shared_path}/{item_dir} {release_path}/{item_dir}")
 
-    shared_file_items = dep.make("shared_files", [])
+    shared_file_items = dep.cook("shared_files", [])
 
     # Share files
     for item_file in shared_file_items:

@@ -9,8 +9,9 @@ def deploy_release(dep: Deployer):
     if dep.test("[ -h release ]"):
         dep.run("rm release")
 
-    releases = dep.make("releases_list")
-    release_name = dep.make("release_name")
+    # TODO: Is it necessary
+    # releases = dep.cook("releases_list")
+    release_name = dep.cook("release_name")
     release_dir = f"releases/{release_name}"
 
     if dep.test(f"[ -d {release_dir} ]"):
@@ -31,7 +32,7 @@ def deploy_release(dep: Deployer):
         "created_at": timestamp,
         "release_name": str(release_name),
         "user": user,
-        "target": dep.make("target"),
+        "target": dep.cook("target"),
     }
 
     json_data = json.dumps(candidate)
@@ -48,7 +49,8 @@ def deploy_release(dep: Deployer):
         + " is created and symlinked (release: {{release_name}})"
     )
 
-    releases.insert(0, release_name)
+    # TODO: Is is necessary?
+    # releases.insert(0, release_name)
 
-    if len(releases) >= 2:
-        dep.put("previous_release", "{{deploy_path}}/releases/" + releases[1])
+    # if len(releases) >= 2:
+    #     dep.put("previous_release", "{{deploy_path}}/releases/" + releases[1])

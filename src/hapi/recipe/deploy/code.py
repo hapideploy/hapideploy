@@ -5,14 +5,14 @@ from ..binding import release_path as resolve_release_path
 
 
 def deploy_code(dep: Deployer):
-    git = dep.make("bin/git")
-    repository = dep.make("repository", throw=True)
+    git = dep.cook("bin/git")
+    repository = dep.cook("repository")
 
     bare = dep.parse("{{deploy_path}}/.dep/repo")
 
     env = dict(
         GIT_TERMINAL_PROMPT="0",
-        GIT_SSH_COMMAND=dep.make("git_ssh_command"),
+        GIT_SSH_COMMAND=dep.cook("git_ssh_command"),
     )
 
     dep.run(f"[ -d {bare} ] || mkdir -p {bare}")
@@ -29,14 +29,14 @@ def deploy_code(dep: Deployer):
 
     dep.run(f"{git} remote update 2>&1", env=env)
 
-    target_with_dir = dep.make("target")
-    if isinstance(dep.make("sub_directory"), str):
+    target_with_dir = dep.cook("target")
+    if isinstance(dep.cook("sub_directory"), str):
         target_with_dir += ":{{sub_directory}}"
 
     release_path = resolve_release_path(dep)
 
     # TODO: Support clone strategy
-    strategy = dep.make("update_code_strategy")
+    strategy = dep.cook("update_code_strategy")
     if strategy == "archive":
         dep.run(
             "%s archive %s | tar -x -f - -C %s 2>&1"
@@ -46,7 +46,7 @@ def deploy_code(dep: Deployer):
         dep.stop("Unknown `update_code_strategy` option: {{update_code_strategy}}.")
 
     # Save git revision in REVISION file.
-    rev = shlex.quote(dep.run(f"{git} rev-list {dep.make('target')} -1").fetch())
+    rev = shlex.quote(dep.run(f"{git} rev-list {dep.cook('target')} -1").fetch())
     dep.run(f"echo {rev} > {release_path}/REVISION")
 
     dep.info("Code is updated")

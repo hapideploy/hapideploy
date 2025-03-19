@@ -2,9 +2,9 @@ from ...core import Deployer
 
 
 def deploy_symlink(dep: Deployer):
-    current_path = dep.make("current_path")
+    current_path = dep.cook("current_path")
 
-    if dep.make("use_atomic_symlink", False):
+    if dep.cook("use_atomic_symlink", False):
         dep.run("mv -T {{deploy_path}}/release " + current_path)
     else:
         # Atomic override symlink.

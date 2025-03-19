@@ -6,13 +6,15 @@ def bin_git(_: Deployer):
 
 
 def bin_symlink(dep: Deployer):
-    return (
-        "ln -nfs --relative" if dep.make("use_relative_symlink") is True else "ln -nfs"
-    )
+    c = dep.context()
+
+    return "ln -nfs --relative" if c.cook("use_relative_symlink") is True else "ln -nfs"
 
 
 def target(dep: Deployer):
-    branch = dep.make("branch")
+    c = dep.context()
+
+    branch = c.cook("branch")
     if branch:
         return branch
 
@@ -22,20 +24,24 @@ def target(dep: Deployer):
 
 
 def release_path(dep: Deployer):
-    if dep.test("[ -h {{deploy_path}}/release ]"):
-        link = dep.run("readlink {{deploy_path}}/release").fetch()
-        return link if link[0] == "/" else dep.parse("{{deploy_path}}" + "/" + link)
+    c = dep.context()
 
-    dep.stop('The "release_path" ({{deploy_path}}/release) does not exist.')
+    if c.test("[ -h {{deploy_path}}/release ]"):
+        link = c.run("readlink {{deploy_path}}/release").fetch()
+        return link if link[0] == "/" else c.parse("{{deploy_path}}" + "/" + link)
+
+    c.stop('The "release_path" ({{deploy_path}}/release) does not exist.')
 
 
 def releases_log(dep: Deployer):
+    c = dep.context()
+
     import json
 
-    if dep.test("[ -f {{deploy_path}}/.dep/releases_log ]") is False:
+    if c.test("[ -f {{deploy_path}}/.dep/releases_log ]") is False:
         return []
 
-    lines = dep.run("tail -n 300 {{deploy_path}}/.dep/releases_log").fetch().split("\n")
+    lines = c.run("tail -n 300 {{deploy_path}}/.dep/releases_log").fetch().split("\n")
     releases = []
     for line in lines:
         releases.insert(0, json.loads(line))
@@ -43,18 +49,20 @@ def releases_log(dep: Deployer):
 
 
 def releases_list(dep: Deployer):
+    c = dep.context()
+
     if (
-        dep.test(
+        c.test(
             '[ -d {{deploy_path}}/releases ] && [ "$(ls -A {{deploy_path}}/releases)" ]'
         )
         is False
     ):
         return []
 
-    ll = dep.run("cd {{deploy_path}}/releases && ls -t -1 -d */").fetch().split("\n")
+    ll = c.run("cd {{deploy_path}}/releases && ls -t -1 -d */").fetch().split("\n")
     ll = list(map(lambda x: x.strip("/"), ll))
 
-    release_items = dep.make("releases_log")
+    release_items = c.cook("releases_log")
 
     releases = []
 
