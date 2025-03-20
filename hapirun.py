@@ -40,18 +40,6 @@ def command_config_show(c: Context):
 
 # Tasks
 
-@app.task(name='composer:install', desc='Install Composer packages')
-def composer_install(c: Context):
-    c.info('composer install')
-
-@app.task(name='npm:install', desc='Install NPM packages')
-def npm_install(c: Context):
-    c.info('npm install')
-
-@app.task(name='npm:build', desc='Build frontend assets')
-def npm_install(c: Context):
-    c.info('npm run build')
-
 
 # Hooks
 
@@ -61,11 +49,11 @@ def npm_install(c: Context):
 #     'npm:build'
 # ])
 
-app.after('deploy:writable', [
-    'composer:install',
-    'npm:install',
-    'npm:build'
-])
+# app.after('deploy:writable', [
+#     'composer:install',
+#     'npm:install',
+#     'npm:build'
+# ])
 
 # app.before('deploy:code', 'composer:install')
 

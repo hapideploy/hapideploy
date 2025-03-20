@@ -1,7 +1,7 @@
 import typing
 
-from hapi.exceptions import ItemNotFound, TaskNotFound
-from hapi.support import Collection
+from ..exceptions import ItemNotFound, TaskNotFound
+from ..support import Collection
 
 
 class Task:

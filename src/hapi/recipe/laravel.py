@@ -1,7 +1,7 @@
-from hapi.recipe.common import CommonProvider
+from .php import PHP
 
 
-class Laravel(CommonProvider):
+class Laravel(PHP):
     def register(self):
         super().register()
 
