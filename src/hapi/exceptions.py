@@ -1,6 +1,9 @@
-from .logic import LogicException
-from .runtime import RuntimeException
-from .stopped import StoppedException
+class RuntimeException(Exception):
+    pass
+
+
+class StoppedException(Exception):
+    pass
 
 
 class InvalidProviderClass(TypeError):

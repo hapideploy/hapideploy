@@ -10,4 +10,4 @@ from .core import (
     Remote,
     Task,
 )
-from .exceptions import LogicException, RuntimeException
+from .exceptions import RuntimeException
