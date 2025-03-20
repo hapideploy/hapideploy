@@ -1,13 +1,12 @@
 import pytest
 
 from hapi.core import Container
-from hapi.exceptions import BindingException, LogicException
 
 
 def test_it_can_get_and_set_instance():
-    deployer = Container()
+    container = Container()
 
-    Container.set_instance(deployer)
+    Container.set_instance(container)
 
     assert Container.get_instance() == Container.get_instance()
 
@@ -69,7 +68,7 @@ def test_it_raises_a_logic_exception_if_adding_values_when_key_not_a_list():
     container.put("name", "James")
 
     with pytest.raises(
-        LogicException, match='The value associated with "name" is not a list.'
+        ValueError, match='The value associated with "name" is not a list.'
     ):
         container.add("name", "John")
 
@@ -113,18 +112,42 @@ def test_it_binds_using_resolve_annotation():
 def test_it_returns_fallback_if_key_does_not_exist():
     container = Container()
 
-    value = container.make("foobar", "Foobar does not exist")
+    value = container.make("message", "message does not exist")
 
-    assert value == "Foobar does not exist"
+    assert value == "message does not exist"
 
 
 def test_it_raises_exception_if_key_does_not_exist():
     container = Container()
 
     with pytest.raises(
-        BindingException, match='The key "repository" is not defined in the container.'
+        ValueError, match='The key "repository" is not defined in the container.'
     ):
         container.make("repository", throw=True)
 
-    with pytest.raises(LogicException, match="message must be a string"):
-        container.make("message", throw=LogicException("message must be a string"))
+    with pytest.raises(ValueError, match="message must be a string"):
+        container.make("message", throw=ValueError("message must be a string"))
+
+
+def test_it_passes_container_to_callback():
+    container = Container()
+
+    def bin_php(c: Container):
+        return c
+
+    container.bind("bin/php", bin_php)
+
+    assert container.make("bin/php") == container
+
+
+def test_it_passes_inject_to_callback():
+    container = Container()
+
+    def bin_php(inject):
+        return inject
+
+    container.bind("bin/php", bin_php)
+
+    exception = Exception()
+
+    assert container.make("bin/php", inject=exception) == exception

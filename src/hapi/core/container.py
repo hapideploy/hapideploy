@@ -1,6 +1,14 @@
 import typing
 
-from ..exceptions import BindingException, LogicException
+
+class Binding:
+    INSTANT = "instant"
+    CALLBACK = "callback"
+
+    def __init__(self, kind: str, value=None, callback: typing.Callable = None):
+        self.kind = kind
+        self.value = value
+        self.callback = callback
 
 
 class Container:
@@ -8,7 +16,6 @@ class Container:
 
     def __init__(self):
         self.__bindings = {}
-        self.__items = {}
 
     @staticmethod
     def set_instance(instance):
@@ -27,7 +34,7 @@ class Container:
         :param str key: The unified key (identifier) in the container.
         :param value: The value is associated with the given key.
         """
-        self.__items[key] = value
+        self.__bindings[key] = Binding(Binding.INSTANT, value)
         return self
 
     def add(self, key: str, value):
@@ -37,17 +44,17 @@ class Container:
         :param str key: The unified key (identifier) in the container.
         :param value: It can be a single value such as int, str or a list.
         """
-        if self.__items.get(key) is None:
-            self.__items[key] = []
+        if self.__bindings.get(key) is None:
+            self.__bindings[key] = Binding(Binding.INSTANT, [])
 
-        if isinstance(self.__items[key], list) is False:
-            raise LogicException(f'The value associated with "{key}" is not a list.')
+        if isinstance(self.__bindings[key].value, list) is False:
+            raise ValueError(f'The value associated with "{key}" is not a list.')
 
         if isinstance(value, list):
             for v in value:
-                self.__items[key].append(v)
+                self.__bindings[key].value.append(v)
         else:
-            self.__items[key].append(value)
+            self.__bindings[key].value.append(value)
 
         return self
 
@@ -55,7 +62,7 @@ class Container:
         """
         Bind a callback to its key in the container.
         """
-        self.__bindings[key] = callback
+        self.__bindings[key] = Binding(Binding.CALLBACK, callback=callback)
         return self
 
     def resolve(self, key: str):
@@ -80,7 +87,7 @@ class Container:
 
         :param str key: The key (identifier) needs to be checked.
         """
-        return key in self.__bindings or key in self.__items
+        return key in self.__bindings
 
     def make(self, key: str, fallback: any = None, throw=None, inject=None):
         """
@@ -96,15 +103,19 @@ class Container:
                 return fallback
 
             if throw is True:
-                raise BindingException.with_key(key)
+                raise ValueError(f'The key "{key}" is not defined in the container.')
 
             if isinstance(throw, Exception):
                 raise throw
 
-            raise LogicException(
-                f"throw must be either None, bool or an instance of Exception."
+            raise ValueError(
+                "throw must be either None, bool or an instance of Exception."
             )
 
-        if key in self.__bindings:
-            return self.__bindings[key](inject if inject else self)
-        return self.__items.get(key)
+        binding = self.__bindings[key]
+
+        return (
+            binding.value
+            if binding.kind == Binding.INSTANT
+            else binding.callback(inject if inject else self)
+        )
