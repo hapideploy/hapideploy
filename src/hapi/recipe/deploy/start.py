@@ -1,13 +1,13 @@
-from ...core import Deployer
+from ...core import Context
 
 
-def deploy_start(dep: Deployer):
+def deploy_start(c: Context):
     release_name = (
-        int(dep.cat("{{deploy_path}}/.dep/latest_release")) + 1
-        if dep.test("[ -f {{deploy_path}}/.dep/latest_release ]")
+        int(c.cat("{{deploy_path}}/.dep/latest_release")) + 1
+        if c.test("[ -f {{deploy_path}}/.dep/latest_release ]")
         else 1
     )
 
-    dep.put("release_name", release_name)
+    c.put("release_name", release_name)
 
-    dep.info("Deploying {{name}} to {{stage}} (release: {{release_name}})")
+    c.info("Deploying {{name}} to {{stage}} (release: {{release_name}})")

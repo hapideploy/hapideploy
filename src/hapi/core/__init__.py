@@ -6,5 +6,6 @@ from .process import (
     Printer,
 )
 from .program import Program, Provider
+from .proxy import Context
 from .remote import Remote
 from .task import Task

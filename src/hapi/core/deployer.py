@@ -3,10 +3,11 @@ import typing
 import typer
 from typing_extensions import Annotated
 
+from ..exceptions import CurrentRemoteNotSet, CurrentTaskNotSet, InvalidHookKind
 from ..log import FileStyle
 from .container import Container
 from .io import InputOutput
-from .proxy import Context, Proxy
+from .proxy import Proxy
 from .remote import Remote
 from .task import Task
 
@@ -61,9 +62,6 @@ class Deployer(Container):
 
         self.__proxy.typer()
 
-    def context(self) -> Context:
-        return self.__proxy.context(True)
-
     def io(self):
         return self.__proxy.io
 
@@ -80,7 +78,7 @@ class Deployer(Container):
         throw = True if "throw" not in kwargs else kwargs.get("throw")
 
         if not self.__proxy.current_remote and throw is True:
-            self.stop("The is no current remote.")
+            raise CurrentRemoteNotSet("The current remote is not set.")
 
         return self.__proxy.current_remote
 
@@ -88,7 +86,7 @@ class Deployer(Container):
         throw = True if "throw" not in kwargs else kwargs.get("throw")
 
         if not self.__proxy.current_task and throw:
-            self.stop("There is no current task.")
+            raise CurrentTaskNotSet("The current task is not set.")
 
         return self.__proxy.current_task
 
@@ -141,57 +139,37 @@ class Deployer(Container):
 
             for remote in self.__proxy.selected:
                 self.__proxy.current_remote = remote
-
                 self.__proxy.context().exec(task)
+                self.__proxy.clear_context()
 
             self.__proxy.current_task = task
 
         return task
 
     def register_group(self, name: str, desc: str, names: list[str]):
-        def func(dep: Deployer):
+        def func(_):
             for task_name in names:
-                task = dep.tasks().find(task_name)
+                task = self.tasks().find(task_name)
                 self.__proxy.current_task = task
                 self.__proxy.context().exec(task)
+                self.__proxy.clear_context()
 
         self.register_task(name, desc, func)
 
         return self
 
-    def register_before(self, name: str, do):
+    def register_hook(self, kind: str, name: str, do):
         task = self.tasks().find(name)
-        task.before = do if isinstance(do, list) else [do]
+
+        if kind == "before":
+            task.before = do if isinstance(do, list) else [do]
+        elif kind == "after":
+            task.after = do if isinstance(do, list) else [do]
+        else:
+            raise InvalidHookKind(
+                f"Invalid hook kind: {kind}. Chose either 'before' or 'after'."
+            )
+
+        task.hook = do
+
         return self
-
-    def register_after(self, name: str, do):
-        task = self.tasks().find(name)
-        task.after = do if isinstance(do, list) else [do]
-        return self
-
-    def check(self, key: str) -> bool:
-        return self.__proxy.context().check(key)
-
-    def cook(self, key: str, fallback=None):
-        return self.__proxy.context().cook(key, fallback)
-
-    def parse(self, text: str) -> str:
-        return self.__proxy.context().parse(text)
-
-    def run(self, command: str, **kwargs):
-        return self.__proxy.context().run(command, **kwargs)
-
-    def test(self, command: str) -> bool:
-        return self.__proxy.context().test(command)
-
-    def cat(self, file: str) -> str:
-        return self.__proxy.context().cat(file)
-
-    def cd(self, cwd: str):
-        self.__proxy.context().cd(cwd)
-
-    def info(self, message: str):
-        self.__proxy.context().info(message)
-
-    def stop(self, message: str):
-        self.__proxy.context().stop(message)

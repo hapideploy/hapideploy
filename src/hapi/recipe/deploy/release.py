@@ -1,25 +1,25 @@
 import json
 
-from ...core import Deployer
+from ...core import Context
 
 
-def deploy_release(dep: Deployer):
-    dep.cd("{{deploy_path}}")
+def deploy_release(c: Context):
+    c.cd("{{deploy_path}}")
 
-    if dep.test("[ -h release ]"):
-        dep.run("rm release")
+    if c.test("[ -h release ]"):
+        c.run("rm release")
 
     # TODO: Is it necessary
-    # releases = dep.cook("releases_list")
-    release_name = dep.cook("release_name")
+    # releases = c.cook("releases_list")
+    release_name = c.cook("release_name")
     release_dir = f"releases/{release_name}"
 
-    if dep.test(f"[ -d {release_dir} ]"):
-        dep.stop(
+    if c.test(f"[ -d {release_dir} ]"):
+        c.stop(
             f'Release name "{release_name}" already exists.\nIt can be overridden via:\n -o release_name={release_name}'
         )
 
-    dep.run("echo {{release_name}} > .dep/latest_release")
+    c.run("echo {{release_name}} > .dep/latest_release")
 
     import time
 
@@ -32,18 +32,18 @@ def deploy_release(dep: Deployer):
         "created_at": timestamp,
         "release_name": str(release_name),
         "user": user,
-        "target": dep.cook("target"),
+        "target": c.cook("target"),
     }
 
     json_data = json.dumps(candidate)
 
-    dep.run(f"echo '{json_data}' >> .dep/releases_log")
+    c.run(f"echo '{json_data}' >> .dep/releases_log")
 
-    dep.run(f"mkdir -p {release_dir}")
+    c.run(f"mkdir -p {release_dir}")
 
-    dep.run("{{bin/symlink}} " + release_dir + " {{deploy_path}}/release")
+    c.run("{{bin/symlink}} " + release_dir + " {{deploy_path}}/release")
 
-    dep.info(
+    c.info(
         "The {{deploy_path}}/"
         + release_dir
         + " is created and symlinked (release: {{release_name}})"
@@ -53,4 +53,4 @@ def deploy_release(dep: Deployer):
     # releases.insert(0, release_name)
 
     # if len(releases) >= 2:
-    #     dep.put("previous_release", "{{deploy_path}}/releases/" + releases[1])
+    #     c.put("previous_release", "{{deploy_path}}/releases/" + releases[1])

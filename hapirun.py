@@ -1,4 +1,4 @@
-from hapi.core import Deployer
+from hapi.core import Context
 
 from hapi.toolbox import app
 
@@ -15,8 +15,8 @@ app.put('stage', 'dev')
 app.put('repository', 'https://github.com/laravel/laravel')
 app.put('branch', '9.x')
 
-app.put('log_style', 'file') # none or buffer
-app.put('log_file', 'hapirun.log')
+# app.put('log_style', 'file') # none or buffer
+# app.put('log_file', 'hapirun.log')
 
 app.add('shared_dirs', [])
 app.add('shared_files', [])
@@ -35,22 +35,22 @@ app.put('writable_group', 'www-data')
 
 # Commands
 @app.command(name='config:show', desc='Show a configuration key')
-def command_config_show(dep: Deployer):
-    dep.io().writeln('Hello World')
+def command_config_show(c: Context):
+    c.io().writeln('Hello World')
 
 # Tasks
 
 @app.task(name='composer:install', desc='Install Composer packages')
-def composer_install(dep: Deployer):
-    dep.info('composer install')
+def composer_install(c: Context):
+    c.info('composer install')
 
 @app.task(name='npm:install', desc='Install NPM packages')
-def npm_install(dep: Deployer):
-    dep.info('npm install')
+def npm_install(c: Context):
+    c.info('npm install')
 
 @app.task(name='npm:build', desc='Build frontend assets')
-def npm_install(dep: Deployer):
-    dep.info('npm run build')
+def npm_install(c: Context):
+    c.info('npm run build')
 
 
 # Hooks

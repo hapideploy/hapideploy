@@ -1,5 +1,5 @@
-from ...core import Deployer
+from ...core import Context
 
 
-def deploy_success(dep: Deployer):
-    dep.info("Successfully deployed!")
+def deploy_success(c: Context):
+    c.info("Successfully deployed!")

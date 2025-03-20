@@ -39,3 +39,15 @@ class ParsingRecurredKey(Exception):
     @staticmethod
     def with_key(key: str):
         return ParsingRecurredKey(f"The key [{key}] is a recurred key when parsing.")
+
+
+class CurrentRemoteNotSet(RuntimeException):
+    pass
+
+
+class CurrentTaskNotSet(RuntimeException):
+    pass
+
+
+class InvalidHookKind(RuntimeException):
+    pass

@@ -1,19 +1,15 @@
-from ..core import Deployer
+from ..core import Context
 
 
-def bin_git(_: Deployer):
+def bin_git(_: Context):
     return "/usr/bin/git"
 
 
-def bin_symlink(dep: Deployer):
-    c = dep.context()
-
+def bin_symlink(c: Context):
     return "ln -nfs --relative" if c.cook("use_relative_symlink") is True else "ln -nfs"
 
 
-def target(dep: Deployer):
-    c = dep.context()
-
+def target(c: Context):
     branch = c.cook("branch")
     if branch:
         return branch
@@ -23,9 +19,7 @@ def target(dep: Deployer):
     return "HEAD"
 
 
-def release_path(dep: Deployer):
-    c = dep.context()
-
+def release_path(c: Context):
     if c.test("[ -h {{deploy_path}}/release ]"):
         link = c.run("readlink {{deploy_path}}/release").fetch()
         return link if link[0] == "/" else c.parse("{{deploy_path}}" + "/" + link)
@@ -33,9 +27,7 @@ def release_path(dep: Deployer):
     c.stop('The "release_path" ({{deploy_path}}/release) does not exist.')
 
 
-def releases_log(dep: Deployer):
-    c = dep.context()
-
+def releases_log(c: Context):
     import json
 
     if c.test("[ -f {{deploy_path}}/.dep/releases_log ]") is False:
@@ -48,9 +40,7 @@ def releases_log(dep: Deployer):
     return releases
 
 
-def releases_list(dep: Deployer):
-    c = dep.context()
-
+def releases_list(c: Context):
     if (
         c.test(
             '[ -d {{deploy_path}}/releases ] && [ "$(ls -A {{deploy_path}}/releases)" ]'

@@ -1,9 +1,9 @@
-from ...core import Deployer
+from ...core import Context
 
 
-def deploy_env(dep: Deployer):
-    dep.cd("{{release_path}}")
+def deploy_env(c: Context):
+    c.cd("{{release_path}}")
 
-    if dep.test("[ ! -e .env ] && [ -f {{dotenv_example}} ]"):
-        dep.run("cp {{dotenv_example}} .env")
-        dep.info(".env is created")
+    if c.test("[ ! -e .env ] && [ -f {{dotenv_example}} ]"):
+        c.run("cp {{dotenv_example}} .env")
+        c.info(".env is created")

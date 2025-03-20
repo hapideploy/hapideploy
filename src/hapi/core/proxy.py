@@ -7,7 +7,7 @@ from ..exceptions import ParsingRecurredKey, StoppedException
 from ..log import NoneStyle
 from ..support import env_stringify, extract_curly_braces
 from .container import Container
-from .io import ConsoleInputOutput
+from .io import ConsoleInputOutput, InputOutput
 from .process import CommandResult, Printer
 from .remote import Remote, RemoteBag
 from .task import Task, TaskBag
@@ -37,10 +37,28 @@ class Context:
         self.__cwd = []
         self.__parsing_stack = {}
 
+    def io(self) -> InputOutput:
+        return self.printer.io
+
     def exec(self, task: Task):
         self._before_exec(task)
-        task.func(self.container)
+        task.func(self._clone())
         self._after_exec(task)
+
+    def check(self, key: str) -> bool:
+        return True if self.remote.has(key) else self.container.has(key)
+
+    def cook(self, key: str, fallback=None):
+        if self.remote.has(key):
+            return self.remote.make(key, fallback, throw=True)
+
+        if self.container.has(key):
+            return self.container.make(key, fallback, throw=True, inject=self._clone())
+
+        return fallback
+
+    def put(self, key: str, value):
+        self.container.put(key, value)
 
     def parse(self, text: str) -> str:
         remote = self.remote
@@ -56,7 +74,10 @@ class Context:
                 if key in self.__parsing_stack:
                     del self.__parsing_stack[key]
             elif self.container.has(key):
-                text = text.replace("{{" + key + "}}", str(self.container.make(key)))
+                text = text.replace(
+                    "{{" + key + "}}",
+                    str(self.container.make(key, inject=self._clone())),
+                )
                 if key in self.__parsing_stack:
                     del self.__parsing_stack[key]
             elif key in self.__parsing_stack:
@@ -66,36 +87,11 @@ class Context:
 
         return self.parse(text)
 
-    # TODO: Remove
-    def exec_tasks(self, names: list[str]):
-        if len(names) == 0:
-            return
-        for name in names:
-            task = self.tasks.find(name)
-            self.exec(task)
-
-    # TODO: Remove
-    def parse_command(self, command: str, **kwargs):
-        cwd = " && cd ".join(self.__cwd)
-
-        if cwd.strip() != "":
-            command = f"cd {cwd} && ({command.strip()})"
-        else:
-            command = command.strip()
-
-        command = self.parse(command)
-
-        return command
-
     def run(self, command: str, **kwargs):
-        command = self.parse_command(command, **kwargs)
+        command = self._parse_command(command)
 
         self._before_run(command, **kwargs)
-
-        self.printer.print_command(self.remote, command)
-
         res = self._do_run(command, **kwargs)
-
         self._after_run(command, **kwargs)
 
         return res
@@ -158,33 +154,43 @@ class Context:
 
         return res
 
+    def _clone(self):
+        return Context(self.container, self.remote, self.tasks, self.printer)
+
+    def _exec_tasks_by_name(self, names: list[str]):
+        if len(names) == 0:
+            return
+        for name in names:
+            task = self.tasks.find(name)
+            self.exec(task)
+
+    def _parse_command(self, command: str):
+        cwd = " && cd ".join(self.__cwd)
+
+        if cwd.strip() != "":
+            command = f"cd {cwd} && ({command.strip()})"
+        else:
+            command = command.strip()
+
+        command = self.parse(command)
+
+        return command
+
     def _before_exec(self, task: Task):
         self.printer.print_task(self.remote, task)
 
-        self.exec_tasks(task.before)
+        self._exec_tasks_by_name(task.before)
 
     def _after_exec(self, task: Task):
         self.__cwd = []
 
-        self.exec_tasks(task.after)
+        self._exec_tasks_by_name(task.after)
 
     def _before_run(self, command: str, **kwargs):
-        pass
+        self.printer.print_command(self.remote, command)
 
     def _after_run(self, command: str, **kwargs):
         pass
-
-    def check(self, key: str) -> bool:
-        return True if self.remote.has(key) else self.container.has(key)
-
-    def cook(self, key: str, fallback=None):
-        if self.remote.has(key):
-            return self.remote.make(key, fallback, throw=True)
-
-        if self.container.has(key):
-            return self.container.make(key, fallback, throw=True)
-
-        return fallback
 
 
 class Proxy:
@@ -226,3 +232,6 @@ class Proxy:
             )
 
         return self.__context
+
+    def clear_context(self):
+        self.__context = None

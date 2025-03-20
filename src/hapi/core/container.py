@@ -1,7 +1,6 @@
 import typing
 
 from ..exceptions import BindingException, LogicException
-from ..support import extract_curly_braces
 
 
 class Container:
@@ -83,13 +82,14 @@ class Container:
         """
         return key in self.__bindings or key in self.__items
 
-    def make(self, key: str, fallback: any = None, throw=None):
+    def make(self, key: str, fallback: any = None, throw=None, inject=None):
         """
         Resolve an item from the container.
 
         :param str key: The key (identifier) needs to be resolved.
         :param any fallback: This will be returned if key does not exist.
         :param bool|Exception throw: Determine if it should raise an exception if key does not exist.
+        :param any inject: The value to be injected into the callback.
         """
         if not self.has(key):
             if throw is None or throw is False:
@@ -106,5 +106,5 @@ class Container:
             )
 
         if key in self.__bindings:
-            return self.__bindings[key](self)
+            return self.__bindings[key](inject if inject else self)
         return self.__items.get(key)

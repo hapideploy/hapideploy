@@ -1,41 +1,41 @@
-from ...core import Deployer
+from ...core import Context
 
 
-def deploy_writable(dep: Deployer):
-    dirs = " ".join(dep.cook("writable_dirs", []))
+def deploy_writable(c: Context):
+    dirs = " ".join(c.cook("writable_dirs", []))
 
     if dirs.strip() == "":
         return
 
     if dirs.find(" /") != -1:
-        dep.stop("Absolute path not allowed in config parameter `writable_dirs`.")
+        c.stop("Absolute path not allowed in config parameter `writable_dirs`.")
 
-    dep.cd("{{release_path}}")
+    c.cd("{{release_path}}")
 
-    dep.run(f"mkdir -p {dirs}")
+    c.run(f"mkdir -p {dirs}")
 
-    mode = dep.cook("writable_mode")  # chown, chgrp or chmod
-    recursive = "-R" if dep.cook("writable_recursive") is True else ""
-    sudo = "sudo" if dep.cook("writable_use_sudo") is True else ""
+    mode = c.cook("writable_mode")  # chown, chgrp or chmod
+    recursive = "-R" if c.cook("writable_recursive") is True else ""
+    sudo = "sudo" if c.cook("writable_use_sudo") is True else ""
 
     if mode == "user":
-        user = dep.cook("writable_user", "www-data")
-        dep.run(f"{sudo} chown -L {recursive} {user} {dirs}")
-        dep.run(f"{sudo} chmod {recursive} u+rwx {dirs}")
+        user = c.cook("writable_user", "www-data")
+        c.run(f"{sudo} chown -L {recursive} {user} {dirs}")
+        c.run(f"{sudo} chmod {recursive} u+rwx {dirs}")
     elif mode == "group":
-        group = dep.cook("writable_group", "www-data")
-        dep.run(f"{sudo} chgrp -L {recursive} {group} {dirs}")
-        dep.run(f"{sudo} chmod {recursive} g+rwx {dirs}")
+        group = c.cook("writable_group", "www-data")
+        c.run(f"{sudo} chgrp -L {recursive} {group} {dirs}")
+        c.run(f"{sudo} chmod {recursive} g+rwx {dirs}")
     elif mode == "user:group":
-        user = dep.cook("writable_user", "www-data")
-        group = dep.cook("writable_group", "www-data")
-        dep.run(f"{sudo} chown -L {recursive} {user}:{group} {dirs}")
-        dep.run(f"{sudo} chmod {recursive} u+rwx {dirs}")
-        dep.run(f"{sudo} chmod {recursive} g+rwx {dirs}")
+        user = c.cook("writable_user", "www-data")
+        group = c.cook("writable_group", "www-data")
+        c.run(f"{sudo} chown -L {recursive} {user}:{group} {dirs}")
+        c.run(f"{sudo} chmod {recursive} u+rwx {dirs}")
+        c.run(f"{sudo} chmod {recursive} g+rwx {dirs}")
     elif mode == "chmod":
-        chmod_mode = dep.cook("writable_chmod_mode", "0775")
-        dep.run(f"{sudo} chmod {recursive} {chmod_mode} {dirs}")
+        chmod_mode = c.cook("writable_chmod_mode", "0775")
+        c.run(f"{sudo} chmod {recursive} {chmod_mode} {dirs}")
     else:
-        dep.stop(f"Unsupported [writable_mode]: {mode}")
+        c.stop(f"Unsupported [writable_mode]: {mode}")
 
-    dep.info("Make directories and files writable")
+    c.info("Make directories and files writable")

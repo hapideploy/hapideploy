@@ -14,10 +14,10 @@ class Program(Deployer):
 
         self.__discovered = []
 
-        self.add_about_command()
+        self.command_about()
         self.command_task_list()
 
-    def add_about_command(self):
+    def command_about(self):
         def about(_):
             print(f"HapiDeploy {__version__}")
 
@@ -84,10 +84,10 @@ class Program(Deployer):
         return self.register_group(name, desc, do)
 
     def before(self, name: str, do):
-        return super().register_before(name, do)
+        return super().register_hook("before", name, do)
 
     def after(self, name: str, do):
-        return super().register_after(name, do)
+        return super().register_hook("after", name, do)
 
     def resolve(self, key: str):
         return super().resolve(key)
