@@ -7,8 +7,7 @@ from ..exceptions import ParsingRecurredKey, StoppedException
 from ..log import NoneStyle
 from ..support import env_stringify, extract_curly_braces
 from .container import Container
-from .io import ConsoleInputOutput, InputOutput
-from .process import CommandResult, Printer
+from .io import ConsoleInputOutput, InputOutput, Printer
 from .remote import Remote, RemoteBag
 from .task import Task, TaskBag
 
@@ -235,3 +234,23 @@ class Proxy:
 
     def clear_context(self):
         self.__context = None
+
+
+from fabric import Result
+
+
+class CommandResult:
+    def __init__(self, origin: Result = None):
+        self.origin = origin
+
+        self.fetched = False
+
+        self.__output = None
+
+    def fetch(self) -> str:
+        if self.fetched:
+            return ""
+
+        self.fetched = True
+
+        return self.origin.stdout.strip()

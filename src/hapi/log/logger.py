@@ -1,12 +1,8 @@
 class Logger:
-    def __init__(self):
-        pass
-
-    def info(self, message: str, context: dict = None):
-        self.write(level="INFO", message=message, context=context)
+    LEVEL_DEBUG = "DEBUG"
 
     def debug(self, message: str, context: dict = None):
-        self.write(level="DEBUG", message=message, context=context)
+        self.write(level=Logger.LEVEL_DEBUG, message=message, context=context)
 
     def write(self, level: str, message: str, context: dict = None):
-        pass
+        raise NotImplemented

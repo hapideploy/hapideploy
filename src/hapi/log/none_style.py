@@ -2,4 +2,5 @@ from .logger import Logger
 
 
 class NoneStyle(Logger):
-    pass
+    def write(self, level: str, message: str, context: dict = None):
+        pass

@@ -1,8 +1,15 @@
 import pytest
 
-from hapi import CommandResult
-from hapi.core import Deployer, Printer, Remote
-from hapi.core.proxy import Context
+from hapi import Container
+from hapi.core import (
+    ArrayInputOutput,
+    CommandResult,
+    Context,
+    Printer,
+    Remote,
+)
+from hapi.core.task import TaskBag
+from hapi.log import NoneStyle
 
 
 class DummyResult(CommandResult):
@@ -20,11 +27,11 @@ class DummyContext(Context):
 
 
 def create_context() -> DummyContext:
-    container = Deployer()
+    container = Container()
 
     container.put("stage", "testing")
 
-    printer = Printer(container.io(), container.log())
+    printer = Printer(ArrayInputOutput(), NoneStyle())
 
     remote = Remote(
         host="127.0.0.1",
@@ -32,7 +39,7 @@ def create_context() -> DummyContext:
         user="vagrant",
     ).put("deploy_path", "~/deploy/{{stage}}")
 
-    context = DummyContext(container, remote, container.tasks(), printer)
+    context = DummyContext(container, remote, TaskBag(), printer)
 
     return context
 
