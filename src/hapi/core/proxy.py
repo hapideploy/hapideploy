@@ -104,6 +104,9 @@ class Context:
     def cat(self, file: str, **kwargs):
         return self.run(f"cat {file}", **kwargs).fetch()
 
+    def which(self, command: str, **kwargs):
+        return self.run(f"which {command}", **kwargs).fetch()
+
     def cd(self, cwd: str):
         self.__cwd.append(cwd)
         return self.remote.put("cwd", self.parse(cwd))

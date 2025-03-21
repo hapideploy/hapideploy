@@ -1,12 +1,4 @@
 from ..core import Provider
-from .binding import (
-    bin_git,
-    bin_symlink,
-    release_path,
-    releases_list,
-    releases_log,
-    target,
-)
 from .deploy import (
     deploy_clean,
     deploy_code,
@@ -20,6 +12,14 @@ from .deploy import (
     deploy_symlink,
     deploy_unlock,
     deploy_writable,
+)
+from .functions import (
+    bin_git,
+    bin_symlink,
+    release_path,
+    releases_list,
+    releases_log,
+    target,
 )
 
 
