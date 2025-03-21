@@ -82,6 +82,14 @@ def test_context_cat_method():
     assert context.container.make("run") == ["cat ~/deploy/testing/.dep/latest_release"]
 
 
+def test_context_which_method():
+    context = create_context()
+
+    context.which("php")
+
+    assert context.container.make("run") == ["which php"]
+
+
 def test_context_remote_cwd():
     context = create_context()
 

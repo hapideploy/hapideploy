@@ -1,8 +1,8 @@
 from ..core import Context
 
 
-def bin_git(_: Context):
-    return "/usr/bin/git"
+def bin_git(c: Context):
+    return c.which("git")
 
 
 def bin_symlink(c: Context):

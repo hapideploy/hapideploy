@@ -13,10 +13,10 @@ app.load(Laravel)
 app.put('name', 'Laravel')
 app.put('stage', 'dev')
 app.put('repository', 'https://github.com/laravel/laravel')
-app.put('branch', '9.x')
+app.put('branch', '12.x')
 
 # app.put('log_style', 'file') # none or buffer
-# app.put('log_file', 'hapirun.log')
+app.put('log_file', 'hapirun.log')
 
 app.add('shared_dirs', [])
 app.add('shared_files', [])
