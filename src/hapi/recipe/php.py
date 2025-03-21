@@ -21,6 +21,14 @@ def composer_install(c: Context):
     c.run("cd {{release_path}} && {{bin/composer}} install " + options)
 
 
+def fpm_reload(c: Context):
+    c.run("sudo systemctl reload php{{php_version}}-fpm")
+
+
+def fpm_restart(c: Context):
+    c.run("sudo systemctl restart php{{php_version}}-fpm")
+
+
 class PHP(CommonProvider):
     def register(self):
         super().register()
@@ -30,6 +38,8 @@ class PHP(CommonProvider):
 
         items = [
             ("composer:install", "Install Composer dependencies", composer_install),
+            ("fpm:reload", "Reload PHP-FPM", fpm_reload),
+            ("fpm:restart", "Restart PHP-FPM", fpm_restart),
         ]
 
         for item in items:

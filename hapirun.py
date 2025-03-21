@@ -33,10 +33,6 @@ app.put('writable_group', 'www-data')
 # app.put('writable_user', 'vagrant')
 # app.put('writable_group', 'vagrant')
 
-# Commands
-@app.command(name='config:show', desc='Show a configuration key')
-def command_config_show(c: Context):
-    c.io().writeln('Hello World')
 
 # Tasks
 
