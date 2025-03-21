@@ -10,6 +10,7 @@ class Task:
         self.desc = desc
         self.func = func
 
+        self.children = []
         self.before = []
         self.after = []
 

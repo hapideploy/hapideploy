@@ -3,7 +3,6 @@ import typing
 
 import yaml
 
-from ..__version import __version__
 from ..exceptions import InvalidHostsDefinition, InvalidProviderClass
 from .deployer import Deployer
 
@@ -13,24 +12,6 @@ class Program(Deployer):
         super().__init__()
 
         self.__discovered = []
-
-        self.command_about()
-        self.command_task_list()
-
-    def command_about(self):
-        def about(_):
-            print(f"HapiDeploy {__version__}")
-
-        self.register_command("about", "Display this program information", about)
-
-    def command_task_list(self):
-        def task_list(dep: Deployer):
-            tasks = dep.tasks().all()
-
-            for task in tasks:
-                dep.io().writeln(f"<primary>{task.name}</primary>  {task.desc}")
-
-        self.register_command("task:list", "List tasks", task_list)
 
     def start(self):
         inventory_file = os.getcwd() + "/inventory.yml"

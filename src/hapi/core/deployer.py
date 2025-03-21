@@ -3,6 +3,7 @@ import typing
 import typer
 from typing_extensions import Annotated
 
+from ..__version import __version__
 from ..exceptions import CurrentRemoteNotSet, CurrentTaskNotSet, InvalidHookKind
 from ..log import FileStyle
 from .container import Container
@@ -10,6 +11,69 @@ from .io import InputOutput
 from .proxy import Proxy
 from .remote import Remote
 from .task import Task
+
+
+class TreeCommand:
+    def __init__(self, deployer, task_name: str):
+        self.__deployer = deployer
+        self.__tasks = deployer.tasks()
+        self.__io = deployer.io()
+        self.__task_name = task_name
+
+        self.__tree = []
+        self.__depth = 1
+
+    def __call__(self):
+        self._build_tree()
+
+        self._print_tree()
+
+    def _build_tree(self):
+        self._create_tree_from_task_name(self.__task_name)
+
+    def _create_tree_from_task_name(self, task_name: str, postfix: str = ""):
+        task = self.__tasks.find(task_name)
+
+        if task.before:
+            for before_task in task.before:
+                self._create_tree_from_task_name(
+                    before_task, postfix="// before {}".format(task_name)
+                )
+
+        self.__tree.append(
+            dict(
+                task_name=task.name,
+                depth=self.__depth,
+                postfix=postfix,
+            )
+        )
+
+        if task.children:
+            self.__depth += 1
+
+            for child in task.children:
+                self._create_tree_from_task_name(child, "")
+
+            self.__depth -= 1
+
+        if task.after:
+            for after_task in task.after:
+                self._create_tree_from_task_name(
+                    after_task, postfix="// after {}".format(task_name)
+                )
+
+    def _print_tree(self):
+        self.__io.writeln("The task-tree for <success>deploy</success>:")
+
+        for item in self.__tree:
+            self.__io.writeln(
+                "└"
+                + ("──" * item["depth"])
+                + "> "
+                + item["task_name"]
+                + " "
+                + item["postfix"]
+            )
 
 
 class Deployer(Container):
@@ -60,6 +124,11 @@ class Deployer(Container):
 
         self.__proxy.started = True
 
+        self._add_builtin_commands()
+
+        for task in self.tasks().all():
+            self._add_command_for(task)
+
         self.__proxy.typer()
 
     def io(self):
@@ -105,7 +174,49 @@ class Deployer(Container):
 
         self.tasks().add(task)
 
-        @self.__proxy.typer.command(name=name, help=desc)
+        return task
+
+    def register_group(self, name: str, desc: str, names: list[str]):
+        def func(_):
+            for task_name in names:
+                task = self.tasks().find(task_name)
+                self.__proxy.current_task = task
+                self.__proxy.context().exec(task)
+                self.__proxy.clear_context()
+
+        self.register_task(name, desc, func).children = names
+
+        return self
+
+    def register_hook(self, kind: str, name: str, do):
+        task = self.tasks().find(name)
+
+        if kind == "before":
+            task.before = do if isinstance(do, list) else [do]
+        elif kind == "after":
+            task.after = do if isinstance(do, list) else [do]
+        else:
+            raise InvalidHookKind(
+                f"Invalid hook kind: {kind}. Chose either 'before' or 'after'."
+            )
+
+        task.hook = do
+
+        return self
+
+    def _add_builtin_commands(self):
+        @self.__proxy.typer.command(name="about", help="Display the Hapi CLI version")
+        def about():
+            print(f"Hapi {__version__}")
+
+        @self.__proxy.typer.command(
+            name="tree", help="Display the task-tree for a given task"
+        )
+        def tree(task: str = typer.Argument(help="Task to display the tree for")):
+            TreeCommand(self, task)()
+
+    def _add_command_for(self, task: Task):
+        @self.__proxy.typer.command(name=task.name, help="[task] " + task.desc)
         def task_handler(
             selector: str = typer.Argument(default=InputOutput.SELECTOR_ALL),
             stage: Annotated[
@@ -143,33 +254,3 @@ class Deployer(Container):
                 self.__proxy.clear_context()
 
             self.__proxy.current_task = task
-
-        return task
-
-    def register_group(self, name: str, desc: str, names: list[str]):
-        def func(_):
-            for task_name in names:
-                task = self.tasks().find(task_name)
-                self.__proxy.current_task = task
-                self.__proxy.context().exec(task)
-                self.__proxy.clear_context()
-
-        self.register_task(name, desc, func)
-
-        return self
-
-    def register_hook(self, kind: str, name: str, do):
-        task = self.tasks().find(name)
-
-        if kind == "before":
-            task.before = do if isinstance(do, list) else [do]
-        elif kind == "after":
-            task.after = do if isinstance(do, list) else [do]
-        else:
-            raise InvalidHookKind(
-                f"Invalid hook kind: {kind}. Chose either 'before' or 'after'."
-            )
-
-        task.hook = do
-
-        return self
