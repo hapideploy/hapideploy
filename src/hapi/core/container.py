@@ -76,10 +76,10 @@ class Container:
         :param str key: The unified key (identifier) in the container.
         """
 
-        def caller(func: typing.Callable):
+        def wrapper(func: typing.Callable):
             self.bind(key, func)
 
-        return caller
+        return wrapper
 
     def has(self, key: str) -> bool:
         """

@@ -23,7 +23,7 @@ from .functions import (
 )
 
 
-class CommonProvider(Provider):
+class Common(Provider):
     def register(self):
         self.app.put("dotenv_example", ".env.example")
         self.app.put("current_path", "{{deploy_path}}/current")

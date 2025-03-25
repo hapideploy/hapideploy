@@ -1,11 +1,12 @@
 import random
 
+from fabric import Result
 from invoke import StreamWatcher
 from typer import Typer
 
 from ..exceptions import KeyNotFound, StoppedException
 from ..log import NoneStyle
-from ..support import env_stringify, extract_curly_braces
+from ..support import env_stringify, extract_curly_brackets
 from .container import Container
 from .io import ConsoleInputOutput, InputOutput, Printer
 from .remote import Remote, RemoteBag
@@ -60,7 +61,7 @@ class Context:
         self.container.put(key, value)
 
     def parse(self, text: str) -> str:
-        keys = extract_curly_braces(text)
+        keys = extract_curly_brackets(text)
 
         if len(keys) == 0:
             return text
@@ -229,9 +230,6 @@ class Proxy:
 
     def clear_context(self):
         self.__context = None
-
-
-from fabric import Result
 
 
 class CommandResult:

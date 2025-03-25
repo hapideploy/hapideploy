@@ -1,5 +1,5 @@
 from ..core import Context
-from .common import CommonProvider
+from .common import Common
 
 
 def bin_php(c: Context):
@@ -29,7 +29,7 @@ def fpm_restart(c: Context):
     c.run("sudo systemctl restart php{{php_version}}-fpm")
 
 
-class PHP(CommonProvider):
+class PHP(Common):
     def register(self):
         super().register()
 

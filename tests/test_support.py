@@ -1,7 +1,7 @@
 import pytest
 
 from hapi.exceptions import ItemNotFound
-from hapi.support import Collection, env_stringify, extract_curly_braces
+from hapi.support import Collection, env_stringify, extract_curly_brackets
 
 
 class Person:
@@ -30,8 +30,8 @@ def test_env_stringify_function():
     )
 
 
-def test_extract_curly_braces():
-    keys = extract_curly_braces("cd {{release_path}} && {{bin/npm}} run install")
+def test_extract_curly_brackets():
+    keys = extract_curly_brackets("cd {{release_path}} && {{bin/npm}} run install")
 
     assert keys == ["release_path", "bin/npm"]
 

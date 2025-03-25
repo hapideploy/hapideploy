@@ -74,29 +74,16 @@ class Program(Deployer):
         return super().resolve(key)
 
     def command(self, name: str, desc: str):
-        def caller(func: typing.Callable):
+        def wrapper(func: typing.Callable):
             self.register_command(name, desc, func)
 
-        return caller
+        return wrapper
 
     def task(self, name: str, desc: str):
-        def caller(func: typing.Callable):
+        def wrapper(func: typing.Callable):
             self.register_task(name, desc, func)
 
-            def wrapper(*args, **kwargs):
-                # Do something before the function call
-                print("Before the function call")
-
-                # Call the original function
-                result = func(*args, **kwargs)
-
-                # Do something after the function call
-                print("After the function call")
-                return result
-
-            return wrapper
-
-        return caller
+        return wrapper
 
 
 class Provider:

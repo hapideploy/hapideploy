@@ -1,12 +1,8 @@
-class RuntimeException(Exception):
-    pass
-
-
 class StoppedException(Exception):
     pass
 
 
-class KeyNotFound(RuntimeException):
+class KeyNotFound(ValueError):
     pass
 
 
@@ -14,11 +10,11 @@ class InvalidProviderClass(TypeError):
     pass
 
 
-class InvalidHostsDefinition(Exception):
+class InvalidHostsDefinition(ValueError):
     pass
 
 
-class ItemNotFound(Exception):
+class ItemNotFound(ValueError):
     pass
 
 
@@ -36,24 +32,15 @@ class TaskNotFound(ItemNotFound):
 
 class RemoteNotFound(ItemNotFound):
     pass
-    # @staticmethod
-    # def with_name(name: str):
-    #     return TaskNotFound(f'Remote {key} is not found.')
 
 
-class ParsingRecurredKey(Exception):
-    @staticmethod
-    def with_key(key: str):
-        return ParsingRecurredKey(f"The key [{key}] is a recurred key when parsing.")
-
-
-class CurrentRemoteNotSet(RuntimeException):
+class CurrentRemoteNotSet(ValueError):
     pass
 
 
-class CurrentTaskNotSet(RuntimeException):
+class CurrentTaskNotSet(ValueError):
     pass
 
 
-class InvalidHookKind(RuntimeException):
+class InvalidHookKind(ValueError):
     pass

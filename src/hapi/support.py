@@ -12,7 +12,7 @@ def env_stringify(env: dict) -> str:
     return " ".join(items)
 
 
-def extract_curly_braces(text):
+def extract_curly_brackets(text):
     pattern = r"\{\{([^}]*)\}\}"
     matches = re.findall(pattern, text)
     return matches
