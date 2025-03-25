@@ -6,6 +6,10 @@ class StoppedException(Exception):
     pass
 
 
+class KeyNotFound(RuntimeException):
+    pass
+
+
 class InvalidProviderClass(TypeError):
     pass
 

@@ -3,7 +3,7 @@ import random
 from invoke import StreamWatcher
 from typer import Typer
 
-from ..exceptions import ParsingRecurredKey, StoppedException
+from ..exceptions import KeyNotFound, StoppedException
 from ..log import NoneStyle
 from ..support import env_stringify, extract_curly_braces
 from .container import Container
@@ -60,29 +60,21 @@ class Context:
         self.container.put(key, value)
 
     def parse(self, text: str) -> str:
-        remote = self.remote
-
         keys = extract_curly_braces(text)
 
         if len(keys) == 0:
             return text
 
         for key in keys:
-            if remote and remote.has(key):
-                text = text.replace("{{" + key + "}}", remote.make(key))
-                if key in self.__parsing_stack:
-                    del self.__parsing_stack[key]
+            if self.remote.has(key):
+                text = text.replace("{{" + key + "}}", self.remote.make(key))
             elif self.container.has(key):
                 text = text.replace(
                     "{{" + key + "}}",
                     str(self.container.make(key, inject=self._clone())),
                 )
-                if key in self.__parsing_stack:
-                    del self.__parsing_stack[key]
-            elif key in self.__parsing_stack:
-                raise ParsingRecurredKey.with_key(key)
             else:
-                self.__parsing_stack[key] = True
+                raise KeyNotFound("Key not found: " + key)
 
         return self.parse(text)
 

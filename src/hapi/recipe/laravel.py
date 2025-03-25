@@ -1,5 +1,15 @@
+from ..core import Context
 from .npm import bin_npm, npm_build, npm_install
 from .php import PHP
+
+
+def artisan(command: str):
+    def caller(c: Context):
+        bin_php = c.cook("bin/php")
+        artisan_file = "{{release_path}}/artisan"
+        c.run(f"{bin_php} {artisan_file} {command}")
+
+    return caller
 
 
 class Laravel(PHP):
@@ -30,6 +40,23 @@ class Laravel(PHP):
 
         self.app.bind("bin/npm", bin_npm)
 
+        self.app.register_task(
+            "artisan:storage:link",
+            "Create the symbolic links",
+            artisan("storage:link --force"),
+        )
+        self.app.register_task(
+            "artisan:optimize",
+            "Optimize application configuration",
+            artisan("optimize"),
+        )
+        self.app.register_task(
+            "artisan:migrate", "Run database migrations", artisan("migrate --force")
+        )
+        self.app.register_task(
+            "artisan:db:seed", "Seed the database", artisan("migrate --force")
+        )
+
         self.app.register_task("npm:install", "Install NPM packages", npm_install)
         self.app.register_task("npm:build", "Execute NPM build script", npm_build)
 
@@ -39,5 +66,9 @@ class Laravel(PHP):
             [
                 "npm:install",
                 "npm:build",
+                "artisan:storage:link",
+                "artisan:optimize",
+                "artisan:migrate",
+                "artisan:db:seed",
             ],
         )

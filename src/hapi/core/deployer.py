@@ -101,8 +101,11 @@ class Deployer(Container):
         elif kwargs.get("debug"):
             verbosity = InputOutput.DEBUG
 
-        self.__proxy.io.selector = kwargs.get("selector")
-        self.__proxy.io.stage = kwargs.get("stage")
+        selector = kwargs.get("selector")
+        stage = kwargs.get("stage")
+
+        self.__proxy.io.selector = selector
+        self.__proxy.io.stage = stage
         self.__proxy.io.verbosity = verbosity
 
         if self.has("log_file"):
@@ -113,7 +116,16 @@ class Deployer(Container):
             or remote.label == self.__proxy.io.selector
         )
 
-        self.put("stage", self.__proxy.io.stage)
+        self.put("stage", stage)
+
+        opts_str = kwargs.get("options")
+        if opts_str:
+            opts_items = opts_str.split(",")
+            options = dict()
+            for opt_item in opts_items:
+                opt_key, opt_val = opt_item.split("=")
+                options[opt_key] = opt_val
+                self.put(opt_key, opt_val)
 
     def started(self) -> bool:
         return self.__proxy.started
@@ -222,6 +234,7 @@ class Deployer(Container):
             stage: Annotated[
                 str, typer.Option(help="The deployment stage")
             ] = InputOutput.STAGE_DEV,
+            options: Annotated[str, typer.Option(help="Task options")] = None,
             quiet: Annotated[
                 bool, typer.Option(help="Do not print any output messages (level: 0)")
             ] = False,
@@ -240,6 +253,7 @@ class Deployer(Container):
                 self.prepare(
                     selector=selector,
                     stage=stage,
+                    options=options,
                     quiet=quiet,
                     normal=normal,
                     detail=detail,

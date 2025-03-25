@@ -7,7 +7,7 @@ readme = "README.md"
 packages = [{include = "hapi", from = "src"}]
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = "^3.13"
 typer = "^0.15.2"
 fabric = "^3.2.2"
 typing-extensions = "^4.12.2"

@@ -47,3 +47,4 @@ class PHP(CommonProvider):
             self.app.register_task(name, desc, func)
 
         self.app.register_hook("after", "deploy:writable", "composer:install")
+        self.app.register_hook("after", "deploy:symlink", "fpm:restart")

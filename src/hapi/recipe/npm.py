@@ -4,7 +4,7 @@ from ..core import Context
 def bin_npm(c: Context):
     node_version = c.cook("node_version")
 
-    return f'PATH="/home/vagrant/.nvm/versions/node/v{node_version}/bin:$PATH" npm'
+    return f'export PATH="$HOME/.nvm/versions/node/v{node_version}/bin:$PATH"; npm'
 
 
 def npm_install(c: Context):
