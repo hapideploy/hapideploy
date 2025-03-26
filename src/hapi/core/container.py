@@ -119,3 +119,6 @@ class Container:
             if binding.kind == Binding.INSTANT
             else binding.callback(inject if inject else self)
         )
+
+    def all(self) -> dict:
+        return self.__bindings

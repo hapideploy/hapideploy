@@ -6,74 +6,12 @@ from typing_extensions import Annotated
 from ..__version import __version__
 from ..exceptions import CurrentRemoteNotSet, CurrentTaskNotSet, InvalidHookKind
 from ..log import FileStyle
+from .commands import ConfigListCommand, ConfigShowCommand, TreeCommand
 from .container import Container
 from .io import InputOutput
 from .proxy import Proxy
 from .remote import Remote
 from .task import Task
-
-
-class TreeCommand:
-    def __init__(self, deployer, task_name: str):
-        self.__deployer = deployer
-        self.__tasks = deployer.tasks()
-        self.__io = deployer.io()
-        self.__task_name = task_name
-
-        self.__tree = []
-        self.__depth = 1
-
-    def __call__(self):
-        self._build_tree()
-
-        self._print_tree()
-
-    def _build_tree(self):
-        self._create_tree_from_task_name(self.__task_name)
-
-    def _create_tree_from_task_name(self, task_name: str, postfix: str = ""):
-        task = self.__tasks.find(task_name)
-
-        if task.before:
-            for before_task in task.before:
-                self._create_tree_from_task_name(
-                    before_task, postfix="// before {}".format(task_name)
-                )
-
-        self.__tree.append(
-            dict(
-                task_name=task.name,
-                depth=self.__depth,
-                postfix=postfix,
-            )
-        )
-
-        if task.children:
-            self.__depth += 1
-
-            for child in task.children:
-                self._create_tree_from_task_name(child, "")
-
-            self.__depth -= 1
-
-        if task.after:
-            for after_task in task.after:
-                self._create_tree_from_task_name(
-                    after_task, postfix="// after {}".format(task_name)
-                )
-
-    def _print_tree(self):
-        self.__io.writeln("The task-tree for <success>deploy</success>:")
-
-        for item in self.__tree:
-            self.__io.writeln(
-                "└"
-                + ("──" * item["depth"])
-                + "> "
-                + item["task_name"]
-                + " "
-                + item["postfix"]
-            )
 
 
 class Deployer(Container):
@@ -222,10 +160,22 @@ class Deployer(Container):
             print(f"Hapi {__version__}")
 
         @self.__proxy.typer.command(
+            name="config:list", help="Display all pre-defined configuration items"
+        )
+        def config_list():
+            ConfigListCommand(self)()
+
+        @self.__proxy.typer.command(
+            name="config:show", help="Display a configuration item details"
+        )
+        def config_list(key: str):
+            ConfigShowCommand(self)(key)
+
+        @self.__proxy.typer.command(
             name="tree", help="Display the task-tree for a given task"
         )
         def tree(task: str = typer.Argument(help="Task to display the tree for")):
-            TreeCommand(self, task)()
+            TreeCommand(self)(task)
 
     def _add_command_for(self, task: Task):
         @self.__proxy.typer.command(name=task.name, help="[task] " + task.desc)
