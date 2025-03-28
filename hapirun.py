@@ -6,7 +6,7 @@ app.load(Laravel)
 
 app.put('name', 'Laravel')
 app.put('repository', 'https://github.com/hapideploy/laravel')
-app.put('branch', 'main')
+# app.put('branch', 'main')
 
 app.add('shared_dirs', [])
 app.add('shared_files', [])

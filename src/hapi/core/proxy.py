@@ -321,9 +321,6 @@ class Proxy:
         self.io.stage = stage
         self.io.verbosity = verbosity
 
-        if self.container.has("log_file"):
-            self.log = FileStyle(self.container.make("log_file"))
-
         self.selected = self.remotes.filter(
             lambda remote: self.io.selector == InputOutput.SELECTOR_ALL
             or remote.label == self.io.selector
@@ -339,6 +336,9 @@ class Proxy:
                 opt_key, opt_val = opt_item.split("=")
                 options[opt_key] = opt_val
                 self.container.put(opt_key, opt_val)
+
+        if self.container.has("log_file"):
+            self.log = FileStyle(self.container.make("log_file"))
 
 
 class CommandResult:

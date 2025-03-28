@@ -9,14 +9,13 @@ def deploy_release(c: Context):
     if c.test("[ -h release ]"):
         c.run("rm release")
 
-    # TODO: Is it necessary
-    # releases = c.cook("releases_list")
+    releases = c.cook("releases_list")
     release_name = c.cook("release_name")
     release_dir = f"releases/{release_name}"
 
     if c.test(f"[ -d {release_dir} ]"):
         c.stop(
-            f'Release name "{release_name}" already exists.\nIt can be overridden via:\n -o release_name={release_name}'
+            f'Release name "{release_name}" already exists.\nIt can be overridden via:\n --options=release_name={release_name}'
         )
 
     c.run("echo {{release_name}} > .dep/latest_release")
@@ -49,8 +48,7 @@ def deploy_release(c: Context):
         + " is created and symlinked (release: {{release_name}})"
     )
 
-    # TODO: Is is necessary?
-    # releases.insert(0, release_name)
+    releases.insert(0, release_name)
 
-    # if len(releases) >= 2:
-    #     c.put("previous_release", "{{deploy_path}}/releases/" + releases[1])
+    if len(releases) >= 2:
+        c.put("previous_release", "{{deploy_path}}/releases/" + releases[1])

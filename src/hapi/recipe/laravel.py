@@ -54,7 +54,7 @@ class Laravel(PHP):
             "artisan:migrate", "Run database migrations", artisan("migrate --force")
         )
         self.app.register_task(
-            "artisan:db:seed", "Seed the database", artisan("migrate --force")
+            "artisan:db:seed", "Seed the database", artisan("db:seed --force")
         )
 
         self.app.register_task("npm:install", "Install NPM packages", npm_install)
@@ -69,6 +69,6 @@ class Laravel(PHP):
                 "artisan:storage:link",
                 "artisan:optimize",
                 "artisan:migrate",
-                "artisan:db:seed",
+                # "artisan:db:seed",
             ],
         )

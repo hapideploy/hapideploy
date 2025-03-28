@@ -10,11 +10,14 @@ def bin_symlink(c: Context):
 
 
 def target(c: Context):
-    branch = c.cook("branch")
-    if branch:
-        return branch
+    if c.check("branch"):
+        return c.cook("branch")
 
-    # TODO: Needs to support tag or revision?
+    if c.check("tag"):
+        return c.cook("tag")
+
+    if c.check("revision"):
+        return c.cook("revision")
 
     return "HEAD"
 
