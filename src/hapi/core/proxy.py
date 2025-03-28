@@ -108,8 +108,7 @@ class Context:
         return self.remote.put("cwd", self.parse(cwd))
 
     def info(self, message: str):
-        message = self.parse(message)
-        self.printer.print_info(self.remote, message)
+        self.printer.print_info(self.remote, self.parse(message))
 
     def stop(self, message: str):
         raise StoppedException(self.parse(message))

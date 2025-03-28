@@ -9,6 +9,7 @@ from hapi.core import (
     Remote,
 )
 from hapi.core.task import TaskBag
+from hapi.exceptions import StoppedException
 from hapi.log import NoneStyle
 
 
@@ -42,6 +43,30 @@ def create_context() -> DummyContext:
     context = DummyContext(container, remote, TaskBag(), printer)
 
     return context
+
+
+def test_context_check_method():
+    context = create_context()
+
+    assert context.check("stage") is True
+    assert context.check("deploy_path") is True
+    assert context.check("unknown") is False
+
+
+def test_context_cook_method():
+    context = create_context()
+
+    assert context.cook("stage") == "testing"
+    assert context.cook("deploy_path") == "~/deploy/{{stage}}"
+    assert context.cook("unknown", "foobar") == "foobar"
+
+
+def test_context_put_method():
+    context = create_context()
+
+    context.put("message", "calling context.put in runtime")
+
+    assert context.cook("message") == "calling context.put in runtime"
 
 
 def test_context_parse_method():
@@ -90,7 +115,7 @@ def test_context_which_method():
     assert context.container.make("run") == ["which php"]
 
 
-def test_context_remote_cwd():
+def test_context_cd_method():
     context = create_context()
 
     context.cd("{{deploy_path}}")
@@ -115,3 +140,39 @@ def test_context_remote_cwd():
     pytest.fail(
         'It must run command a similar to "cd ~/deploy/testing && (if [ ! -d .dep ]; then echo +true; fi"'
     )
+
+
+def test_context_info_method():
+    context = create_context()
+
+    info_items = []
+
+    class DummyPrinter(Printer):
+        def print_info(self, remote: Remote, message: str):
+            info_items.append((remote, message))
+
+    context.printer = DummyPrinter(context.printer.io, context.printer.log)
+
+    context.put("name", "HapiDeploy")
+
+    # printer.print_info will be called with the remote and parsed message.
+    context.info("Deploying {{name}} to {{stage}}")
+
+    r, m = info_items[0]
+
+    assert r == context.remote
+    assert m == "Deploying HapiDeploy to testing"
+
+
+def test_context_stop_method():
+    context = create_context()
+
+    context.put("name", "HapiDeploy")
+
+    with pytest.raises(
+        StoppedException,
+        match="Deploying HapiDeploy to testing has failed due to a system error.",
+    ):
+        context.stop(
+            "Deploying {{name}} to {{stage}} has failed due to a system error."
+        )
