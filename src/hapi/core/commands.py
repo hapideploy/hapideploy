@@ -2,6 +2,8 @@ from rich.console import Console
 from rich.table import Table
 
 from .container import Binding, Container
+from .io import InputOutput
+from .task import TaskBag
 
 
 class ConfigListCommand:
@@ -74,10 +76,9 @@ class ConfigShowCommand:
 
 
 class TreeCommand:
-    def __init__(self, deployer):
-        self.__deployer = deployer
-        self.__tasks = deployer.tasks()
-        self.__io = deployer.io()
+    def __init__(self, tasks: TaskBag, io: InputOutput):
+        self.__tasks = tasks
+        self.__io = io
 
         self.__tree = []
         self.__depth = 1
@@ -124,14 +125,16 @@ class TreeCommand:
                 )
 
     def _print_tree(self):
-        self.__io.writeln("The task-tree for <success>deploy</success>:")
+        self.__io.writeln("The task-tree for <primary>deploy</primary>:")
 
         for item in self.__tree:
             self.__io.writeln(
                 "└"
                 + ("──" * item["depth"])
                 + "> "
+                + "<primary>"
                 + item["task_name"]
+                + "</primary>"
                 + " "
                 + item["postfix"]
             )
