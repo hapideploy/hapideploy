@@ -1,9 +1,73 @@
+import os
+from pathlib import Path
+
+import typer
 from rich.console import Console
 from rich.table import Table
 
 from .container import Binding, Container
 from .io import InputOutput
 from .task import TaskBag
+
+
+class InitCommand:
+    def __init__(self, io: InputOutput):
+        self.io = io
+
+    def execute(self) -> int:
+        recipe_list = [
+            ("1", "laravel"),
+        ]
+
+        for key, name in recipe_list:
+            self.io.writeln(f" [<comment>{key}</comment>] {name}")
+
+        recipe_name = None
+
+        choice = typer.prompt(self.io.decorate("<primary>Select a hapi recipe</primary>"))
+
+        for key, name in recipe_list:
+            if choice == key or choice == name:
+                recipe_name = name
+
+        if not recipe_name:
+            self.io.error(f'Value "{choice}" is invalid.')
+
+            return 1
+
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+
+        path = Path(f"{dir_path}/../../../stubs/{recipe_name}.py.stub")
+
+        if not path.exists():
+            self.io.error(f"recipe {recipe_name}.py.stub file does not exist.")
+
+            return 1
+
+        file_contents = path.read_text()
+
+        f = open(os.getcwd() + "/hapirun.py", "w")
+        f.write(file_contents)
+        f.close()
+
+        self.io.success("hapirun.py file is created")
+
+        path = Path(f"{dir_path}/../../../stubs/inventory.yml.stub")
+
+        if not path.exists():
+            self.io.error(f"inventory.yml.stub file does not exist.")
+
+            return 1
+
+        file_contents = path.read_text()
+
+        f = open(os.getcwd() + "/inventory.yml", "w")
+        f.write(file_contents)
+        f.close()
+
+        self.io.success("inventory.yml file is created")
+
+        return 0
 
 
 class ConfigListCommand:

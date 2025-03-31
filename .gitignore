@@ -14,7 +14,7 @@ poetry.lock
 
 *.log
 
-deploy.py
+hapirun.py
 inventory.yml
 
 deploy.php

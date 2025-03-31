@@ -9,7 +9,7 @@ from ..__version import __version__
 from ..exceptions import GracefulShutdown, KeyNotFound, StoppedException
 from ..log import FileStyle, NoneStyle
 from ..support import env_stringify, extract_curly_brackets
-from .commands import ConfigListCommand, ConfigShowCommand, TreeCommand
+from .commands import ConfigListCommand, ConfigShowCommand, InitCommand, TreeCommand
 from .container import Container
 from .io import ConsoleInputOutput, InputOutput, Printer
 from .remote import Remote, RemoteBag
@@ -249,7 +249,7 @@ class Proxy:
         self.__context = None
 
     def add_builtin_commands(self):
-        @self.typer.command(name="about", help="Display the Hapi CLI version")
+        @self.typer.command(name="about", help="Display the Hapi CLI information")
         def about():
             print(f"Hapi {__version__}")
 
@@ -264,6 +264,11 @@ class Proxy:
         )
         def config_list(key: str = Argument(help="A configuration key")):
             ConfigShowCommand(self.container)(key)
+
+        @self.typer.command(name="init", help="Initialize hapi files")
+        def init():
+            exit_code = InitCommand(self.io).execute()
+            exit(exit_code)
 
         @self.typer.command(name="tree", help="Display the task-tree for a given task")
         def tree(task: str = Argument(help="Task to display the tree for")):
