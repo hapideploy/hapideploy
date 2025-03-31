@@ -13,6 +13,7 @@ class Task:
         self.children = []
         self.before = []
         self.after = []
+        self.failed = []
 
 
 class TaskBag(Collection):

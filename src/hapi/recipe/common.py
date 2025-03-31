@@ -96,3 +96,5 @@ class Common(Provider):
                 "deploy:success",
             ],
         )
+
+        self.app.fail("deploy", "deploy:unlock")

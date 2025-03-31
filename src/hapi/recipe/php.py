@@ -13,12 +13,14 @@ def bin_composer(c: Context):
 
 
 def composer_install(c: Context):
+    release_path = c.cook("release_path")
+    composer = c.cook("bin/composer")
     options = c.cook(
-        "composer_options",
+        "composer_install_options",
         "--no-ansi --verbose --prefer-dist --no-progress --no-interaction --no-dev --optimize-autoloader",
     )
 
-    c.run("cd {{release_path}} && {{bin/composer}} install " + options)
+    c.run(f"cd {release_path} && {composer} install {options}")
 
 
 def fpm_reload(c: Context):

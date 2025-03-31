@@ -1,3 +1,7 @@
+class GracefulShutdown(Exception):
+    pass
+
+
 class StoppedException(Exception):
     pass
 

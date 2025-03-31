@@ -75,28 +75,34 @@ class Deployer(Container):
 
         return task
 
-    def register_group(self, name: str, desc: str, names: list[str]):
+    def register_group(self, name: str, desc: str, names: str | list[str]):
+        children = names if isinstance(names, list) else [names]
+
         def func(_):
-            for task_name in names:
+            for task_name in children:
                 task = self.tasks().find(task_name)
                 self.__proxy.current_task = task
                 self.__proxy.context().exec(task)
                 self.__proxy.clear_context()
 
-        self.register_task(name, desc, func).children = names
+        group_task = self.register_task(name, desc, func)
 
-        return self
+        group_task.children = children
 
-    def register_hook(self, kind: str, name: str, do):
+        return group_task
+
+    def register_hook(self, kind: str, name: str, do: str | list[str]):
         task = self.tasks().find(name)
 
         if kind == "before":
             task.before = do if isinstance(do, list) else [do]
         elif kind == "after":
             task.after = do if isinstance(do, list) else [do]
+        elif kind == "failed":
+            task.failed = do if isinstance(do, list) else [do]
         else:
             raise InvalidHookKind(
-                f"Invalid hook kind: {kind}. Chose either 'before' or 'after'."
+                f"Invalid hook kind: {kind}. Chose either 'before', 'after' or 'failed'."
             )
 
         task.hook = do
