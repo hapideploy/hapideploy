@@ -13,13 +13,6 @@ class Program(Deployer):
 
         self.__discovered = []
 
-    def start(self):
-        inventory_file = os.getcwd() + "/inventory.yml"
-
-        self.discover(inventory_file)
-
-        super().start()
-
     def load(self, cls):
         if not issubclass(cls, Provider):
             raise InvalidProviderClass("The given class must be a subclass of Provider")

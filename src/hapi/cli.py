@@ -5,9 +5,16 @@ from .toolbox import app
 
 
 def start():
-    file = os.getcwd() + "/hapirun.py"
-    code = Path(file).read_text()
-    exec(code)
+    hapirun_file = Path(os.getcwd() + "/hapirun.py")
+
+    if hapirun_file.exists():
+        code = Path(hapirun_file).read_text()
+        exec(code)
+
+    inventory_file = os.getcwd() + "/inventory.yml"
+
+    if Path(inventory_file).exists():
+        app.discover(inventory_file)
 
     if not app.started():
         app.start()

@@ -39,6 +39,18 @@ class InputOutput:
     def writeln(self, text: str = ""):
         self._do_write(text, True)
 
+    def error(self, text: str = ""):
+        prefix = typer.style(" ERROR ", bg=typer.colors.RED)
+        self._do_write("", True)
+        self._do_write(f"  {prefix} {text}", True)
+        self._do_write("", True)
+
+    def success(self, text: str = ""):
+        prefix = typer.style(" SUCCESS ", bg=typer.colors.GREEN)
+        self._do_write("", True)
+        self._do_write(f"  {prefix} {text}", True)
+        self._do_write("", True)
+
     @staticmethod
     def decorate(text: str):
         replacements = dict(

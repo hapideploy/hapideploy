@@ -14,7 +14,7 @@ def deploy_writable(c: Context):
 
     c.run(f"mkdir -p {dirs}")
 
-    mode = c.cook("writable_mode")  # chown, chgrp or chmod
+    mode = c.cook("writable_mode", "chmod")  # chown, chgrp or chmod
     recursive = "-R" if c.cook("writable_recursive") is True else ""
     sudo = "sudo" if c.cook("writable_use_sudo") is True else ""
 
