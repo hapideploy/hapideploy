@@ -1,5 +1,4 @@
 import os
-from pathlib import Path
 
 import typer
 from rich.console import Console
@@ -37,34 +36,42 @@ class InitCommand:
 
             return 1
 
-        dir_path = os.path.dirname(os.path.realpath(__file__))
+        hapirun_contents = """from hapi.toolbox import app
 
-        path = Path(f"{dir_path}/../../../stubs/{recipe_name}.py.stub")
+from hapi.recipe.laravel import Laravel
 
-        if not path.exists():
-            self.io.error(f"recipe {recipe_name}.py.stub file does not exist.")
+app.load(Laravel)
 
-            return 1
+app.put('name', 'Laravel')
+app.put('repository', 'https://github.com/laravel/laravel')
+app.put('branch', 'main')
 
-        file_contents = path.read_text()
+app.add('shared_dirs', [])
+app.add('shared_files', [])
+app.add('writable_dirs', [])
+
+if __name__ == '__main__':
+    app.start()
+"""
 
         f = open(os.getcwd() + "/hapirun.py", "w")
-        f.write(file_contents)
+        f.write(hapirun_contents)
         f.close()
 
         self.io.success("hapirun.py file is created")
 
-        path = Path(f"{dir_path}/../../../stubs/inventory.yml.stub")
-
-        if not path.exists():
-            self.io.error(f"inventory.yml.stub file does not exist.")
-
-            return 1
-
-        file_contents = path.read_text()
+        inventory_contents = """hosts:
+  app-server:
+    host: 192.168.33.10
+    port: 22 # Optional
+    user: vagrant # Optional
+    pemfile: ~/.ssh/id_ed25519 # Optional
+    with:
+      deploy_path: ~/deploy/{{stage}}
+"""
 
         f = open(os.getcwd() + "/inventory.yml", "w")
-        f.write(file_contents)
+        f.write(inventory_contents)
         f.close()
 
         self.io.success("inventory.yml file is created")
