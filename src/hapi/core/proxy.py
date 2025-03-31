@@ -61,7 +61,9 @@ class Context:
             return self.remote.make(key, fallback, throw=True)
 
         if self.container.has(key):
-            return self.container.make(key, fallback, throw=True, inject=self._do_clone_context())
+            return self.container.make(
+                key, fallback, throw=True, inject=self._do_clone_context()
+            )
 
         return fallback
 
