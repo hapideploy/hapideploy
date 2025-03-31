@@ -2,7 +2,7 @@ hosts:
   app-server:
     host: 192.168.33.10
     port: 22 # Optional
-    user: forge # Optional
-    pemfile: ~/.ssh/id_25519 # Optional
+    user: vagrant # Optional
+    pemfile: ~/.ssh/id_ed25519 # Optional
     with:
       deploy_path: ~/deploy/{{stage}}

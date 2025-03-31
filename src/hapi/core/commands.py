@@ -24,7 +24,9 @@ class InitCommand:
 
         recipe_name = None
 
-        choice = typer.prompt(self.io.decorate("<primary>Select a hapi recipe</primary>"))
+        choice = typer.prompt(
+            self.io.decorate("<primary>Select a hapi recipe</primary>")
+        )
 
         for key, name in recipe_list:
             if choice == key or choice == name:
