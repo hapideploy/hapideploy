@@ -6,7 +6,7 @@ from invoke import StreamWatcher
 from typer import Argument, Option, Typer
 
 from ..__version import __version__
-from ..exceptions import KeyNotFound, StoppedException
+from ..exceptions import GracefulShutdown, KeyNotFound, StoppedException
 from ..log import FileStyle, NoneStyle
 from ..support import env_stringify, extract_curly_brackets
 from .commands import ConfigListCommand, ConfigShowCommand, TreeCommand
@@ -45,7 +45,12 @@ class Context:
 
     def exec(self, task: Task):
         self._before_exec(task)
-        task.func(self._clone())
+
+        try:
+            task.func(self._do_clone_context())
+        except Exception as e:
+            self._do_catch(task, e)
+
         self._after_exec(task)
 
     def check(self, key: str) -> bool:
@@ -56,7 +61,9 @@ class Context:
             return self.remote.make(key, fallback, throw=True)
 
         if self.container.has(key):
-            return self.container.make(key, fallback, throw=True, inject=self._clone())
+            return self.container.make(
+                key, fallback, throw=True, inject=self._do_clone_context()
+            )
 
         return fallback
 
@@ -75,7 +82,7 @@ class Context:
             elif self.container.has(key):
                 text = text.replace(
                     "{{" + key + "}}",
-                    str(self.container.make(key, inject=self._clone())),
+                    str(self.container.make(key, inject=self._do_clone_context())),
                 )
             else:
                 raise KeyNotFound("Key not found: " + key)
@@ -83,7 +90,7 @@ class Context:
         return self.parse(text)
 
     def run(self, command: str, **kwargs):
-        command = self._parse_command(command)
+        command = self._do_parse_command(command)
 
         self._before_run(command, **kwargs)
         res = self._do_run(command, **kwargs)
@@ -151,17 +158,25 @@ class Context:
 
         return res
 
-    def _clone(self):
+    def _do_catch(self, task: Task, ex: Exception):
+        if isinstance(ex, GracefulShutdown):
+            raise ex
+
+        self._do_exec_task_list(task.failed)
+
+        raise ex
+
+    def _do_clone_context(self):
         return Context(self.container, self.remote, self.tasks, self.printer)
 
-    def _exec_tasks_by_name(self, names: list[str]):
+    def _do_exec_task_list(self, names: list[str]):
         if len(names) == 0:
             return
         for name in names:
             task = self.tasks.find(name)
             self.exec(task)
 
-    def _parse_command(self, command: str):
+    def _do_parse_command(self, command: str):
         cwd = " && cd ".join(self.__cwd)
 
         if cwd.strip() != "":
@@ -176,12 +191,12 @@ class Context:
     def _before_exec(self, task: Task):
         self.printer.print_task(self.remote, task)
 
-        self._exec_tasks_by_name(task.before)
+        self._do_exec_task_list(task.before)
 
     def _after_exec(self, task: Task):
         self.__cwd = []
 
-        self._exec_tasks_by_name(task.after)
+        self._do_exec_task_list(task.after)
 
     def _before_run(self, command: str, **kwargs):
         self.printer.print_command(self.remote, command)

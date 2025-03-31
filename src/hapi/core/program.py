@@ -70,6 +70,9 @@ class Program(Deployer):
     def after(self, name: str, do):
         return super().register_hook("after", name, do)
 
+    def fail(self, name: str, do):
+        return super().register_hook("failed", name, do)
+
     def resolve(self, key: str):
         return super().resolve(key)
 
