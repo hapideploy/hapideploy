@@ -42,15 +42,15 @@ from hapi.recipe.laravel import Laravel
 
 app.load(Laravel)
 
-app.put('name', 'Laravel')
-app.put('repository', 'https://github.com/laravel/laravel')
-app.put('branch', 'main')
+app.put("name", "Laravel")
+app.put("repository", "https://github.com/laravel/laravel")
+app.put("branch", "main")
 
-app.add('shared_dirs', [])
-app.add('shared_files', [])
-app.add('writable_dirs', [])
+app.add("shared_dirs", [])
+app.add("shared_files", [])
+app.add("writable_dirs", [])
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.start()
 """
 
