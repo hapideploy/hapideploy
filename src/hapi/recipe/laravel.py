@@ -65,10 +65,10 @@ class Laravel(PHP):
             "composer:install",
             [
                 "npm:install",
-                "npm:build",
-                "artisan:storage:link",
                 "artisan:optimize",
+                "artisan:storage:link",
                 "artisan:migrate",
                 # "artisan:db:seed",
+                "npm:build",
             ],
         )

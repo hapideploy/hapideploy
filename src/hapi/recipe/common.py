@@ -97,4 +97,10 @@ class Common(Provider):
             ],
         )
 
-        self.app.fail("deploy", "deploy:unlock")
+        self.app.register_group(
+            "deploy:failed",
+            "Activities should be done when deploy task is failed.",
+            ["deploy:unlock"],
+        )
+
+        self.app.fail("deploy", "deploy:failed")
