@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "hapideploy"
 version = "0.1.0"
-description = "HabiDeploy"
+description = "A remote execution tool written in Python, inspired by DeployPHP. "
 authors = ["Quynh Nguyen <seriquynh@gmail.com>"]
 readme = "README.md"
 packages = [{include = "hapi", from = "src"}]

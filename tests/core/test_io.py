@@ -143,7 +143,7 @@ def test_it_prints_command():
     )
 
 
-def test_it_prints_buffer():
+def test_it_prints_line():
     records = []
 
     class TestingStyle(Logger):
@@ -157,13 +157,13 @@ def test_it_prints_buffer():
             )
 
     remote = Remote(host="192.168.33.11", user="vagrant")
-    buffer = "+true"
+    line = "+true"
     io = ArrayInputOutput(verbosity=InputOutput.DEBUG)
     log = TestingStyle()
 
     printer = Printer(io, log)
 
-    printer.print_buffer(remote, buffer)
+    printer.print_line(remote, line)
 
     record = records[0]
 

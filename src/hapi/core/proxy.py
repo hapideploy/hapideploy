@@ -90,7 +90,7 @@ class Context:
         return self.parse(text)
 
     def run(self, command: str, **kwargs):
-        command = self._do_parse_command(command)
+        command = self._do_parse_command(command, **kwargs)
 
         self._before_run(command, **kwargs)
         res = self._do_run(command, **kwargs)
@@ -121,34 +121,30 @@ class Context:
         raise StoppedException(self.parse(message))
 
     def _do_run(self, command: str, **kwargs):
-        def callback(_: str, buffer: str):
-            self.printer.print_buffer(self.remote, buffer)
+        def process_line(line: str):
+            self.printer.print_line(self.remote, line)
 
-        class LogBuffer(StreamWatcher):
+        class PrintWatcher(StreamWatcher):
             def __init__(self):
                 super().__init__()
                 self.last_pos = 0
 
             def submit(self, stream: str):
-                # Find new lines since last position
-                new_content = stream[self.last_pos :]
+                last_end_line_pos = stream.rfind("\n")
+
+                new_content = stream[self.last_pos : last_end_line_pos]
+
                 if new_content:
-                    # Update last position
-                    self.last_pos = len(stream)
-                    # Process any new complete lines
+                    self.last_pos = last_end_line_pos
+
                     lines = new_content.splitlines()
+
                     if lines:
                         for line in lines:
-                            callback("log", line)
-                return (
-                    []
-                )  # Return an empty list as we don't need to submit any responses
+                            process_line(line)
+                return []
 
-        watcher = LogBuffer()
-
-        if kwargs.get("env"):
-            env_vars = env_stringify(kwargs.get("env"))
-            command = f"export {env_vars}; {command}"
+        watcher = PrintWatcher()
 
         conn = self.remote.connect()
 
@@ -176,7 +172,7 @@ class Context:
             task = self.tasks.find(name)
             self.exec(task)
 
-    def _do_parse_command(self, command: str):
+    def _do_parse_command(self, command: str, **kwargs):
         cwd = " && cd ".join(self.__cwd)
 
         if cwd.strip() != "":
@@ -184,9 +180,11 @@ class Context:
         else:
             command = command.strip()
 
-        command = self.parse(command)
+        if kwargs.get("env"):
+            env_vars = env_stringify(kwargs.get("env"))
+            command = f"export {env_vars}; {command}"
 
-        return command
+        return self.parse(command)
 
     def _before_exec(self, task: Task):
         self.printer.print_task(self.remote, task)

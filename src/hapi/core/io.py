@@ -119,11 +119,11 @@ class Printer:
         if self.io.verbosity >= InputOutput.DETAIL:
             self._do_print(remote, f"<comment>RUN</comment> {command}")
 
-    def print_buffer(self, remote: Remote, buffer: str):
-        self.log.debug(f"[{remote.label}] {buffer}")
+    def print_line(self, remote: Remote, line: str):
+        self.log.debug(f"[{remote.label}] {line}")
 
         if self.io.verbosity >= InputOutput.DEBUG:
-            self._do_print(remote, buffer)
+            self._do_print(remote, line)
 
     def print_info(self, remote: Remote, message: str):
         self.log.debug(f"[{remote.label}] INFO {message}")
