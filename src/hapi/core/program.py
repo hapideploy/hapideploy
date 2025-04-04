@@ -45,33 +45,33 @@ class Program(Deployer):
                 if bindings is not None:
                     del data["with"]
 
-                remote = self.register_remote(**data)
+                remote = self.define_remote(**data)
 
                 if isinstance(bindings, dict):
                     for k, v in bindings.items():
                         remote.put(k, v)
 
     def remote(self, **kwargs):
-        return super().register_remote(**kwargs)
+        return super().define_remote(**kwargs)
 
     def group(self, name: str, desc: str, do: list[str]):
-        return self.register_group(name, desc, do)
+        return self.define_group(name, desc, do)
 
     def before(self, name: str, do):
-        return super().register_hook("before", name, do)
+        return super().define_hook("before", name, do)
 
     def after(self, name: str, do):
-        return super().register_hook("after", name, do)
+        return super().define_hook("after", name, do)
 
     def fail(self, name: str, do):
-        return super().register_hook("failed", name, do)
+        return super().define_hook("failed", name, do)
 
     def resolve(self, key: str):
         return super().resolve(key)
 
     def task(self, name: str, desc: str):
         def wrapper(func: typing.Callable):
-            self.register_task(name, desc, func)
+            self.define_task(name, desc, func)
 
         return wrapper
 

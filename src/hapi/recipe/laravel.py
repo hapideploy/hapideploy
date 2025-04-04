@@ -40,27 +40,27 @@ class Laravel(PHP):
 
         self.app.bind("bin/npm", bin_npm)
 
-        self.app.register_task(
+        self.app.define_task(
             "artisan:storage:link",
             "Create the symbolic links",
             artisan("storage:link --force"),
         )
-        self.app.register_task(
+        self.app.define_task(
             "artisan:optimize",
             "Optimize application configuration",
             artisan("optimize"),
         )
-        self.app.register_task(
+        self.app.define_task(
             "artisan:migrate", "Run database migrations", artisan("migrate --force")
         )
-        self.app.register_task(
+        self.app.define_task(
             "artisan:db:seed", "Seed the database", artisan("db:seed --force")
         )
 
-        self.app.register_task("npm:install", "Install NPM packages", npm_install)
-        self.app.register_task("npm:build", "Execute NPM build script", npm_build)
+        self.app.define_task("npm:install", "Install NPM packages", npm_install)
+        self.app.define_task("npm:build", "Execute NPM build script", npm_build)
 
-        self.app.register_hook(
+        self.app.define_hook(
             "after",
             "composer:install",
             [
