@@ -12,19 +12,15 @@ class Deployer(Container):
         super().__init__()
         self.__proxy = Proxy(self)
 
-    def started(self) -> bool:
-        return self.__proxy.started
-
     def start(self):
-        if self.started():
+        if self.__proxy.started:
             return
 
         self.__proxy.started = True
 
-        self.__proxy.add_builtin_commands()
+        self.__proxy.define_general_commands()
 
-        for task in self.__proxy.tasks.all():
-            self.__proxy.add_command_for(task)
+        self.__proxy.define_task_commands()
 
         self.__proxy.typer()
 

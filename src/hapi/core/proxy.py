@@ -60,7 +60,7 @@ class Proxy:
     def clear_context(self):
         self.__context = None
 
-    def add_builtin_commands(self):
+    def define_general_commands(self):
         @self.typer.command(name="about", help="Display the Hapi CLI information")
         def about():
             print(f"Hapi {__version__}")
@@ -86,7 +86,11 @@ class Proxy:
         def tree(task: str = Argument(help="Task to display the tree for")):
             TreeCommand(self.tasks, self.io)(task)
 
-    def add_command_for(self, task: Task):
+    def define_task_commands(self):
+        for task in self.tasks.all():
+            self._do_define_task_command(task)
+
+    def _do_define_task_command(self, task: Task):
         @self.typer.command(name=task.name, help="[task] " + task.desc)
         def task_handler(
             selector: str = Argument(default=InputOutput.SELECTOR_ALL),

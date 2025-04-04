@@ -16,5 +16,4 @@ def start():
     if Path(inventory_file).exists():
         app.discover(inventory_file)
 
-    if not app.started():
-        app.start()
+    app.start()
