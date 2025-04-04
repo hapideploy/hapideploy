@@ -3,7 +3,7 @@ import typing
 from ..exceptions import CurrentRemoteNotSet, CurrentTaskNotSet, InvalidHookKind
 from .container import Container
 from .proxy import Context, Proxy
-from .remote import Remote
+from .remote import Remote, RemoteBag
 from .task import Task
 
 
@@ -23,64 +23,34 @@ class Deployer(Container):
 
         self.__proxy.add_builtin_commands()
 
-        for task in self.tasks().all():
+        for task in self.__proxy.tasks.all():
             self.__proxy.add_command_for(task)
 
         self.__proxy.typer()
 
-    def io(self):
-        return self.__proxy.io
-
-    def log(self):
-        return self.__proxy.log
-
-    def remotes(self):
+    def get_remotes(self) -> RemoteBag:
         return self.__proxy.remotes
 
-    def tasks(self):
-        return self.__proxy.tasks
-
-    def current_remote(self, **kwargs) -> Remote:
-        throw = True if "throw" not in kwargs else kwargs.get("throw")
-
-        if not self.__proxy.current_remote and throw is True:
-            raise CurrentRemoteNotSet("The current remote is not set.")
-
-        return self.__proxy.current_remote
-
-    def current_task(self, **kwargs) -> Task:
-        throw = True if "throw" not in kwargs else kwargs.get("throw")
-
-        if not self.__proxy.current_task and throw:
-            raise CurrentTaskNotSet("The current task is not set.")
-
-        return self.__proxy.current_task
-
-    def register_command(self, name: str, desc: str, func: typing.Callable):
-        @self.__proxy.typer.command(name=name, help=desc)
-        def command_handler():
-            func(self)
-
-    def register_remote(self, **kwargs):
+    def register_remote(self, **kwargs) -> Remote:
         remote = Remote(**kwargs)
-        self.remotes().add(remote)
+        self.__proxy.remotes.add(remote)
         return remote
 
     def register_task(
         self, name: str, desc: str, func: typing.Callable[[Context], any]
-    ):
+    ) -> Task:
         task = Task(name, desc, func)
 
-        self.tasks().add(task)
+        self.__proxy.tasks.add(task)
 
         return task
 
-    def register_group(self, name: str, desc: str, names: str | list[str]):
+    def register_group(self, name: str, desc: str, names: str | list[str]) -> Task:
         children = names if isinstance(names, list) else [names]
 
         def func(_):
             for task_name in children:
-                task = self.tasks().find(task_name)
+                task = self.__proxy.tasks.find(task_name)
                 self.__proxy.current_task = task
                 self.__proxy.context().exec(task)
                 self.__proxy.clear_context()
@@ -92,7 +62,7 @@ class Deployer(Container):
         return group_task
 
     def register_hook(self, kind: str, name: str, do: str | list[str]):
-        task = self.tasks().find(name)
+        task = self.__proxy.tasks.find(name)
 
         if kind == "before":
             task.before = do if isinstance(do, list) else [do]

@@ -69,12 +69,6 @@ class Program(Deployer):
     def resolve(self, key: str):
         return super().resolve(key)
 
-    def command(self, name: str, desc: str):
-        def wrapper(func: typing.Callable):
-            self.register_command(name, desc, func)
-
-        return wrapper
-
     def task(self, name: str, desc: str):
         def wrapper(func: typing.Callable):
             self.register_task(name, desc, func)
