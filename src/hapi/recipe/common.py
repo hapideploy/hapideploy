@@ -75,9 +75,9 @@ class Common(Provider):
 
         for item in items:
             name, desc, func = item
-            self.app.register_task(name, desc, func)
+            self.app.define_task(name, desc, func)
 
-        self.app.register_group(
+        self.app.define_group(
             "deploy",
             "Run deployment tasks",
             [
@@ -97,7 +97,7 @@ class Common(Provider):
             ],
         )
 
-        self.app.register_group(
+        self.app.define_group(
             "deploy:failed",
             "Activities should be done when deploy task is failed.",
             ["deploy:unlock"],
