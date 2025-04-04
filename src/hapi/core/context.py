@@ -1,18 +1,13 @@
 import random
-from typing import Annotated
 
 from fabric import Result
 from invoke import StreamWatcher
-from typer import Argument, Option, Typer
 
-from ..__version import __version__
 from ..exceptions import GracefulShutdown, KeyNotFound, StoppedException
-from ..log import FileStyle, NoneStyle
 from ..support import env_stringify, extract_curly_brackets
-from .commands import ConfigListCommand, ConfigShowCommand, InitCommand, TreeCommand
 from .container import Container
-from .io import ConsoleInputOutput, InputOutput, Printer
-from .remote import Remote, RemoteBag
+from .io import InputOutput, Printer
+from .remote import Remote
 from .task import Task, TaskBag
 
 
@@ -46,7 +41,7 @@ class Context:
         self._before_exec(task)
 
         try:
-            task.func(self._do_clone_context())
+            task.func(self._do_clone())
         except Exception as e:
             self._do_catch(task, e)
 
@@ -61,7 +56,7 @@ class Context:
 
         if self.container.has(key):
             return self.container.make(
-                key, fallback, throw=True, inject=self._do_clone_context()
+                key, fallback, throw=True, inject=self._do_clone()
             )
 
         return fallback
@@ -81,7 +76,7 @@ class Context:
             elif self.container.has(key):
                 text = text.replace(
                     "{{" + key + "}}",
-                    str(self.container.make(key, inject=self._do_clone_context())),
+                    str(self.container.make(key, inject=self._do_clone())),
                 )
             else:
                 raise KeyNotFound("Key not found: " + key)
@@ -157,14 +152,14 @@ class Context:
         if isinstance(ex, GracefulShutdown):
             raise ex
 
-        self._do_exec_task_list(task.failed)
+        self._do_exec_list(task.failed)
 
         raise ex
 
-    def _do_clone_context(self):
+    def _do_clone(self):
         return Context(self.container, self.remote, self.tasks, self.printer)
 
-    def _do_exec_task_list(self, names: list[str]):
+    def _do_exec_list(self, names: list[str]):
         if len(names) == 0:
             return
         for name in names:
@@ -188,12 +183,12 @@ class Context:
     def _before_exec(self, task: Task):
         self.printer.print_task(self.remote, task)
 
-        self._do_exec_task_list(task.before)
+        self._do_exec_list(task.before)
 
     def _after_exec(self, task: Task):
         self.__cwd = []
 
-        self._do_exec_task_list(task.after)
+        self._do_exec_list(task.after)
 
     def _before_run(self, command: str, **kwargs):
         self.printer.print_command(self.remote, command)
@@ -205,10 +200,7 @@ class Context:
 class RunResult:
     def __init__(self, origin: Result = None):
         self.origin = origin
-
         self.fetched = False
-
-        self.__output = None
 
     def fetch(self) -> str:
         if self.fetched:
