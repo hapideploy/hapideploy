@@ -3,7 +3,6 @@
 from .__version import __version__
 from .core import (
     ArrayInputOutput,
-    CommandResult,
     ConsoleInputOutput,
     Container,
     Context,
@@ -15,6 +14,7 @@ from .core import (
     Proxy,
     Remote,
     RemoteBag,
+    RunResult,
     Task,
     TaskBag,
 )

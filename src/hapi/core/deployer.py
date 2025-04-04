@@ -52,7 +52,7 @@ class Deployer(Container):
             for task_name in children:
                 task = self.__proxy.tasks.find(task_name)
                 self.__proxy.current_task = task
-                self.__proxy.context().exec(task)
+                self.__proxy.make_context().exec(task)
                 self.__proxy.clear_context()
 
         group_task = self.register_task(name, desc, func)
