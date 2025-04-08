@@ -16,7 +16,19 @@ def test_it_creates_an_io_instance():
     assert io.verbosity == InputOutput.DEBUG
 
 
-def test_it_check_verbose_levels():
+def test_it_sets_and_gets_arguments():
+    io = InputOutput()
+
+    io.set_argument("name", "John Doe")
+
+    assert io.get_argument("name") == "John Doe"
+
+    assert io.get_argument("age") is None
+
+    assert io.get_argument("age", 30) == 30
+
+
+def test_it_checks_verbose_levels():
     io = InputOutput("ubuntu-1", "production", InputOutput.QUIET)
     assert io.quiet() == True
     assert io.normal() == False

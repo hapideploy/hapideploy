@@ -4,12 +4,29 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
+from ..__version import __version__
 from .container import Binding, Container
 from .io import InputOutput
 from .task import TaskBag
 
 
+class AboutCommand:
+    NAME = "about"
+    DESC = "Display the Hapi CLI information"
+
+    def __init__(self, io: InputOutput):
+        self.io = io
+
+    def execute(self) -> int:
+        self.io.writeln(f"Hapi CLI <success>{__version__}</success>")
+
+        return 0
+
+
 class InitCommand:
+    NAME = "init"
+    DESC = "Initialize hapi files"
+
     def __init__(self, io: InputOutput):
         self.io = io
 
@@ -80,10 +97,13 @@ if __name__ == "__main__":
 
 
 class ConfigListCommand:
+    NAME = "config:list"
+    DESC = "Display all pre-defined configuration items"
+
     def __init__(self, container: Container):
         self.container = container
 
-    def __call__(self, *args, **kwargs):
+    def execute(self) -> int:
         table = Table("Key", "Kind", "Type", "Value")
 
         bindings = self.container.all()
@@ -115,15 +135,21 @@ class ConfigListCommand:
         console = Console()
         console.print(table)
 
+        return 0
+
 
 class ConfigShowCommand:
-    def __init__(self, container: Container):
-        self.container = container
+    NAME = "config:show"
+    DESC = "Display details for a configuration item"
 
-    def __call__(self, *args, **kwargs):
+    def __init__(self, container: Container, io: InputOutput):
+        self.container = container
+        self.io = io
+
+    def execute(self) -> int:
         table = Table("Property", "Detail")
 
-        key = args[0]
+        key = self.io.get_argument("key")
 
         bindings = self.container.all()
 
@@ -147,21 +173,29 @@ class ConfigShowCommand:
         console = Console()
         console.print(table)
 
+        return 0
+
 
 class TreeCommand:
+    NAME = "tree"
+    DESC = "Display the task-tree for a given task"
+
     def __init__(self, tasks: TaskBag, io: InputOutput):
+        self.__task_name = None
         self.__tasks = tasks
         self.__io = io
 
         self.__tree = []
         self.__depth = 1
 
-    def __call__(self, task_name: str):
-        self.__task_name = task_name
+    def execute(self) -> int:
+        self.__task_name = self.__io.get_argument("task")
 
         self._build_tree()
 
         self._print_tree()
+
+        return 0
 
     def _build_tree(self):
         self._create_tree_from_task_name(self.__task_name)

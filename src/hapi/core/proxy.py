@@ -1,19 +1,19 @@
-import random
 from typing import Annotated
 
-from fabric import Result
-from invoke import StreamWatcher
 from typer import Argument, Option, Typer
 
-from ..__version import __version__
-from ..exceptions import GracefulShutdown, KeyNotFound, StoppedException
 from ..log import FileStyle, NoneStyle
-from ..support import env_stringify, extract_curly_brackets
-from .commands import ConfigListCommand, ConfigShowCommand, InitCommand, TreeCommand
+from .commands import (
+    AboutCommand,
+    ConfigListCommand,
+    ConfigShowCommand,
+    InitCommand,
+    TreeCommand,
+)
 from .container import Container
 from .context import Context
 from .io import ConsoleInputOutput, InputOutput, Printer
-from .remote import Remote, RemoteBag
+from .remote import RemoteBag
 from .task import Task, TaskBag
 
 
@@ -61,30 +61,32 @@ class Proxy:
         self.__context = None
 
     def define_general_commands(self):
-        @self.typer.command(name="about", help="Display the Hapi CLI information")
+        @self.typer.command(name=AboutCommand.NAME, help=AboutCommand.DESC)
         def about():
-            print(f"Hapi {__version__}")
+            exit_code = AboutCommand(self.io).execute()
+            exit(exit_code)
 
-        @self.typer.command(
-            name="config:list", help="Display all pre-defined configuration items"
-        )
+        @self.typer.command(name=ConfigListCommand.NAME, help=ConfigListCommand.DESC)
         def config_list():
-            ConfigListCommand(self.container)()
+            exit_code = ConfigListCommand(self.container).execute()
+            exit(exit_code)
 
-        @self.typer.command(
-            name="config:show", help="Display a configuration item details"
-        )
-        def config_list(key: str = Argument(help="A configuration key")):
-            ConfigShowCommand(self.container)(key)
+        @self.typer.command(name=ConfigShowCommand.NAME, help=ConfigShowCommand.DESC)
+        def config_show(key: str = Argument(help="A configuration key")):
+            self.io.set_argument("key", key)
+            exit_code = ConfigShowCommand(self.container, self.io).execute()
+            exit(exit_code)
 
-        @self.typer.command(name="init", help="Initialize hapi files")
+        @self.typer.command(name=InitCommand.NAME, help=InitCommand.DESC)
         def init():
             exit_code = InitCommand(self.io).execute()
             exit(exit_code)
 
-        @self.typer.command(name="tree", help="Display the task-tree for a given task")
+        @self.typer.command(name=TreeCommand.NAME, help=TreeCommand.DESC)
         def tree(task: str = Argument(help="Task to display the tree for")):
-            TreeCommand(self.tasks, self.io)(task)
+            self.io.set_argument("task", task)
+            exit_code = TreeCommand(self.tasks, self.io).execute()
+            exit(exit_code)
 
     def define_task_commands(self):
         for task in self.tasks.all():

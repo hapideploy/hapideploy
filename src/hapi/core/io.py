@@ -17,9 +17,17 @@ class InputOutput:
     STAGE_DEV = "dev"
 
     def __init__(self, selector: str = None, stage: str = None, verbosity: int = None):
+        self.arguments = dict()
+
         self.selector = selector if selector is not None else InputOutput.SELECTOR_ALL
         self.stage = stage if stage is not None else InputOutput.STAGE_DEV
         self.verbosity = verbosity if verbosity is not None else InputOutput.NORMAL
+
+    def set_argument(self, name: str, value: str):
+        self.arguments[name] = value
+
+    def get_argument(self, name: str, fallback=None):
+        return self.arguments[name] if name in self.arguments else fallback
 
     def quiet(self) -> bool:
         return self.verbosity == InputOutput.QUIET
