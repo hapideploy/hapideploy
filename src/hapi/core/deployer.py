@@ -64,11 +64,11 @@ class Deployer(Container):
                 self.__proxy.make_context().exec(task)
                 self.__proxy.clear_context()
 
-        task = self.define_task(name, desc, func)
+        group = self.define_task(name, desc, func)
 
-        task.children = children
+        group.children = children
 
-        return task
+        return group
 
     def define_hook(self, kind: str, name: str, do: str | list[str]):
         task = self.__proxy.tasks.find(name)
