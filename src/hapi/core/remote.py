@@ -13,16 +13,16 @@ class Remote(Container):
         host: str,
         user: str = "hapi",
         port: int = 22,
-        label: str = None,
         pemfile: str = None,
+        label: str = None,
     ):
         super().__init__()
 
         self.host = host
         self.user = user
         self.port = port
-        self.label = host if label is None else label
         self.pemfile = pemfile
+        self.label = host if label is None else label
         self.key = f"{self.user}@{self.host}:{self.port}"
 
     def connect(self) -> Connection:
@@ -46,11 +46,11 @@ class RemoteBag(Collection):
     def add(self, remote: Remote):
         return super().add(remote)
 
-    def find(self, name: str) -> Remote:
+    def find(self, key: str) -> Remote:
         try:
-            return super().find(name)
+            return super().find(key)
         except ItemNotFound:
-            raise RemoteNotFound(f"remote {name} is not found.")
+            raise RemoteNotFound(f"remote {key} is not found.")
 
     def match(self, callback: typing.Callable) -> Remote:
         try:

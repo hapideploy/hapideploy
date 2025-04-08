@@ -5,6 +5,10 @@ from ..support import Collection
 
 
 class Task:
+    HOOK_BEFORE = "before"
+    HOOK_AFTER = "after"
+    HOOK_FAILED = "failed"
+
     def __init__(self, name: str, desc: str, func: typing.Callable):
         self.name = name
         self.desc = desc

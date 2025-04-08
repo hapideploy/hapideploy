@@ -46,7 +46,7 @@ class PHP(Common):
 
         for item in items:
             name, desc, func = item
-            self.app.register_task(name, desc, func)
+            self.app.define_task(name, desc, func)
 
-        self.app.register_hook("after", "deploy:writable", "composer:install")
-        self.app.register_hook("after", "deploy:symlink", "fpm:restart")
+        self.app.define_hook("after", "deploy:writable", "composer:install")
+        self.app.define_hook("after", "deploy:symlink", "fpm:restart")
