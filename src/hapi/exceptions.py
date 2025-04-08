@@ -2,6 +2,10 @@ class GracefulShutdown(Exception):
     pass
 
 
+class ConfigurationError(Exception):
+    pass
+
+
 class StoppedException(Exception):
     pass
 

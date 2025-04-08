@@ -3,7 +3,12 @@ import random
 from fabric import Result
 from invoke import StreamWatcher
 
-from ..exceptions import GracefulShutdown, KeyNotFound, StoppedException
+from ..exceptions import (
+    ConfigurationError,
+    GracefulShutdown,
+    KeyNotFound,
+    StoppedException,
+)
 from ..support import env_stringify, extract_curly_brackets
 from .container import Container
 from .io import InputOutput, Printer
@@ -50,7 +55,15 @@ class Context:
     def check(self, key: str) -> bool:
         return True if self.remote.has(key) else self.container.has(key)
 
-    def cook(self, key: str, fallback=None):
+    def cook(self, key: str, fallback=None, throw: bool = False):
+        """
+        Returns the value of a key from the remote or container.
+
+        :param str key: The configuration key
+        :param any fallback: The fallback value to return if the key aws not found
+        :param bool throw: Determine if it should throw an exception if the key was not found
+        :return any: The value of the key
+        """
         if self.remote.has(key):
             return self.remote.make(key, fallback, throw=True)
 
@@ -58,6 +71,9 @@ class Context:
             return self.container.make(
                 key, fallback, throw=True, inject=self._do_clone()
             )
+
+        if throw is True:
+            raise ConfigurationError("Missing configuration: " + key)
 
         return fallback
 

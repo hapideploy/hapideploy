@@ -9,7 +9,7 @@ from hapi.core import (
 )
 from hapi.core.context import RunResult
 from hapi.core.task import TaskBag
-from hapi.exceptions import StoppedException
+from hapi.exceptions import ConfigurationError, StoppedException
 from hapi.log import NoneStyle
 
 
@@ -50,7 +50,7 @@ def test_context_check_method():
 
     assert context.check("stage") is True
     assert context.check("deploy_path") is True
-    assert context.check("unknown") is False
+    assert context.check("provision_user") is False
 
 
 def test_context_cook_method():
@@ -58,7 +58,10 @@ def test_context_cook_method():
 
     assert context.cook("stage") == "testing"
     assert context.cook("deploy_path") == "~/deploy/{{stage}}"
-    assert context.cook("unknown", "foobar") == "foobar"
+    assert context.cook("provision_user", "root") == "root"
+
+    with pytest.raises(ConfigurationError):
+        context.cook("provision_user", throw=True)
 
 
 def test_context_put_method():

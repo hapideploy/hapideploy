@@ -1,4 +1,3 @@
-import os
 import typing
 
 import yaml
@@ -80,5 +79,12 @@ class Provider:
     def __init__(self, app: Program):
         self.app = app
 
+    @staticmethod
+    def tasks():
+        return [
+            # ("sample", "This is a sample task", sample),
+        ]
+
     def register(self):
-        raise NotImplemented
+        for name, desc, func in self.tasks():
+            self.app.define_task(name, desc, func)
