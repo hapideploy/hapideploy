@@ -16,11 +16,8 @@ class InputOutput:
     SELECTOR_ALL = "all"
     STAGE_DEV = "dev"
 
-    def __init__(self, selector: str = None, stage: str = None, verbosity: int = None):
+    def __init__(self, verbosity: int = None):
         self.arguments = dict()
-
-        self.selector = selector if selector is not None else InputOutput.SELECTOR_ALL
-        self.stage = stage if stage is not None else InputOutput.STAGE_DEV
         self.verbosity = verbosity if verbosity is not None else InputOutput.NORMAL
 
     def set_argument(self, name: str, value: str):
@@ -100,8 +97,8 @@ class ConsoleInputOutput(InputOutput):
 
 
 class ArrayInputOutput(InputOutput):
-    def __init__(self, selector: str = None, stage: str = None, verbosity: int = None):
-        super().__init__(selector, stage, verbosity)
+    def __init__(self, verbosity: int = None):
+        super().__init__(verbosity)
 
         self.items = []
 

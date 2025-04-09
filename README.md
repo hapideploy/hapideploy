@@ -48,12 +48,12 @@ Run the `deploy` command with default selector `all` and stage `dev`.
 hapi deploy 
 ```
 
-Run the `deploy` command with explicit selector and custom options.
+Run the `deploy` command with explicit selector, stage and custom config.
 
 ```bash
 hapi deploy all \
     --stage=dev \
-    --options=php_version=8.4,node_version=20.18.0
+    --config=python_version=3.13,node_version=20.18.0
 ```
 
 ## Development

@@ -18,6 +18,9 @@ from .task import Task, TaskBag
 
 
 class Proxy:
+    SELECTOR_ALL = "all"
+    STAGE_DEV = "dev"
+
     def __init__(self, container: Container):
         self.container = container
         self.typer = Typer()
@@ -95,11 +98,18 @@ class Proxy:
     def _do_define_task_command(self, task: Task):
         @self.typer.command(name=task.name, help="[task] " + task.desc)
         def task_handler(
-            selector: str = Argument(default=InputOutput.SELECTOR_ALL),
+            selector: str = Argument(
+                default=self.SELECTOR_ALL, help="The remote selector"
+            ),
             stage: Annotated[
-                str, Option(help="The deployment stage")
-            ] = InputOutput.STAGE_DEV,
-            options: Annotated[str, Option(help="Task options")] = None,
+                str, Option(help="The deployment stage. E.g., dev, testing, production")
+            ] = self.STAGE_DEV,
+            config: Annotated[
+                str,
+                Option(
+                    help="Customize config items. E.g., --config=python_version=3.13"
+                ),
+            ] = None,
             quiet: Annotated[
                 bool, Option(help="Do not print any output messages (level: 0)")
             ] = False,
@@ -118,7 +128,7 @@ class Proxy:
                 self.prepare(
                     selector=selector,
                     stage=stage,
-                    options=options,
+                    config=config,
                     quiet=quiet,
                     normal=normal,
                     detail=detail,
@@ -140,6 +150,15 @@ class Proxy:
 
         self.prepared = True
 
+        self._do_prepare_verbosity(**kwargs)
+
+        self._do_prepare_selector(**kwargs)
+
+        self._do_prepare_stage(**kwargs)
+
+        self._do_prepare_config(**kwargs)
+
+    def _do_prepare_verbosity(self, **kwargs):
         verbosity = InputOutput.NORMAL
 
         if kwargs.get("quiet"):
@@ -151,28 +170,41 @@ class Proxy:
         elif kwargs.get("debug"):
             verbosity = InputOutput.DEBUG
 
-        selector = kwargs.get("selector")
-        stage = kwargs.get("stage")
-
-        self.io.selector = selector
-        self.io.stage = stage
         self.io.verbosity = verbosity
 
-        self.selected = self.remotes.filter(
-            lambda remote: self.io.selector == InputOutput.SELECTOR_ALL
-            or remote.label == self.io.selector
-        )
+    def _do_prepare_selector(self, **kwargs):
+        if self.remotes.empty():
+            raise RuntimeError(f"The are no remotes defined.")
+
+        selector = kwargs.get("selector")
+
+        if selector is None or selector == self.SELECTOR_ALL:
+            self.selected = self.remotes.all()
+            return
+
+        self.io.set_argument("selector", selector)
+
+        self.selected = self.remotes.select(selector)
+
+        if len(self.selected) == 0:
+            raise RuntimeError(f"No remotes match the selector: {selector}.")
+
+    def _do_prepare_stage(self, **kwargs):
+        stage = kwargs.get("stage")
+
+        if stage:
+            self.io.set_argument("stage", stage)
 
         self.container.put("stage", stage)
 
-        opts_str = kwargs.get("options")
-        if opts_str:
-            opts_items = opts_str.split(",")
-            options = dict()
-            for opt_item in opts_items:
-                opt_key, opt_val = opt_item.split("=")
-                options[opt_key] = opt_val
-                self.container.put(opt_key, opt_val)
+    def _do_prepare_config(self, **kwargs):
+        config_str = kwargs.get("config")
+        if config_str:
+            # self.io.set_option('config', config_str)
+            pairs = config_str.split(",")
+            for pair in pairs:
+                key, value = pair.split("=")
+                self.container.put(key, value)
 
         if self.container.has("log_file"):
             self.log = FileStyle(self.container.make("log_file"))

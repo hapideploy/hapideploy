@@ -1,4 +1,4 @@
-from hapi import Container, Remote
+from hapi.core import Container, Remote, RemoteBag
 
 
 def test_it_inherits_container():
@@ -64,3 +64,18 @@ def test_it_creates_an_instance_with_pemfile():
     )
 
     assert remote.pemfile == "/path/.ssh/id_ed25519"
+
+
+def test_it_selects_remotes():
+    remotes = RemoteBag()
+
+    r1 = Remote(host="192.168.33.11", label="server-1")
+    remotes.add(r1)
+    r2 = Remote(host="192.168.33.12", label="server-2")
+    remotes.add(r2)
+    r3 = Remote(host="192.168.33.13", label="server-3")
+    remotes.add(r3)
+
+    assert remotes.select("server-1") == [r1]
+    assert remotes.select("server-2") == [r2]
+    assert remotes.select("server-3") == [r3]

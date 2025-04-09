@@ -6,13 +6,9 @@ from hapi.log import Logger
 
 def test_it_creates_an_io_instance():
     io = InputOutput()
-    assert io.selector == InputOutput.SELECTOR_ALL
-    assert io.stage == InputOutput.STAGE_DEV
     assert io.verbosity == InputOutput.NORMAL
 
-    io = InputOutput("ubuntu-1", "production", InputOutput.DEBUG)
-    assert io.selector == "ubuntu-1"
-    assert io.stage == "production"
+    io = InputOutput(verbosity=InputOutput.DEBUG)
     assert io.verbosity == InputOutput.DEBUG
 
 
@@ -29,29 +25,29 @@ def test_it_sets_and_gets_arguments():
 
 
 def test_it_checks_verbose_levels():
-    io = InputOutput("ubuntu-1", "production", InputOutput.QUIET)
-    assert io.quiet() == True
-    assert io.normal() == False
-    assert io.detail() == False
-    assert io.debug() == False
+    io = InputOutput(verbosity=InputOutput.QUIET)
+    assert io.quiet()
+    assert not io.normal()
+    assert not io.detail()
+    assert not io.debug()
 
-    io = InputOutput("ubuntu-1", "production", InputOutput.NORMAL)
-    assert io.quiet() == False
-    assert io.normal() == True
-    assert io.detail() == False
-    assert io.debug() == False
+    io = InputOutput(verbosity=InputOutput.NORMAL)
+    assert not io.quiet()
+    assert io.normal()
+    assert not io.detail()
+    assert not io.debug()
 
-    io = InputOutput("ubuntu-1", "production", InputOutput.DETAIL)
-    assert io.quiet() == False
-    assert io.normal() == False
-    assert io.detail() == True
-    assert io.debug() == False
+    io = InputOutput(verbosity=InputOutput.DETAIL)
+    assert not io.quiet()
+    assert not io.normal()
+    assert io.detail()
+    assert not io.debug()
 
-    io = InputOutput("ubuntu-1", "production", InputOutput.DEBUG)
-    assert io.quiet() == False
-    assert io.normal() == False
-    assert io.detail() == False
-    assert io.debug() == True
+    io = InputOutput(verbosity=InputOutput.DEBUG)
+    assert not io.quiet()
+    assert not io.normal()
+    assert not io.detail()
+    assert io.debug()
 
 
 def test_it_decorates_text():

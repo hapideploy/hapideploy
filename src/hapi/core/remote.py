@@ -67,3 +67,6 @@ class RemoteBag(Collection):
 
     def all(self) -> list[Remote]:
         return super().all()
+
+    def select(self, selector: str) -> list[Remote]:
+        return self.filter(lambda remote: remote.label == selector)
