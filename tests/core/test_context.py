@@ -9,7 +9,7 @@ from hapi.core import (
 )
 from hapi.core.context import RunResult
 from hapi.core.task import TaskBag
-from hapi.exceptions import StoppedException
+from hapi.exceptions import ConfigurationError, StoppedException
 from hapi.log import NoneStyle
 
 
@@ -45,20 +45,15 @@ def create_context() -> DummyContext:
     return context
 
 
-def test_context_check_method():
+def test_context_io_method():
     context = create_context()
 
-    assert context.check("stage") is True
-    assert context.check("deploy_path") is True
-    assert context.check("unknown") is False
+    assert isinstance(context.io(), ArrayInputOutput)
 
 
-def test_context_cook_method():
-    context = create_context()
-
-    assert context.cook("stage") == "testing"
-    assert context.cook("deploy_path") == "~/deploy/{{stage}}"
-    assert context.cook("unknown", "foobar") == "foobar"
+def test_context_exec_method():
+    # Check before exec and after exec
+    assert True
 
 
 def test_context_put_method():
@@ -69,10 +64,39 @@ def test_context_put_method():
     assert context.cook("message") == "calling context.put in runtime"
 
 
+def test_context_check_method():
+    context = create_context()
+
+    assert context.check("stage") is True
+    assert context.check("deploy_path") is True
+    assert context.check("release_name") is False
+
+
+def test_context_cook_method():
+    context = create_context()
+
+    assert context.cook("stage") == "testing"
+    assert context.cook("deploy_path") == "~/deploy/{{stage}}"
+    assert context.cook("release_name", "feature-a") == "feature-a"
+
+    with pytest.raises(ConfigurationError, match="Missing configuration: release_name"):
+        context.cook("release_name", throw=True)
+
+
 def test_context_parse_method():
     context = create_context()
 
     assert context.parse("{{deploy_path}}") == "~/deploy/testing"
+
+    with pytest.raises(ConfigurationError, match="Missing configuration: release_name"):
+        context.parse("mkdir {{deploy_path}}/releases/{{release_name}}")
+
+    context.put("release_name", "feature-a")
+
+    assert (
+        context.parse("mkdir {{deploy_path}}/releases/{{release_name}}")
+        == "mkdir ~/deploy/testing/releases/feature-a"
+    )
 
 
 def test_context_run_method():

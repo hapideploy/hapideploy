@@ -3,7 +3,11 @@ import random
 from fabric import Result
 from invoke import StreamWatcher
 
-from ..exceptions import GracefulShutdown, KeyNotFound, StoppedException
+from ..exceptions import (
+    ConfigurationError,
+    GracefulShutdown,
+    StoppedException,
+)
 from ..support import env_stringify, extract_curly_brackets
 from .container import Container
 from .io import InputOutput, Printer
@@ -47,39 +51,49 @@ class Context:
 
         self._after_exec(task)
 
-    def check(self, key: str) -> bool:
-        return True if self.remote.has(key) else self.container.has(key)
-
-    def cook(self, key: str, fallback=None):
-        if self.remote.has(key):
-            return self.remote.make(key, fallback, throw=True)
-
-        if self.container.has(key):
-            return self.container.make(
-                key, fallback, throw=True, inject=self._do_clone()
-            )
-
-        return fallback
-
     def put(self, key: str, value):
         self.container.put(key, value)
 
+    def check(self, key: str) -> bool:
+        return True if self.remote.has(key) else self.container.has(key)
+
+    def cook(self, key: str, fallback: any = None, throw: bool = False):
+        """
+        Return the value of a key from the remote or container.
+
+        :param str key: The configuration key
+        :param any fallback: The fallback value to return if the key aws not found
+        :param bool throw: Determine if it should throw an exception if the key was not found
+        :return any: The value of the key
+        """
+
+        if self.remote.has(key):
+            return self.remote.make(key, fallback)
+
+        if self.container.has(key):
+            context = self._do_clone()
+            return self.container.make(key, fallback, inject=context)
+
+        if throw:
+            raise ConfigurationError(f"Missing configuration: {key}")
+
+        return fallback
+
     def parse(self, text: str) -> str:
+        """
+        Parse the given text and replace any curly brackets with the corresponding value.
+
+        :param str text: Any text to parse
+        :return str: The parsed text
+        """
         keys = extract_curly_brackets(text)
 
         if len(keys) == 0:
             return text
 
         for key in keys:
-            if self.remote.has(key):
-                text = text.replace("{{" + key + "}}", self.remote.make(key))
-            elif self.container.has(key):
-                text = text.replace(
-                    "{{" + key + "}}",
-                    str(self.container.make(key, inject=self._do_clone())),
-                )
-            else:
-                raise KeyNotFound("Key not found: " + key)
+            value = self.cook(key, throw=True)
+            text = text.replace("{{" + key + "}}", str(value))
 
         return self.parse(text)
 
