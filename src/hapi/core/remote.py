@@ -11,8 +11,8 @@ class Remote(Container):
     def __init__(
         self,
         host: str,
-        user: str = "hapi",
-        port: int = 22,
+        user: str = None,
+        port: int = None,
         pemfile: str = None,
         label: str = None,
     ):
@@ -23,7 +23,11 @@ class Remote(Container):
         self.port = port
         self.pemfile = pemfile
         self.label = host if label is None else label
-        self.key = f"{self.user}@{self.host}:{self.port}"
+
+        u = user if user else ""
+        p = port if port else ""
+
+        self.key = f"{u}@{self.host}:{p}"
 
     def connect(self) -> Connection:
         connect_kwargs = dict()

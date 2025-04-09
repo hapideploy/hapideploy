@@ -11,45 +11,45 @@ def test_it_requires_host_only():
     remote = Remote(host="app-server")
 
     assert remote.host == "app-server"
-    assert remote.user == "hapi"
-    assert remote.port == 22
+    assert remote.user is None
+    assert remote.port is None
     assert remote.label == "app-server"
-    assert remote.key == "hapi@app-server:22"
+    assert remote.key == "@app-server:"
 
 
 def test_it_creates_an_instance_with_ip():
     remote = Remote(host="192.168.33.11")
 
     assert remote.host == "192.168.33.11"
-    assert remote.key == "hapi@192.168.33.11:22"
+    assert remote.key == "@192.168.33.11:"
 
 
 def test_it_creates_an_instance_with_hostname():
     remote = Remote(host="app-server")
 
     assert remote.host == "app-server"
-    assert remote.key == "hapi@app-server:22"
+    assert remote.key == "@app-server:"
 
 
 def test_it_creates_an_instance_with_domain():
     remote = Remote(host="hapideploy.com")
 
     assert remote.host == "hapideploy.com"
-    assert remote.key == "hapi@hapideploy.com:22"
+    assert remote.key == "@hapideploy.com:"
 
 
 def test_it_creates_an_instance_with_user():
     remote = Remote(host="192.168.33.11", user="vagrant")
 
     assert remote.user == "vagrant"
-    assert remote.key == "vagrant@192.168.33.11:22"
+    assert remote.key == "vagrant@192.168.33.11:"
 
 
 def test_it_creates_an_instance_with_port():
     remote = Remote(host="192.168.33.11", port=2222)
 
     assert remote.port == 2222
-    assert remote.key == "hapi@192.168.33.11:2222"
+    assert remote.key == "@192.168.33.11:2222"
 
 
 def test_it_creates_an_instance_with_label():
