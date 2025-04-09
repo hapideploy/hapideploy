@@ -7,6 +7,7 @@ from rich.table import Table
 from ..__version import __version__
 from .container import Binding, Container
 from .io import InputOutput
+from .remote import RemoteBag
 from .task import TaskBag
 
 
@@ -169,6 +170,40 @@ class ConfigShowCommand:
         if binding.kind == Binding.INSTANT:
             table.add_row("Type", type(binding.value).__name__)
             table.add_row("Value", value)
+
+        console = Console()
+        console.print(table)
+
+        return 0
+
+
+class RemoteListCommand:
+    NAME = "remote:list"
+    DESC = "Display a list of defined remotes"
+
+    def __init__(self, remotes: RemoteBag, io: InputOutput):
+        self.remotes = remotes
+        self.io = io
+
+    def execute(self) -> int:
+        table = Table("Label", "Host", "User", "Port", "Pemfile")
+
+        selector = self.io.get_argument("selector")
+
+        selected = self.remotes.select(selector)
+
+        if len(selected) == 0:
+            self.io.error(f"No remotes match the selector: {selector}")
+            return 1
+
+        for remote in selected:
+            table.add_row(
+                remote.label,
+                remote.host,
+                str(remote.user),
+                str(remote.port),
+                str(remote.pemfile),
+            )
 
         console = Console()
         console.print(table)

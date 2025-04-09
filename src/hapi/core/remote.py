@@ -42,6 +42,8 @@ class Remote(Container):
 
 
 class RemoteBag(Collection):
+    SELECTOR_ALL = "all"
+
     def __init__(self):
         super().__init__(Remote)
 
@@ -69,4 +71,6 @@ class RemoteBag(Collection):
         return super().all()
 
     def select(self, selector: str) -> list[Remote]:
+        if selector == self.SELECTOR_ALL:
+            return self.all()
         return self.filter(lambda remote: remote.label == selector)

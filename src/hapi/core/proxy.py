@@ -8,6 +8,7 @@ from .commands import (
     ConfigListCommand,
     ConfigShowCommand,
     InitCommand,
+    RemoteListCommand,
     TreeCommand,
 )
 from .container import Container
@@ -18,7 +19,6 @@ from .task import Task, TaskBag
 
 
 class Proxy:
-    SELECTOR_ALL = "all"
     STAGE_DEV = "dev"
 
     def __init__(self, container: Container):
@@ -85,6 +85,16 @@ class Proxy:
             exit_code = InitCommand(self.io).execute()
             exit(exit_code)
 
+        @self.typer.command(name=RemoteListCommand.NAME, help=RemoteListCommand.DESC)
+        def remote_list(
+            selector: str = Argument(
+                default=RemoteBag.SELECTOR_ALL, help="The remote selector"
+            )
+        ):
+            self.io.set_argument("selector", selector)
+            exit_code = RemoteListCommand(self.remotes, self.io).execute()
+            exit(exit_code)
+
         @self.typer.command(name=TreeCommand.NAME, help=TreeCommand.DESC)
         def tree(task: str = Argument(help="Task to display the tree for")):
             self.io.set_argument("task", task)
@@ -99,7 +109,7 @@ class Proxy:
         @self.typer.command(name=task.name, help="[task] " + task.desc)
         def task_handler(
             selector: str = Argument(
-                default=self.SELECTOR_ALL, help="The remote selector"
+                default=RemoteBag.SELECTOR_ALL, help="The remote selector"
             ),
             stage: Annotated[
                 str, Option(help="The deployment stage. E.g., dev, testing, production")
@@ -178,16 +188,12 @@ class Proxy:
 
         selector = kwargs.get("selector")
 
-        if selector is None or selector == self.SELECTOR_ALL:
-            self.selected = self.remotes.all()
-            return
-
         self.io.set_argument("selector", selector)
 
         self.selected = self.remotes.select(selector)
 
         if len(self.selected) == 0:
-            raise RuntimeError(f"No remotes match the selector: {selector}.")
+            raise RuntimeError(f"No remotes match the selector: {selector}")
 
     def _do_prepare_stage(self, **kwargs):
         stage = kwargs.get("stage")

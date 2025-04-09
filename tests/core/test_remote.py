@@ -79,3 +79,5 @@ def test_it_selects_remotes():
     assert remotes.select("server-1") == [r1]
     assert remotes.select("server-2") == [r2]
     assert remotes.select("server-3") == [r3]
+
+    assert remotes.select("all") == [r1, r2, r3]
