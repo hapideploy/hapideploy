@@ -5,15 +5,17 @@ from .toolbox import app
 
 
 def start():
-    hapirun_file = Path(os.getcwd() + "/hapirun.py")
-
-    if hapirun_file.exists():
-        code = Path(hapirun_file).read_text()
-        exec(code)
-
     inventory_file = os.getcwd() + "/inventory.yml"
 
     if Path(inventory_file).exists():
         app.discover(inventory_file)
+
+    run_files = [Path(os.getcwd() + "/deploy.py"), Path(os.getcwd() + "/hapirun.py")]
+
+    for run_file in run_files:
+        if run_file.exists():
+            code = Path(run_file).read_text()
+            exec(code)
+            break
 
     app.start()

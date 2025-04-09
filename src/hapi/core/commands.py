@@ -53,14 +53,14 @@ class InitCommand:
 
             return 1
 
-        hapirun_contents = """from hapi.toolbox import app
+        deploy_file_content = """from hapi.toolbox import app
 
 from hapi.recipe.laravel import Laravel
 
 app.load(Laravel)
 
-app.put("name", "Laravel")
-app.put("repository", "https://github.com/laravel/laravel")
+app.put("name", "laravel")
+app.put("repository", "https://github.com/hapideploy/laravel")
 app.put("branch", "main")
 
 app.add("shared_dirs", [])
@@ -71,13 +71,13 @@ if __name__ == "__main__":
     app.start()
 """
 
-        f = open(os.getcwd() + "/hapirun.py", "w")
-        f.write(hapirun_contents)
+        f = open(os.getcwd() + "/deploy.py", "w")
+        f.write(deploy_file_content)
         f.close()
 
-        self.io.success("hapirun.py file is created")
+        self.io.success("deploy.py file is created")
 
-        inventory_contents = """hosts:
+        inventory_file_content = """hosts:
   app-server:
     host: 192.168.33.10
     port: 22 # Optional
@@ -88,7 +88,7 @@ if __name__ == "__main__":
 """
 
         f = open(os.getcwd() + "/inventory.yml", "w")
-        f.write(inventory_contents)
+        f.write(inventory_file_content)
         f.close()
 
         self.io.success("inventory.yml file is created")

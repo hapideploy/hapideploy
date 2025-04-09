@@ -36,7 +36,7 @@ pip install hapideploy
 
 ## Usage
 
-Create `hapirun.py` and `inventory.yml` files.
+Create `deploy.py` and `inventory.yml` files.
 
 ```bash
 hapi init
