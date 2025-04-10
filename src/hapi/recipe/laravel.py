@@ -1,5 +1,6 @@
-from ..core import Context
-from .npm import bin_npm, npm_build, npm_install
+from ..core import Context, Provider
+from ..utils import bin_npm, npm_build, npm_install
+from .common import Common
 from .php import PHP
 
 
@@ -12,9 +13,10 @@ def artisan(command: str):
     return caller
 
 
-class Laravel(PHP):
+class Laravel(Provider):
     def register(self):
-        super().register()
+        self.app.load(Common)
+        self.app.load(PHP)
 
         self.app.put("shared_dirs", ["storage"])
         self.app.put("shared_files", [".env"])
@@ -40,30 +42,13 @@ class Laravel(PHP):
 
         self.app.bind("bin/npm", bin_npm)
 
-        self.app.define_task(
-            "artisan:storage:link",
-            "Create the symbolic links",
-            artisan("storage:link --force"),
-        )
-        self.app.define_task(
-            "artisan:optimize",
-            "Optimize application configuration",
-            artisan("optimize"),
-        )
-        self.app.define_task(
-            "artisan:migrate", "Run database migrations", artisan("migrate --force")
-        )
-        self.app.define_task(
-            "artisan:db:seed", "Seed the database", artisan("db:seed --force")
-        )
+        self._register_tasks()
 
-        self.app.define_task("npm:install", "Install NPM packages", npm_install)
-        self.app.define_task("npm:build", "Execute NPM build script", npm_build)
-
-        self.app.define_hook(
-            "after",
-            "composer:install",
+        self.app.define_group(
+            "deploy:main",
+            "Deploy main activities",
             [
+                "composer:install",
                 "npm:install",
                 "artisan:optimize",
                 "artisan:storage:link",
@@ -72,3 +57,18 @@ class Laravel(PHP):
                 "npm:build",
             ],
         )
+
+    def _register_tasks(self):
+        for name, desc, func in [
+            (
+                "artisan:storage:link",
+                "Create the storage symlink",
+                artisan("storage:link --force"),
+            ),
+            ("artisan:optimize", "Increase performance", artisan("optimize")),
+            ("artisan:migrate", "Run database migrations", artisan("migrate --force")),
+            ("artisan:db:seed", "Seed the database", artisan("db:seed --force")),
+            ("npm:install", "Install NPM packages", npm_install),
+            ("npm:build", "Execute NPM build script", npm_build),
+        ]:
+            self.app.define_task(name, desc, func)

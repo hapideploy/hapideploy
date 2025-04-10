@@ -1,4 +1,4 @@
-from ..core import Context
+from .core import Context
 
 
 def bin_git(c: Context):
@@ -64,3 +64,45 @@ def releases_list(c: Context):
             releases.append(str(candidate["release_name"]))
 
     return releases
+
+
+def bin_npm(c: Context):
+    node_version = c.cook("node_version")
+
+    return f'export PATH="$HOME/.nvm/versions/node/v{node_version}/bin:$PATH"; npm'
+
+
+def npm_install(c: Context):
+    c.run("cd {{release_path}} && {{bin/npm}} {{npm_install_action}}")
+
+
+def npm_build(c: Context):
+    c.run("cd {{release_path}} && {{bin/npm}} run {{npm_build_script}}")
+
+
+def bin_php(c: Context):
+    version = c.cook("php_version") if c.check("php_version") else ""
+
+    return c.which(f"php{version}")
+
+
+def bin_composer(c: Context):
+    return c.cook("bin/php") + " " + c.which("composer")
+
+
+def composer_install(c: Context):
+    composer = c.cook("bin/composer")
+    options = c.cook(
+        "composer_install_options",
+        "--no-ansi --verbose --prefer-dist --no-progress --no-interaction --no-dev --optimize-autoloader",
+    )
+
+    c.run(f"cd {c.cook("release_path")} && {composer} install {options}")
+
+
+def fpm_reload(c: Context):
+    c.run("sudo systemctl reload php{{php_version}}-fpm")
+
+
+def fpm_restart(c: Context):
+    c.run("sudo systemctl restart php{{php_version}}-fpm")
