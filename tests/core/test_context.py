@@ -9,7 +9,7 @@ from hapi.core import (
 )
 from hapi.core.context import RunResult
 from hapi.core.task import TaskBag
-from hapi.exceptions import ConfigurationError, StoppedException
+from hapi.exceptions import ConfigurationError, ContextError
 from hapi.log import NoneStyle
 
 
@@ -188,15 +188,15 @@ def test_context_info_method():
     assert m == "Deploying HapiDeploy to testing"
 
 
-def test_context_stop_method():
+def test_context_raise_error_method():
     context = create_context()
 
     context.put("name", "HapiDeploy")
 
     with pytest.raises(
-        StoppedException,
+        ContextError,
         match="Deploying HapiDeploy to testing has failed due to a system error.",
     ):
-        context.stop(
+        context.raise_error(
             "Deploying {{name}} to {{stage}} has failed due to a system error."
         )

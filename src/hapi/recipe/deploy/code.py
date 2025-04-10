@@ -53,7 +53,7 @@ def deploy_code(c: Context):
         c.run(f"{git} remote set-url origin {repository}", env=env)
         c.run(f"{git} checkout --force {target}")
     else:
-        c.stop(f"Unknown `update_code_strategy` option: {strategy}.")
+        c.raise_error(f"Unsupported configuration [update_code_strategy]: {strategy}")
 
     # Save git revision in REVISION file.
     rev = shlex.quote(c.run(f"{git} rev-list {target} -1").fetch())

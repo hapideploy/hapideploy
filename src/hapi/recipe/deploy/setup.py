@@ -9,7 +9,7 @@ def deploy_setup(c: Context):
     c.run("[ -d shared ] || mkdir shared")
 
     if c.test("[ ! -L {{current_path}} ] && [ -d {{current_path}} ]"):
-        c.stop(
+        c.raise_error(
             "There is a directory (not symlink) at {{current_path}}.\n Remove this directory so it can be replaced with a symlink for atomic deployments."
         )
 

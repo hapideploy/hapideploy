@@ -2,11 +2,11 @@ class ConfigurationError(RuntimeError):
     pass
 
 
-class GracefulShutdown(Exception):
+class ContextError(Exception):
     pass
 
 
-class StoppedException(Exception):
+class GracefulShutdown(Exception):
     pass
 
 

@@ -5,8 +5,8 @@ from invoke import StreamWatcher
 
 from ..exceptions import (
     ConfigurationError,
+    ContextError,
     GracefulShutdown,
-    StoppedException,
 )
 from ..support import env_stringify, extract_curly_brackets
 from .container import Container
@@ -125,8 +125,8 @@ class Context:
     def info(self, message: str):
         self.printer.print_info(self.remote, self.parse(message))
 
-    def stop(self, message: str):
-        raise StoppedException(self.parse(message))
+    def raise_error(self, message: str):
+        raise ContextError(self.parse(message))
 
     def _do_run(self, command: str, **kwargs):
         def process_line(line: str):

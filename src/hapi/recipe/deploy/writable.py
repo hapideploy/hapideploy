@@ -8,7 +8,7 @@ def deploy_writable(c: Context):
         return
 
     if dirs.find(" /") != -1:
-        c.stop("Absolute path not allowed in config parameter `writable_dirs`.")
+        c.raise_error("Absolute path not allowed in config parameter `writable_dirs`.")
 
     c.cd("{{release_path}}")
 
@@ -36,6 +36,6 @@ def deploy_writable(c: Context):
         chmod_mode = c.cook("writable_chmod_mode", "0775")
         c.run(f"{sudo} chmod {recursive} {chmod_mode} {dirs}")
     else:
-        c.stop(f"Unsupported [writable_mode]: {mode}")
+        c.raise_error(f"Unsupported configuration [writable_mode]: {mode}")
 
     c.info("Make directories and files writable")

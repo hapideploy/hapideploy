@@ -14,8 +14,8 @@ def deploy_release(c: Context):
     release_dir = f"releases/{release_name}"
 
     if c.test(f"[ -d {release_dir} ]"):
-        c.stop(
-            f'Release name "{release_name}" already exists.\nIt can be overridden via:\n --options=release_name={release_name}'
+        c.raise_error(
+            f'Release name "{release_name}" already exists.\nIt can be overridden via:\n --config=release_name={release_name}'
         )
 
     c.run("echo {{release_name}} > .dep/latest_release")

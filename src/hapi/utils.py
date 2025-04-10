@@ -27,7 +27,7 @@ def release_path(c: Context):
         link = c.run("readlink {{deploy_path}}/release").fetch()
         return link if link[0] == "/" else c.parse("{{deploy_path}}" + "/" + link)
 
-    c.stop('The "release_path" ({{deploy_path}}/release) does not exist.')
+    c.raise_error('The "release_path" ({{deploy_path}}/release) does not exist.')
 
 
 def releases_log(c: Context):
