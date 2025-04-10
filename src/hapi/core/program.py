@@ -80,5 +80,26 @@ class Provider:
     def __init__(self, app: Program):
         self.app = app
 
+    def bindings(self) -> list[tuple]:
+        return []
+
+    def tasks(self) -> list[tuple]:
+        return []
+
+    def groups(self) -> list[tuple]:
+        return []
+
     def register(self):
-        raise NotImplemented
+        import types
+
+        for key, value in self.bindings():
+            if isinstance(value, types.LambdaType):
+                self.app.bind(key, value)
+            else:
+                self.app.put(key, value)
+
+        for name, desc, func in self.tasks():
+            self.app.define_task(name, desc, func)
+
+        for name, desc, do in self.groups():
+            self.app.define_group(name, desc, do)

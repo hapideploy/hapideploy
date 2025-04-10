@@ -7,8 +7,23 @@ from hapi.exceptions import InvalidProviderClass
 
 
 class DummyProvider(Provider):
-    def register(self):
-        self.app.put("message", "register DummyProvider")
+    def bindings(self) -> list[tuple]:
+        return [
+            ("release_name", "feature-a"),
+            ("bin/python", lambda _: "/usr/bin/python3"),
+        ]
+
+    def tasks(self) -> list[tuple]:
+        return [
+            ("one", "ONE", lambda _: None),
+            ("two", "TWO", lambda _: None),
+            ("three", "THREE", lambda _: None),
+        ]
+
+    def groups(self) -> list[tuple]:
+        return [
+            ("deploy", "DEPLOY", ["one", "two", "three"]),
+        ]
 
 
 class FoobarProvider:
@@ -24,12 +39,23 @@ def test_it_creates_a_program_instance():
 def test_it_loads_a_valid_provider():
     app = Program()
 
-    assert not app.has("message")
-
     app.load(DummyProvider)
 
-    assert app.has("message")
-    assert app.make("message") == "register DummyProvider"
+    assert not app.has("name")
+    assert app.make("release_name") == "feature-a"
+    assert app.make("bin/python", "/usr/bin/python3")
+
+    tasks = app.get_tasks().all()
+    assert tasks[0].name == "one"
+    assert tasks[0].desc == "ONE"
+    assert tasks[1].name == "two"
+    assert tasks[1].desc == "TWO"
+    assert tasks[2].name == "three"
+    assert tasks[2].desc == "THREE"
+
+    group = app.get_tasks().find("deploy")
+    assert group.desc == "DEPLOY"
+    assert group.children == ["one", "two", "three"]
 
 
 def test_it_loads_an_invalid_provider():
