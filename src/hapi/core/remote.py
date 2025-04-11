@@ -2,8 +2,8 @@ import typing
 
 from fabric import Connection
 
+from ..collect import Collection
 from ..exceptions import ItemNotFound, RemoteNotFound
-from ..support import Collection
 from .container import Container
 
 

@@ -1,21 +1,6 @@
-import re
-import shlex
 import typing
 
 from .exceptions import ItemNotFound
-
-
-def env_stringify(env: dict) -> str:
-    items = []
-    for name, value in env.items():
-        items.append(f"%s=%s" % (name, shlex.quote(str(value))))
-    return " ".join(items)
-
-
-def extract_curly_brackets(text):
-    pattern = r"\{\{([^}]*)\}\}"
-    matches = re.findall(pattern, text)
-    return matches
 
 
 class Collection:
@@ -33,14 +18,14 @@ class Collection:
     def empty(self) -> bool:
         return len(self.__items) == 0
 
-    def find(self, key: str):
+    def find(self, key: str) -> any:
         for item in self.__items:
             if self.__filter_key(key, item):
                 return item
 
         raise ItemNotFound(f"Item with {key} is not found in the collection.")
 
-    def match(self, callback: typing.Callable):
+    def match(self, callback: typing.Callable) -> any:
         for item in self.__items:
             if callback(item):
                 return item
@@ -50,7 +35,7 @@ class Collection:
     def filter(self, callback: typing.Callable) -> list:
         return [item for item in self.__items if callback(item)]
 
-    def all(self):
+    def all(self) -> list:
         return self.__items
 
     def filter_key(self, callback: typing.Callable):
