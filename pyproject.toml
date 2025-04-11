@@ -27,6 +27,7 @@ packages = [{include = "hapi", from = "src"}]
 pytest = "^8.3.5"
 black = "^25.1.0"
 isort = "^6.0.1"
+mypy = "^1.15.0"
 
 [tool.black]
 line-length = 88

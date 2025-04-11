@@ -1,4 +1,4 @@
-import typing
+from typing import Callable
 
 from fabric import Connection
 
@@ -47,7 +47,7 @@ class RemoteBag(Collection):
     def __init__(self):
         super().__init__(Remote)
 
-        self.filter_key(lambda key, remote: remote.key == key)
+        self.find_using(lambda key, remote: remote.key == key)
 
     def add(self, remote: Remote):
         return super().add(remote)
@@ -56,15 +56,15 @@ class RemoteBag(Collection):
         try:
             return super().find(key)
         except ItemNotFound:
-            raise RemoteNotFound(f"remote {key} is not found.")
+            raise RemoteNotFound(f"Remote {key} was not found.")
 
-    def match(self, callback: typing.Callable) -> Remote:
+    def match(self, callback: Callable[[Remote], bool]) -> Remote:
         try:
             return super().match(callback)
         except:
-            raise RemoteNotFound
+            raise RemoteNotFound("Not remotes match the given callback.")
 
-    def filter(self, callback: typing.Callable) -> list[Remote]:
+    def filter(self, callback: Callable[[Remote], bool]) -> list[Remote]:
         return super().filter(callback)
 
     def all(self) -> list[Remote]:

@@ -38,7 +38,7 @@ def test_collection_empty():
 def test_collection_find():
     collection = Collection(Person)
 
-    collection.filter_key(lambda name, item: item.name == name)
+    collection.find_using(lambda name, p: p.name == name)
 
     p1 = Person("John")
     collection.add(p1)
@@ -56,7 +56,7 @@ def test_collection_find():
 def test_collection_match():
     collection = Collection(Person)
 
-    collection.filter_key(lambda name, item: item.name == name)
+    collection.find_using(lambda name, p: p.name == name)
 
     p1 = Person("John")
     collection.add(p1)
@@ -65,9 +65,9 @@ def test_collection_match():
     collection.add(p2)
 
     with pytest.raises(ItemNotFound):
-        collection.match(lambda item: item.name == "James")
+        collection.match(lambda p: p.name == "James")
 
-    assert collection.match(lambda item: item.name == "John") == p1
+    assert collection.match(lambda p: p.name == "John") == p1
 
 
 def test_collection_filter():

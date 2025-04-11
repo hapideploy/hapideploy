@@ -135,7 +135,7 @@ def test_it_can_not_add_groups_contain_undefined_tasks():
     t1 = deployer.define_task("one", "ONE", lambda _: None)
     t2 = deployer.define_task("two", "TWO", lambda _: None)
 
-    with pytest.raises(TaskNotFound, match=f'Task "three" is not found.'):
+    with pytest.raises(TaskNotFound, match=f'Task "three" was not found.'):
         deployer.define_group("one-two-three", "ONE-TWO-THREE", ["one", "two", "three"])
 
     assert deployer.get_tasks().all() == [t1, t2]
@@ -162,12 +162,12 @@ def test_it_adds_hooks():
 def test_it_can_not_add_hooks_with_invalid_tasks_or_kinds():
     deployer = Deployer()
 
-    with pytest.raises(TaskNotFound, match='Task "deploy" is not found.'):
+    with pytest.raises(TaskNotFound, match='Task "deploy" was not found.'):
         deployer.define_hook(Task.HOOK_BEFORE, "deploy", ["one"])
 
     deployer.define_task("deploy", "DEPLOY", lambda _: None)
 
-    with pytest.raises(TaskNotFound, match='Task "one" is not found.'):
+    with pytest.raises(TaskNotFound, match='Task "one" was not found.'):
         deployer.define_hook(Task.HOOK_BEFORE, "deploy", ["one"])
 
     deployer.define_task("one", "DEPLOY", lambda _: None)

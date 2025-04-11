@@ -1,16 +1,16 @@
-class ConfigurationError(RuntimeError):
+class ConfigurationError(Exception):
     pass
 
 
-class ContextError(Exception):
+class ContextError(RuntimeError):
     pass
 
 
-class GracefulShutdown(Exception):
+class GracefulShutdown(RuntimeError):
     pass
 
 
-class InvalidProviderClass(TypeError):
+class InvalidProviderClass(ValueError):
     pass
 
 
@@ -22,14 +22,14 @@ class InvalidHookKind(ValueError):
     pass
 
 
-class ItemNotFound(ValueError):
+class ItemNotFound(Exception):
     pass
 
 
 class TaskNotFound(ItemNotFound):
     @staticmethod
     def with_name(name: str):
-        return TaskNotFound(f'Task "{name}" is not found.')
+        return TaskNotFound(f'Task "{name}" was not found.')
 
 
 class RemoteNotFound(ItemNotFound):
