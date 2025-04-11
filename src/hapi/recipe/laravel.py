@@ -1,20 +1,7 @@
 from ..core import Context, Provider
+from .__node import bin_npm, npm_build, npm_install
 from .common import Common
 from .php import PHP
-
-
-def bin_npm(c: Context):
-    node_version = c.cook("node_version")
-
-    return f'export PATH="$HOME/.nvm/versions/node/v{node_version}/bin:$PATH"; npm'
-
-
-def npm_install(c: Context):
-    c.run("cd {{release_path}} && {{bin/npm}} {{npm_install_action}}")
-
-
-def npm_build(c: Context):
-    c.run("cd {{release_path}} && {{bin/npm}} run {{npm_build_script}}")
 
 
 def artisan(command: str):
