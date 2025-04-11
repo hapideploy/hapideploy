@@ -1,7 +1,7 @@
 import typing
 
 from ..exceptions import ItemNotFound, TaskNotFound
-from ..support import Collection
+from ..collect import Collection
 
 
 class Task:
