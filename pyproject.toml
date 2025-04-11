@@ -1,20 +1,24 @@
 [project]
 name = "hapideploy"
 version = "0.1.0"
-description = "A remote execution tool written in Python, inspired by DeployPHP. "
+description = "HapiDeploy is a remote execution tool written in Python, inspired by DeployPHP."
 authors = [{name="Quynh Nguyen", email="<seriquynh@gmail.com>" }]
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.13,<4.0"
 dependencies = [
-    "typer>=0.15.2,<1.0",
-    "fabric>=3.2.2,<4.0",
-    "typing-extensions>=4.12.2,<5.0",
-    "pyyaml>=6.0.2,<7.0"
+    "typer (>=0.15.2,<1.0)",
+    "fabric (>=3.2.2,<4.0)",
+    "typing-extensions (>=4.12.2,<5.0)",
+    "pyyaml (>=6.0.2,<7.0)"
 ]
 
 [project.scripts]
 hapi = "hapi.cli:main"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 packages = [{include = "hapi", from = "src"}]
@@ -23,10 +27,6 @@ packages = [{include = "hapi", from = "src"}]
 pytest = "^8.3.5"
 black = "^25.1.0"
 isort = "^6.0.1"
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
 
 [tool.black]
 line-length = 88

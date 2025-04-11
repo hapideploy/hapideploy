@@ -54,7 +54,7 @@ class InitCommand:
 
             return 1
 
-        deploy_file_content = """from hapi.cli import app, main
+        deploy_file_content = """from hapi.cli import app
 from hapi.recipe import Laravel
 
 app.load(Laravel)
@@ -66,9 +66,6 @@ app.put("branch", "main")
 app.add("shared_dirs", [])
 app.add("shared_files", [])
 app.add("writable_dirs", [])
-
-if __name__ == "__main__":
-    main()
 """
 
         f = open(os.getcwd() + "/deploy.py", "w")
