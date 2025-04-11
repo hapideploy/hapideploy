@@ -2,6 +2,7 @@ import typing
 
 from .exceptions import ItemNotFound
 
+
 class Collection:
     def __init__(self, cls):
         self.__cls = cls

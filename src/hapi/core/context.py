@@ -8,7 +8,7 @@ from ..exceptions import (
     ContextError,
     GracefulShutdown,
 )
-from ..support import env_stringify, extract_curly_brackets
+from ..utils import env_stringify, extract_curly_brackets
 from .container import Container
 from .io import InputOutput, Printer
 from .remote import Remote

@@ -1,7 +1,7 @@
 import pytest
 
-from hapi.exceptions import ItemNotFound
 from hapi.collect import Collection
+from hapi.exceptions import ItemNotFound
 
 
 class Person:
@@ -87,6 +87,7 @@ def test_collection_filter():
         p1,
         p3,
     ]
+
 
 def test_collection_all():
     collection = Collection(Person)
