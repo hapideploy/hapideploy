@@ -1,18 +1,23 @@
 import os
 from pathlib import Path
 
-from .toolbox import app
+from .core.program import Program
+
+app = Program()
+
+app.set_instance(app)
 
 
-def start():
+def main():
     inventory_file = os.getcwd() + "/inventory.yml"
 
     if Path(inventory_file).exists():
         app.discover(inventory_file)
 
-    run_files = [Path(os.getcwd() + "/deploy.py"), Path(os.getcwd() + "/hapirun.py")]
+    run_file_names = ["deploy.py", "hapirun.py"]
 
-    for run_file in run_files:
+    for file_name in run_file_names:
+        run_file = Path(os.getcwd() + "/" + file_name)
         if run_file.exists():
             code = Path(run_file).read_text()
             exec(code)

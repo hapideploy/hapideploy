@@ -14,7 +14,7 @@ dependencies = [
 ]
 
 [project.scripts]
-hapi = "hapi.cli:start"
+hapi = "hapi.cli:main"
 
 [tool.poetry]
 packages = [{include = "hapi", from = "src"}]
