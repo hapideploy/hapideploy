@@ -25,7 +25,7 @@ def bin_pm2(c: Context):
 
     if not c.test("[ -d $HOME/.nvm/versions/node/v{{node_version}} ]"):
         c.raise_error(
-            "node version {{node_version}} does not exist. Try run 'nvm install {{node_version}}'."
+            "node version {{node_version}} does not exist. Try to run 'nvm install {{node_version}}'."
         )
 
     return 'export PATH="$HOME/.nvm/versions/node/v{{node_version}}/bin:$PATH"; pm2'
@@ -47,24 +47,15 @@ def pm2_process_name(c: Context):
     return c.parse("{{name}}-{{stage}}")
 
 
+def pm2_stop(c: Context):
+    c.run("{{bin/pm2}} stop {{pm2_process_name}} >> /dev/null")
+
+
+def pm2_del(c: Context):
+    c.run("{{bin/pm2}} del {{pm2_process_name}} >> /dev/null")
+
+
 def pm2_start(c: Context):
-    process_name = c.cook("pm2_process_name")
-    try:
-        c.run("{{bin/pm2}} stop {{pm2_process_name}}").fetch()
-        c.run("{{bin/pm2}} del {{pm2_process_name}}")
-    except UnexpectedExit as e:
-        if (
-            str(e).find(f"[PM2][ERROR] Process or Namespace {process_name} not found")
-            == -1
-        ):
-            raise e
-
-    c.run("{{bin/pm2}} start {{release_path}}/bin/www --name={{pm2_process_name}}")
-
-
-def pm2_status(c: Context):
-    command = c.parse("{{bin/pm2}} status")
-    c.remote.connect().run(command)
-    pass
-    # TODO UnicodeEncodeError: 'charmap' codec can't encode character '\ufffd' in position 441: character maps to <undefined>
-    # c.run("{{bin/pm2}} status {{pm2_process_name}}")
+    c.run(
+        "{{bin/pm2}} start {{pm2_start_script_path}} --name={{pm2_process_name}} >> /dev/null"
+    )
