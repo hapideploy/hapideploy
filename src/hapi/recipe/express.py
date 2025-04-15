@@ -15,6 +15,8 @@ class Express(Provider):
     def register(self):
         self.app.load(Common)
 
+        self.app.put("shared_files", [".env"])
+
         self.app.put("node_version", "20.19.0")
         self.app.put("pm2_start_script_path", "{{release_path}}/bin/www")
 
