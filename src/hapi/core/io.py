@@ -121,7 +121,7 @@ class Printer:
     def print_command(self, remote: Remote, command: str):
         self.log.debug(f"[{remote.label}] RUN {command}")
 
-        if self.io.verbosity >= InputOutput.DETAIL:
+        if self.io.verbosity >= InputOutput.DEBUG:
             self._do_print(remote, f"<comment>RUN</comment> {command}")
 
     def print_line(self, remote: Remote, line: str):
@@ -133,7 +133,7 @@ class Printer:
     def print_info(self, remote: Remote, message: str):
         self.log.debug(f"[{remote.label}] INFO {message}")
 
-        if self.io.verbosity >= InputOutput.NORMAL:
+        if self.io.verbosity >= InputOutput.DETAIL:
             self._do_print(remote, f"<info>INFO</info> {message}")
 
     def _do_print(self, remote: Remote, message: str):
