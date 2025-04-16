@@ -158,6 +158,8 @@ class Context:
 
         origin = conn.run(command, hide=True, watchers=[watcher])
 
+        conn.close()
+
         res = RunResult(origin)
 
         return res
