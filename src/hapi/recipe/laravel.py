@@ -13,10 +13,43 @@ def artisan(command: str):
     return caller
 
 
+def release_tidy(c: Context):
+    base_path = c.cook("release_path")
+
+    for tidy_item in c.cook("release_tidy_items"):
+        c.run(f"rm -rf {base_path}/{tidy_item}")
+
+
 class Laravel(Provider):
     def register(self):
         self.app.load(Common)
         self.app.load(PHP)
+
+        self.app.put(
+            "release_tidy_items",
+            [
+                # directories
+                ".github",
+                ".hapi",
+                "node_modules",
+                "tests",
+                # files
+                ".editorconfig",
+                ".env.example",
+                ".gitattributes",
+                ".gitignore",
+                ".prettierignore",
+                ".prettierrc",
+                "components.json",
+                "eslint.config.js",
+                # "package.json",
+                # "package-lock.json",
+                "phpunit.xml.dist",
+                "tailwind.config.js",
+                "tsconfig.json",
+                "vite.config.ts",
+            ],
+        )
 
         self.app.put("shared_dirs", ["storage"])
         self.app.put("shared_files", [".env"])
@@ -55,6 +88,7 @@ class Laravel(Provider):
                 "artisan:migrate",
                 # "artisan:db:seed",
                 "npm:build",
+                "release:tidy",
             ],
         )
 
@@ -70,5 +104,10 @@ class Laravel(Provider):
             ("artisan:db:seed", "Seed the database", artisan("db:seed --force")),
             ("npm:ci", "Clean install NPM packages", npm_ci),
             ("npm:build", "Execute NPM build script", npm_build),
+            (
+                "release:tidy",
+                "Tidy the release such as removing useless files",
+                release_tidy,
+            ),
         ]:
             self.app.define_task(name, desc, func)
