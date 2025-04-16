@@ -47,5 +47,3 @@ class PHP(Provider):
         self.app.define_group(
             "deploy:main", "Deploy main activities", "composer:install"
         )
-
-        self.app.after("deploy:symlink", "fpm:restart")

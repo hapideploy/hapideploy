@@ -1,5 +1,5 @@
 from ..core import Context, Provider
-from .__node import bin_npm, npm_build, npm_install
+from .__node import bin_npm, npm_build, npm_ci
 from .common import Common
 from .php import PHP
 
@@ -36,8 +36,8 @@ class Laravel(Provider):
             ],
         )
 
+        self.app.put("php_version", "8.4")
         self.app.put("node_version", "20.19.0")
-        self.app.put("npm_install_action", "install")  # install or ci
         self.app.put("npm_build_script", "build")
 
         self.app.bind("bin/npm", bin_npm)
@@ -49,7 +49,7 @@ class Laravel(Provider):
             "Deploy main activities",
             [
                 "composer:install",
-                "npm:install",
+                "npm:ci",
                 "artisan:optimize",
                 "artisan:storage:link",
                 "artisan:migrate",
@@ -68,7 +68,7 @@ class Laravel(Provider):
             ("artisan:optimize", "Increase performance", artisan("optimize")),
             ("artisan:migrate", "Run database migrations", artisan("migrate --force")),
             ("artisan:db:seed", "Seed the database", artisan("db:seed --force")),
-            ("npm:install", "Install NPM packages", npm_install),
+            ("npm:ci", "Clean install NPM packages", npm_ci),
             ("npm:build", "Execute NPM build script", npm_build),
         ]:
             self.app.define_task(name, desc, func)
