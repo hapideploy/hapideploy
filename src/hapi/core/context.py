@@ -39,17 +39,43 @@ class Context:
         self.__cwd = []
 
     def io(self) -> InputOutput:
+        """
+        Return the IO instance of this context.
+
+        :return InputOutput:
+        """
         return self.printer.io
 
-    def exec(self, task: Task):
-        self._before_exec(task)
+    def info(self, message: str):
+        """
+        Print an info message for this context.
+
+        :param str message:
+        """
+        self.printer.print_info(self.remote, self.parse(message))
+
+    def raise_error(self, message: str):
+        """
+        Raise a context error with the given message.
+
+        :param str message:
+        """
+        raise ContextError(self.parse(message))
+
+    def exec_task(self, task: Task):
+        """
+        Execute a task instance against the remote of this context.
+
+        :param Task task:
+        """
+        self._before_exec_task(task)
 
         try:
             task.func(self._do_clone())
         except Exception as e:
             self._do_catch(task, e)
 
-        self._after_exec(task)
+        self._after_exec_task(task)
 
     def put(self, key: str, value):
         self.container.put(key, value)
@@ -97,12 +123,16 @@ class Context:
 
         return self.parse(text)
 
+    def sudo(self, command: str, **kwargs):
+        kwargs["sudo"] = True
+        return self.run(command, **kwargs)
+
     def run(self, command: str, **kwargs):
         command = self._do_parse_command(command, **kwargs)
 
-        self._before_run(command, **kwargs)
+        self._before_run(command)
         res = self._do_run(command, **kwargs)
-        self._after_run(command, **kwargs)
+        self._after_run(command)
 
         return res
 
@@ -121,12 +151,6 @@ class Context:
     def cd(self, cwd: str):
         self.__cwd.append(cwd)
         return self.remote.put("cwd", self.parse(cwd))
-
-    def info(self, message: str):
-        self.printer.print_info(self.remote, self.parse(message))
-
-    def raise_error(self, message: str):
-        raise ContextError(self.parse(message))
 
     def _do_run(self, command: str, **kwargs):
         def process_line(line: str):
@@ -156,7 +180,10 @@ class Context:
 
         conn = self.remote.connect()
 
-        origin = conn.run(command, hide=True, watchers=[watcher])
+        if kwargs.get("sudo"):
+            origin = conn.sudo(command, hide=True, watchers=[watcher])
+        else:
+            origin = conn.run(command, hide=True, watchers=[watcher])
 
         conn.close()
 
@@ -180,7 +207,7 @@ class Context:
             return
         for name in names:
             task = self.tasks.find(name)
-            self.exec(task)
+            self.exec_task(task)
 
     def _do_parse_command(self, command: str, **kwargs):
         cwd = " && cd ".join(self.__cwd)
@@ -196,20 +223,20 @@ class Context:
 
         return self.parse(command)
 
-    def _before_exec(self, task: Task):
+    def _before_exec_task(self, task: Task):
         self.printer.print_task(self.remote, task)
 
         self._do_exec_list(task.before)
 
-    def _after_exec(self, task: Task):
+    def _after_exec_task(self, task: Task):
         self.__cwd = []
 
         self._do_exec_list(task.after)
 
-    def _before_run(self, command: str, **kwargs):
+    def _before_run(self, command: str):
         self.printer.print_command(self.remote, command)
 
-    def _after_run(self, command: str, **kwargs):
+    def _after_run(self, command: str):
         pass
 
 

@@ -149,7 +149,7 @@ class Proxy:
 
             for remote in self.selected:
                 self.current_remote = remote
-                self.make_context().exec(task)
+                self.make_context().exec_task(task)
                 self.clear_context()
 
             self.current_task = task
