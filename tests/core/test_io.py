@@ -127,7 +127,7 @@ def test_it_prints_command():
 
     remote = Remote(host="192.168.33.11", user="vagrant")
     command = "if [ ! -d ~/deploy/dev/.dep ]; then echo +true; fi"
-    io = ArrayInputOutput(verbosity=InputOutput.DETAIL)
+    io = ArrayInputOutput(verbosity=InputOutput.DEBUG)
     log = TestingStyle()
 
     printer = Printer(io, log)
@@ -201,7 +201,7 @@ def test_it_prints_info():
 
     remote = Remote(host="192.168.33.11", user="vagrant")
     msg = "Deployment is started"
-    io = ArrayInputOutput(verbosity=InputOutput.NORMAL)
+    io = ArrayInputOutput(verbosity=InputOutput.DETAIL)
     log = TestingStyle()
 
     printer = Printer(io, log)

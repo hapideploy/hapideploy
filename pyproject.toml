@@ -2,7 +2,7 @@
 name = "hapideploy"
 version = "0.1.0"
 description = "HapiDeploy is a remote execution tool written in Python, inspired by DeployPHP."
-authors = [{name="Quynh Nguyen", email="<seriquynh@gmail.com>" }]
+authors = [{name="Quynh Nguyen", email="<seriquynh@gmail.com>"}]
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.13,<4.0"
@@ -28,10 +28,11 @@ pytest = "^8.3.5"
 black = "^25.1.0"
 isort = "^6.0.1"
 mypy = "^1.15.0"
+autoflake = "^2.3.1"
 
 [tool.black]
 line-length = 88
-target-version = ['py37']
+target-version = ['py313']
 include = '\.pyi?$'
 
 [tool.isort]
