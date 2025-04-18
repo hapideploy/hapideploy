@@ -1,7 +1,7 @@
 import pytest
 
 from hapi.core import (
-    ArrayInputOutput,
+    CacheIO,
     Container,
     Context,
     Printer,
@@ -32,7 +32,7 @@ def create_context() -> DummyContext:
 
     container.put("stage", "testing")
 
-    printer = Printer(ArrayInputOutput(), NoneStyle())
+    printer = Printer(CacheIO(), NoneStyle())
 
     remote = Remote(
         host="127.0.0.1",
@@ -48,7 +48,7 @@ def create_context() -> DummyContext:
 def test_context_io_method():
     context = create_context()
 
-    assert isinstance(context.io(), ArrayInputOutput)
+    assert isinstance(context.io(), CacheIO)
 
 
 def test_context_exec_method():

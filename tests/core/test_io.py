@@ -1,6 +1,6 @@
 import typer
 
-from hapi.core import ArrayInputOutput, InputOutput, Printer, Remote, Task
+from hapi.core import CacheIO, InputOutput, Printer, Remote, Task
 from hapi.log import Logger
 
 
@@ -63,17 +63,17 @@ def test_it_decorates_text():
 
 
 def test_it_caches_output():
-    io = ArrayInputOutput()
-    io.writeln("This is the line 1.")
-    io.writeln("This is the line 2.")
-    io.writeln("This is the line 3.")
-    io.write("One more line")
+    io = CacheIO()
+    io.writeln("Hello John")
+    io.writeln("Hi James")
+    io.writeln("How are you doing?")
+    io.write("Not bad")
 
     assert io.items == [
-        "This is the line 1.\n",
-        "This is the line 2.\n",
-        "This is the line 3.\n",
-        "One more line",
+        "Hello John\n",
+        "Hi James.\n",
+        "How are you doing?\n",
+        "Not bad",
     ]
 
 
@@ -92,7 +92,7 @@ def test_it_prints_task():
 
     remote = Remote(host="192.168.33.11", user="vagrant")
     task = Task("sample", "This is a sample task", lambda _: None)
-    io = ArrayInputOutput(verbosity=InputOutput.NORMAL)
+    io = CacheIO(verbosity=InputOutput.NORMAL)
     log = TestingStyle()
 
     printer = Printer(io, log)
@@ -127,7 +127,7 @@ def test_it_prints_command():
 
     remote = Remote(host="192.168.33.11", user="vagrant")
     command = "if [ ! -d ~/deploy/dev/.dep ]; then echo +true; fi"
-    io = ArrayInputOutput(verbosity=InputOutput.DEBUG)
+    io = CacheIO(verbosity=InputOutput.DEBUG)
     log = TestingStyle()
 
     printer = Printer(io, log)
@@ -166,7 +166,7 @@ def test_it_prints_line():
 
     remote = Remote(host="192.168.33.11", user="vagrant")
     line = "+true"
-    io = ArrayInputOutput(verbosity=InputOutput.DEBUG)
+    io = CacheIO(verbosity=InputOutput.DEBUG)
     log = TestingStyle()
 
     printer = Printer(io, log)
@@ -201,7 +201,7 @@ def test_it_prints_info():
 
     remote = Remote(host="192.168.33.11", user="vagrant")
     msg = "Deployment is started"
-    io = ArrayInputOutput(verbosity=InputOutput.DETAIL)
+    io = CacheIO(verbosity=InputOutput.DETAIL)
     log = TestingStyle()
 
     printer = Printer(io, log)
