@@ -90,13 +90,13 @@ class InputOutput:
         raise NotImplemented
 
 
-class ConsoleInputOutput(InputOutput):
+class ConsoleIO(InputOutput):
     def _do_write(self, text: str, newline: bool = False):
         decorated = InputOutput.decorate(text)
         typer.echo(decorated, nl=newline)
 
 
-class ArrayInputOutput(InputOutput):
+class CacheIO(InputOutput):
     def __init__(self, verbosity: int = None):
         super().__init__(verbosity)
 

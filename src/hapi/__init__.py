@@ -2,8 +2,8 @@
 
 from .__version import __version__
 from .core import (
-    ArrayInputOutput,
-    ConsoleInputOutput,
+    CacheIO,
+    ConsoleIO,
     Container,
     Context,
     Deployer,
