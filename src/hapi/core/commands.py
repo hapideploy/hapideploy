@@ -20,30 +20,36 @@ class Command:
         self.remotes = remotes
         self.tasks = tasks
 
-    def execute(self):
+    def define_for(self, console: Typer):
         raise NotImplemented
 
-    def define_for(self, console: Typer):
+    def execute(self):
+        exit_code = self.handle()
+        if isinstance(exit_code, int):
+            exit(exit_code)
+        exit(0)
+
+    def handle(self):
         raise NotImplemented
 
 
 class AboutCommand(Command):
-    def execute(self):
-        self.io.writeln(f"Hapi CLI <success>{__version__}</success>")
-
     def define_for(self, console: Typer):
         @console.command(name="about", help="Display the Hapi CLI information")
         def handler():
-            self.io.writeln(f"Hapi CLI <success>{__version__}</success>")
+            self.execute()
+
+    def handle(self):
+        self.io.writeln(f"Hapi CLI <success>{__version__}</success>")
 
 
 class InitCommand(Command):
     def define_for(self, console: Typer):
         @console.command(name="init", help="Initialize Hapi files")
         def handler():
-            self.execute()
+            self.handle()
 
-    def execute(self):
+    def handle(self):
         recipe_list = [
             ("1", "laravel"),
         ]
@@ -100,7 +106,14 @@ app.add("writable_dirs", [])
 
 
 class ConfigListCommand(Command):
-    def execute(self):
+    def define_for(self, console: Typer):
+        @console.command(
+            name="config:list", help="Display all pre-defined configuration items"
+        )
+        def handler():
+            self.handle()
+
+    def handle(self):
         table = Table("Key", "Kind", "Type", "Value")
 
         bindings = self.container.all()
@@ -132,13 +145,6 @@ class ConfigListCommand(Command):
         console = Console()
         console.print(table)
 
-    def define_for(self, console: Typer):
-        @console.command(
-            name="config:list", help="Display all pre-defined configuration items"
-        )
-        def handler():
-            self.execute()
-
 
 class ConfigShowCommand(Command):
     def define_for(self, console: Typer):
@@ -147,9 +153,9 @@ class ConfigShowCommand(Command):
         )
         def handler(key: str = Argument(help="A configuration key")):
             self.io.set_argument("key", key)
-            self.execute()
+            self.handle()
 
-    def execute(self):
+    def handle(self):
         table = Table("Property", "Detail")
 
         key = self.io.get_argument("key")
@@ -189,9 +195,9 @@ class RemoteListCommand(Command):
         ):
             self.io.set_argument("selector", selector)
 
-            self.execute()
+            self.handle()
 
-    def execute(self) -> int:
+    def handle(self) -> int:
         table = Table("Label", "Host", "User", "Port", "Pemfile")
 
         selector = self.io.get_argument("selector")
@@ -233,9 +239,9 @@ class TreeCommand(Command):
         @console.command(name="tree", help="Display the task-tree for a given task")
         def handler(name: str = Argument(help="Name of task to display the tree for")):
             self.io.set_argument("name", name)
-            self.execute()
+            self.handle()
 
-    def execute(self) -> int:
+    def handle(self) -> int:
         self._build_tree()
 
         self._print_tree()
