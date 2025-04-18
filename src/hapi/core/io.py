@@ -17,7 +17,6 @@ class InputOutput:
     STAGE_DEV = "dev"
 
     def __init__(self, verbosity: int = None):
-
         self.arguments = dict()
         self.verbosity = verbosity if verbosity is not None else InputOutput.NORMAL
 

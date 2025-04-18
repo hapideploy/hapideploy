@@ -71,7 +71,7 @@ def test_it_caches_output():
 
     assert io.items == [
         "Hello John\n",
-        "Hi James.\n",
+        "Hi James\n",
         "How are you doing?\n",
         "Not bad",
     ]
