@@ -22,9 +22,9 @@ class Proxy:
     STAGE_DEV = "dev"
 
     def __init__(self, container: Container):
-        self.container = container
-        self.typer = Typer()
+        self.console = Typer()
 
+        self.container = container
         self.io = ConsoleInputOutput()
         self.log = NoneStyle()
 
@@ -64,49 +64,24 @@ class Proxy:
         self.__context = None
 
     def define_general_commands(self):
-        @self.typer.command(name=AboutCommand.NAME, help=AboutCommand.DESC)
-        def about():
-            exit_code = AboutCommand(self.io).execute()
-            exit(exit_code)
-
-        @self.typer.command(name=ConfigListCommand.NAME, help=ConfigListCommand.DESC)
-        def config_list():
-            exit_code = ConfigListCommand(self.container).execute()
-            exit(exit_code)
-
-        @self.typer.command(name=ConfigShowCommand.NAME, help=ConfigShowCommand.DESC)
-        def config_show(key: str = Argument(help="A configuration key")):
-            self.io.set_argument("key", key)
-            exit_code = ConfigShowCommand(self.container, self.io).execute()
-            exit(exit_code)
-
-        @self.typer.command(name=InitCommand.NAME, help=InitCommand.DESC)
-        def init():
-            exit_code = InitCommand(self.io).execute()
-            exit(exit_code)
-
-        @self.typer.command(name=RemoteListCommand.NAME, help=RemoteListCommand.DESC)
-        def remote_list(
-            selector: str = Argument(
-                default=RemoteBag.SELECTOR_ALL, help="The remote selector"
+        for cls in [
+            AboutCommand,
+            ConfigListCommand,
+            ConfigShowCommand,
+            InitCommand,
+            RemoteListCommand,
+            TreeCommand,
+        ]:
+            cls(self.container, self.io, self.remotes, self.tasks).define_for(
+                self.console
             )
-        ):
-            self.io.set_argument("selector", selector)
-            exit_code = RemoteListCommand(self.remotes, self.io).execute()
-            exit(exit_code)
-
-        @self.typer.command(name=TreeCommand.NAME, help=TreeCommand.DESC)
-        def tree(task: str = Argument(help="Task to display the tree for")):
-            self.io.set_argument("task", task)
-            exit_code = TreeCommand(self.tasks, self.io).execute()
-            exit(exit_code)
 
     def define_task_commands(self):
         for task in self.tasks.all():
             self._do_define_task_command(task)
 
     def _do_define_task_command(self, task: Task):
-        @self.typer.command(name=task.name, help="[task] " + task.desc)
+        @self.console.command(name=task.name, help=task.desc)
         def task_handler(
             selector: str = Argument(
                 default=RemoteBag.SELECTOR_ALL, help="The remote selector"

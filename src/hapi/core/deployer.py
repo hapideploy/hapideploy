@@ -22,7 +22,7 @@ class Deployer(Container):
 
         self.__proxy.define_task_commands()
 
-        self.__proxy.typer()
+        self.__proxy.console()
 
     def get_remotes(self) -> RemoteBag:
         return self.__proxy.remotes

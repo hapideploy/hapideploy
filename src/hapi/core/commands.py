@@ -1,8 +1,8 @@
 import os
 
-import typer
 from rich.console import Console
 from rich.table import Table
+from typer import Argument, Option, Typer, prompt
 
 from ..__version import __version__
 from .container import Binding, Container
@@ -11,27 +11,45 @@ from .remote import RemoteBag
 from .task import TaskBag
 
 
-class AboutCommand:
-    NAME = "about"
-    DESC = "Display the Hapi CLI information"
-
-    def __init__(self, io: InputOutput):
+class Command:
+    def __init__(
+        self, container: Container, io: InputOutput, remotes: RemoteBag, tasks: TaskBag
+    ):
+        self.container = container
         self.io = io
+        self.remotes = remotes
+        self.tasks = tasks
 
-    def execute(self) -> int:
+    def define_for(self, console: Typer):
+        raise NotImplemented
+
+    def execute(self):
+        exit_code = self.handle()
+        if isinstance(exit_code, int):
+            exit(exit_code)
+        exit(0)
+
+    def handle(self):
+        raise NotImplemented
+
+
+class AboutCommand(Command):
+    def define_for(self, console: Typer):
+        @console.command(name="about", help="Display the Hapi CLI information")
+        def handler():
+            self.execute()
+
+    def handle(self):
         self.io.writeln(f"Hapi CLI <success>{__version__}</success>")
 
-        return 0
 
+class InitCommand(Command):
+    def define_for(self, console: Typer):
+        @console.command(name="init", help="Initialize Hapi files")
+        def handler():
+            self.handle()
 
-class InitCommand:
-    NAME = "init"
-    DESC = "Initialize hapi files"
-
-    def __init__(self, io: InputOutput):
-        self.io = io
-
-    def execute(self) -> int:
+    def handle(self):
         recipe_list = [
             ("1", "laravel"),
         ]
@@ -41,9 +59,7 @@ class InitCommand:
 
         recipe_name = None
 
-        choice = typer.prompt(
-            self.io.decorate("<primary>Select a hapi recipe</primary>")
-        )
+        choice = prompt(self.io.decorate("<primary>Select a hapi recipe</primary>"))
 
         for key, name in recipe_list:
             if choice == key or choice == name:
@@ -51,8 +67,6 @@ class InitCommand:
 
         if not recipe_name:
             self.io.error(f'Value "{choice}" is invalid.')
-
-            return 1
 
         deploy_file_content = """from hapi.cli import app
 from hapi.recipe import Laravel
@@ -90,17 +104,16 @@ app.add("writable_dirs", [])
 
         self.io.success("inventory.yml file is created")
 
-        return 0
 
+class ConfigListCommand(Command):
+    def define_for(self, console: Typer):
+        @console.command(
+            name="config:list", help="Display all pre-defined configuration items"
+        )
+        def handler():
+            self.handle()
 
-class ConfigListCommand:
-    NAME = "config:list"
-    DESC = "Display all pre-defined configuration items"
-
-    def __init__(self, container: Container):
-        self.container = container
-
-    def execute(self) -> int:
+    def handle(self):
         table = Table("Key", "Kind", "Type", "Value")
 
         bindings = self.container.all()
@@ -132,18 +145,17 @@ class ConfigListCommand:
         console = Console()
         console.print(table)
 
-        return 0
 
+class ConfigShowCommand(Command):
+    def define_for(self, console: Typer):
+        @console.command(
+            name="config:show", help="Display details for a configuration item"
+        )
+        def handler(key: str = Argument(help="A configuration key")):
+            self.io.set_argument("key", key)
+            self.handle()
 
-class ConfigShowCommand:
-    NAME = "config:show"
-    DESC = "Display details for a configuration item"
-
-    def __init__(self, container: Container, io: InputOutput):
-        self.container = container
-        self.io = io
-
-    def execute(self) -> int:
+    def handle(self):
         table = Table("Property", "Detail")
 
         key = self.io.get_argument("key")
@@ -170,18 +182,22 @@ class ConfigShowCommand:
         console = Console()
         console.print(table)
 
-        return 0
 
+class RemoteListCommand(Command):
+    def define_for(self, console: Typer):
+        @console.command(
+            name="remote:list", help="Display a listing of defined remotes"
+        )
+        def handler(
+            selector: str = Argument(
+                default=RemoteBag.SELECTOR_ALL, help="The remote selector"
+            )
+        ):
+            self.io.set_argument("selector", selector)
 
-class RemoteListCommand:
-    NAME = "remote:list"
-    DESC = "Display a list of defined remotes"
+            self.handle()
 
-    def __init__(self, remotes: RemoteBag, io: InputOutput):
-        self.remotes = remotes
-        self.io = io
-
-    def execute(self) -> int:
+    def handle(self) -> int:
         table = Table("Label", "Host", "User", "Port", "Pemfile")
 
         selector = self.io.get_argument("selector")
@@ -207,21 +223,25 @@ class RemoteListCommand:
         return 0
 
 
-class TreeCommand:
+class TreeCommand(Command):
     NAME = "tree"
     DESC = "Display the task-tree for a given task"
 
-    def __init__(self, tasks: TaskBag, io: InputOutput):
-        self.__task_name = None
-        self.__tasks = tasks
-        self.__io = io
+    def __init__(
+        self, container: Container, io: InputOutput, remotes: RemoteBag, tasks: TaskBag
+    ):
+        super().__init__(container, io, remotes, tasks)
 
-        self.__tree = []
-        self.__depth = 1
+        self.__tree: list[dict] = []
+        self.__depth: int = 1
 
-    def execute(self) -> int:
-        self.__task_name = self.__io.get_argument("task")
+    def define_for(self, console: Typer):
+        @console.command(name="tree", help="Display the task-tree for a given task")
+        def handler(name: str = Argument(help="Name of task to display the tree for")):
+            self.io.set_argument("name", name)
+            self.handle()
 
+    def handle(self) -> int:
         self._build_tree()
 
         self._print_tree()
@@ -229,10 +249,10 @@ class TreeCommand:
         return 0
 
     def _build_tree(self):
-        self._create_tree_from_task_name(self.__task_name)
+        self._create_tree_from_task_name(self.io.get_argument("name"))
 
     def _create_tree_from_task_name(self, task_name: str, postfix: str = ""):
-        task = self.__tasks.find(task_name)
+        task = self.tasks.find(task_name)
 
         if task.before:
             for before_task in task.before:
@@ -263,10 +283,12 @@ class TreeCommand:
                 )
 
     def _print_tree(self):
-        self.__io.writeln("The task-tree for <primary>deploy</primary>:")
+        self.io.writeln(
+            f"The task-tree for <primary>{self.io.get_argument('name')}</primary>:"
+        )
 
         for item in self.__tree:
-            self.__io.writeln(
+            self.io.writeln(
                 "└"
                 + ("──" * item["depth"])
                 + "> "
