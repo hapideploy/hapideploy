@@ -1,13 +1,25 @@
-import typing
+from typing import Any, Callable
 
 
 class Binding:
     INSTANT = "instant"
     CALLBACK = "callback"
 
-    def __init__(self, kind: str, value=None, callback: typing.Callable = None):
+    def __init__(self, kind: str):
+        self.kind: str = kind
+        self.value: Any = None
+        self.callback: Callable[[Any], Any] = lambda _: None
+
+
+class BindingValue:
+    def __init__(self, kind: str, value: Any):
         self.kind = kind
         self.value = value
+
+
+class BindingCallback:
+    def __init__(self, kind: str, callback: Callable[[Any], Any]):
+        self.kind = kind
         self.callback = callback
 
 
@@ -34,7 +46,7 @@ class Container:
         :param str key: The unified key (identifier) in the container.
         :param value: The value is associated with the given key.
         """
-        self.__bindings[key] = Binding(Binding.INSTANT, value)
+        self.__bindings[key] = BindingValue(Binding.INSTANT, value)
         return self
 
     def add(self, key: str, value):
@@ -45,7 +57,7 @@ class Container:
         :param value: It can be a single value such as int, str or a list.
         """
         if self.__bindings.get(key) is None:
-            self.__bindings[key] = Binding(Binding.INSTANT, [])
+            self.__bindings[key] = BindingValue(Binding.INSTANT, [])
 
         if isinstance(self.__bindings[key].value, list) is False:
             raise ValueError(f'The value associated with "{key}" is not a list.')
@@ -58,11 +70,11 @@ class Container:
 
         return self
 
-    def bind(self, key: str, callback: typing.Callable):
+    def bind(self, key: str, callback: Callable[[Any], Any]):
         """
         Bind a callback to its key in the container.
         """
-        self.__bindings[key] = Binding(Binding.CALLBACK, callback=callback)
+        self.__bindings[key] = BindingCallback(Binding.CALLBACK, callback)
         return self
 
     def resolve(self, key: str):
@@ -76,7 +88,7 @@ class Container:
         :param str key: The unified key (identifier) in the container.
         """
 
-        def wrapper(func: typing.Callable):
+        def wrapper(func: Callable[[Any], Any]):
             self.bind(key, func)
 
         return wrapper
@@ -89,7 +101,7 @@ class Container:
         """
         return key in self.__bindings
 
-    def make(self, key: str, fallback: any = None, throw=None, inject=None):
+    def make(self, key: str, fallback: Any = None, throw=None, inject=None):
         """
         Resolve an item from the container.
 

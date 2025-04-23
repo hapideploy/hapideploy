@@ -2,7 +2,7 @@ import os
 
 from rich.console import Console
 from rich.table import Table
-from typer import Argument, Option, Typer, prompt
+from typer import Argument, Typer, prompt
 
 from ..__version import __version__
 from .container import Binding, Container
@@ -21,7 +21,7 @@ class Command:
         self.tasks = tasks
 
     def define_for(self, console: Typer):
-        raise NotImplemented
+        raise NotImplementedError
 
     def execute(self):
         exit_code = self.handle()
@@ -30,7 +30,7 @@ class Command:
         exit(0)
 
     def handle(self):
-        raise NotImplemented
+        raise NotImplementedError
 
 
 class AboutCommand(Command):
