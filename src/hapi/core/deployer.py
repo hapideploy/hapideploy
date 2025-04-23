@@ -1,4 +1,4 @@
-import typing
+from typing import Any, Callable
 
 from ..exceptions import InvalidHookKind, RemoteNotFound, TaskNotFound
 from .container import Container
@@ -39,9 +39,7 @@ class Deployer(Container):
             self.__proxy.remotes.add(remote)
         return remote
 
-    def define_task(
-        self, name: str, desc: str, func: typing.Callable[[Context], any]
-    ) -> Task:
+    def define_task(self, name: str, desc: str, func: Callable[[Context], Any]) -> Task:
         try:
             task = self.__proxy.tasks.find(name)
             task.desc = desc
