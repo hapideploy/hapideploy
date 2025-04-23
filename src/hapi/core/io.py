@@ -13,12 +13,9 @@ class InputOutput:
     DETAIL = 2
     DEBUG = 3
 
-    SELECTOR_ALL = "all"
-    STAGE_DEV = "dev"
-
-    def __init__(self, verbosity: int = None):
-        self.arguments = dict()
-        self.verbosity = verbosity if verbosity is not None else InputOutput.NORMAL
+    def __init__(self, verbosity: int = 1):
+        self.arguments: dict[str, str] = dict()
+        self.verbosity = verbosity
 
     def set_argument(self, name: str, value: str):
         self.arguments[name] = value
@@ -87,20 +84,20 @@ class InputOutput:
         return text
 
     def _do_write(self, text: str, newline: bool = False):
-        raise NotImplemented
+        raise NotImplementedError
 
 
-class ConsoleInputOutput(InputOutput):
+class ConsoleIO(InputOutput):
     def _do_write(self, text: str, newline: bool = False):
         decorated = InputOutput.decorate(text)
         typer.echo(decorated, nl=newline)
 
 
-class ArrayInputOutput(InputOutput):
-    def __init__(self, verbosity: int = None):
+class CacheIO(InputOutput):
+    def __init__(self, verbosity: int = 1):
         super().__init__(verbosity)
 
-        self.items = []
+        self.items: list[str] = []
 
     def _do_write(self, text: str, newline: bool = False):
         decorated = InputOutput.decorate(text) + ("\n" if newline else "")
@@ -112,17 +109,18 @@ class Printer:
         self.io = io
         self.log = log
 
-    def print_task(self, remote: Remote, task: Task):
+    def print_exec_task(self, remote: Remote, task: Task):
         self.log.debug(f"[{remote.label}] TASK {task.name}")
 
         if self.io.verbosity >= InputOutput.NORMAL:
             self._do_print(remote, f"<success>TASK</success> {task.name}")
 
-    def print_command(self, remote: Remote, command: str):
-        self.log.debug(f"[{remote.label}] RUN {command}")
+    def print_run_command(self, remote: Remote, command: str, sudo: bool = False):
+        prefix = "(sudo) " if sudo else ""
+        self.log.debug(f"[{remote.label}] RUN {prefix}{command}")
 
         if self.io.verbosity >= InputOutput.DEBUG:
-            self._do_print(remote, f"<comment>RUN</comment> {command}")
+            self._do_print(remote, f"<comment>RUN</comment> {prefix}{command}")
 
     def print_line(self, remote: Remote, line: str):
         self.log.debug(f"[{remote.label}] {line}")

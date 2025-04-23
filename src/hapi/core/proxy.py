@@ -13,7 +13,7 @@ from .commands import (
 )
 from .container import Container
 from .context import Context
-from .io import ConsoleInputOutput, InputOutput, Printer
+from .io import ConsoleIO, InputOutput, Printer
 from .remote import RemoteBag
 from .task import Task, TaskBag
 
@@ -25,7 +25,7 @@ class Proxy:
         self.console = Typer()
 
         self.container = container
-        self.io = ConsoleInputOutput()
+        self.io = ConsoleIO()
         self.log = NoneStyle()
 
         self.remotes = RemoteBag()
