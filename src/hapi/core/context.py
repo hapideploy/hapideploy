@@ -130,9 +130,9 @@ class Context:
     def run(self, command: str, **kwargs):
         command = self._do_parse_command(command, **kwargs)
 
-        self._before_run(command)
+        self._before_run_command(command, **kwargs)
         res = self._do_run(command, **kwargs)
-        self._after_run(command)
+        self._after_run_command(command)
 
         return res
 
@@ -224,7 +224,7 @@ class Context:
         return self.parse(command)
 
     def _before_exec_task(self, task: Task):
-        self.printer.print_task(self.remote, task)
+        self.printer.print_exec_task(self.remote, task)
 
         self._do_exec_list(task.before)
 
@@ -233,10 +233,10 @@ class Context:
 
         self._do_exec_list(task.after)
 
-    def _before_run(self, command: str):
-        self.printer.print_command(self.remote, command)
+    def _before_run_command(self, command: str, **kwargs):
+        self.printer.print_run_command(self.remote, command, kwargs.get("sudo"))
 
-    def _after_run(self, command: str):
+    def _after_run_command(self, command: str):
         pass
 
 

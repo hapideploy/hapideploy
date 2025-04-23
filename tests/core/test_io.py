@@ -97,7 +97,7 @@ def test_it_prints_task():
 
     printer = Printer(io, log)
 
-    printer.print_task(remote, task)
+    printer.print_exec_task(remote, task)
 
     record = records[0]
 
@@ -132,7 +132,7 @@ def test_it_prints_command():
 
     printer = Printer(io, log)
 
-    printer.print_command(remote, command)
+    printer.print_run_command(remote, command)
 
     record = records[0]
 
