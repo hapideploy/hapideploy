@@ -1,7 +1,8 @@
-from typing import Callable
+from typing import Any, Callable
 
 from ..collect import Collection
 from ..exceptions import ItemNotFound, TaskNotFound
+from .context import Context
 
 
 class Task:
@@ -9,15 +10,15 @@ class Task:
     HOOK_AFTER = "after"
     HOOK_FAILED = "failed"
 
-    def __init__(self, name: str, desc: str, func: Callable):
+    def __init__(self, name: str, desc: str, func: Callable[[Context], Any]):
         self.name = name
         self.desc = desc
         self.func = func
 
-        self.children = []
-        self.before = []
-        self.after = []
-        self.failed = []
+        self.children: list[str] = []
+        self.before: list[str] = []
+        self.after: list[str] = []
+        self.failed: list[str] = []
 
 
 class TaskBag(Collection):
@@ -39,7 +40,7 @@ class TaskBag(Collection):
         try:
             return super().match(callback)
         except ItemNotFound:
-            raise TaskNotFound("Not tasks match the given callback.")
+            raise TaskNotFound("No tasks match the given callback.")
 
     def filter(self, callback: Callable[[Task], bool]) -> list[Task]:
         return super().filter(callback)

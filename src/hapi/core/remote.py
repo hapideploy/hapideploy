@@ -11,10 +11,10 @@ class Remote(Container):
     def __init__(
         self,
         host: str,
-        user: str = None,
-        port: int = None,
-        pemfile: str = None,
-        label: str = None,
+        user: str | None = None,
+        port: int | None = None,
+        pemfile: str | None = None,
+        label: str | None = None,
     ):
         super().__init__()
 
@@ -62,7 +62,7 @@ class RemoteBag(Collection):
         try:
             return super().match(callback)
         except:
-            raise RemoteNotFound("Not remotes match the given callback.")
+            raise RemoteNotFound("No remotes match the given callback.")
 
     def filter(self, callback: Callable[[Remote], bool]) -> list[Remote]:
         return super().filter(callback)
