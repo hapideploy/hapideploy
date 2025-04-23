@@ -41,5 +41,5 @@ multi_line_output = 3
 line_length = 88
 
 [[tool.mypy.overrides]]
-module = ["fabric.*"]
+module = ["fabric.*", "yaml.*"]
 follow_untyped_imports = true

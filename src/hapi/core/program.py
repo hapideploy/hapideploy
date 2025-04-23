@@ -1,9 +1,11 @@
-import typing
-
 import yaml
 
-from ..exceptions import InvalidHostsDefinition, InvalidProviderClass
+from typing import Any, Callable
+
+from .context import Context
 from .deployer import Deployer
+from .task import Task
+from ..exceptions import InvalidHostsDefinition, InvalidProviderClass
 
 
 class Program(Deployer):
@@ -56,20 +58,20 @@ class Program(Deployer):
     def group(self, name: str, desc: str, do: list[str]):
         return self.define_group(name, desc, do)
 
-    def before(self, name: str, do):
-        return super().define_hook("before", name, do)
+    def before(self, name: str, do: list[str]):
+        return super().define_hook(Task.HOOK_BEFORE, name, do)
 
-    def after(self, name: str, do):
-        return super().define_hook("after", name, do)
+    def after(self, name: str, do: list[str]):
+        return super().define_hook(Task.HOOK_AFTER, name, do)
 
-    def fail(self, name: str, do):
-        return super().define_hook("failed", name, do)
+    def fail(self, name: str, do: list[str]):
+        return super().define_hook(Task.HOOK_FAILED, name, do)
 
     def resolve(self, key: str):
         return super().resolve(key)
 
     def task(self, name: str, desc: str):
-        def wrapper(func: typing.Callable):
+        def wrapper(func: Callable[[Context], Any]):
             self.define_task(name, desc, func)
 
         return wrapper
@@ -80,4 +82,4 @@ class Provider:
         self.app = app
 
     def register(self):
-        raise NotImplemented
+        raise NotImplementedError
