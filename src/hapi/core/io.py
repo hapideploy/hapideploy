@@ -116,7 +116,7 @@ class Printer:
             self._do_print(remote, f"<success>TASK</success> {task.name}")
 
     def print_run_command(self, remote: Remote, command: str, sudo: bool = False):
-        prefix = '(sudo) ' if sudo else ''
+        prefix = "(sudo) " if sudo else ""
         self.log.debug(f"[{remote.label}] RUN {prefix}{command}")
 
         if self.io.verbosity >= InputOutput.DEBUG:
