@@ -2,7 +2,6 @@ from typing import Any, Callable
 
 from ..collect import Collection
 from ..exceptions import ItemNotFound, TaskNotFound
-from .context import Context
 
 
 class Task:
@@ -10,7 +9,7 @@ class Task:
     HOOK_AFTER = "after"
     HOOK_FAILED = "failed"
 
-    def __init__(self, name: str, desc: str, func: Callable[[Context], Any]):
+    def __init__(self, name: str, desc: str, func: Callable[[Any], Any]):
         self.name = name
         self.desc = desc
         self.func = func

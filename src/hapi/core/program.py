@@ -1,11 +1,11 @@
-import yaml
-
 from typing import Any, Callable
 
+import yaml
+
+from ..exceptions import InvalidHostsDefinition, InvalidProviderClass
 from .context import Context
 from .deployer import Deployer
 from .task import Task
-from ..exceptions import InvalidHostsDefinition, InvalidProviderClass
 
 
 class Program(Deployer):

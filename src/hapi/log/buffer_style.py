@@ -1,4 +1,5 @@
 import datetime
+from typing import Any
 
 from .logger import Logger
 
@@ -9,7 +10,7 @@ class BufferStyle(Logger):
 
         self.buffered = ""
 
-    def write(self, level: str, message: str, context: dict = None):
+    def write(self, level: str, message: str, context: dict[Any, Any] | None = None):
         moment = datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
         self.buffered += f"[{moment}] {message}\n"
 

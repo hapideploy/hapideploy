@@ -70,14 +70,20 @@ Install Python dependencies
 poetry install
 ```
 
-Run tests
-
-```bash
-poetry run pytest
-```
-
 Fix code style
 
 ```bash
 poetry run autoflake --in-place --remove-unused-variables -r src/ tests/; poetry run black src/ tests/; poetry run isort src/ tests/;
+```
+
+Run static analysis
+
+```bash
+poetry run mypy src/ tests/
+````
+
+Run all tests
+
+```bash
+poetry run pytest
 ```

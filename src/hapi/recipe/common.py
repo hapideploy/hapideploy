@@ -1,3 +1,5 @@
+from typing import Any
+
 from ..core import Context, Provider
 from .deploy import (
     deploy_clean,
@@ -51,7 +53,7 @@ def releases_log(c: Context):
         return []
 
     lines = c.run("tail -n 300 {{deploy_path}}/.dep/releases_log").fetch().split("\n")
-    releases = []
+    releases: list[Any] = []
     for line in lines:
         releases.insert(0, json.loads(line))
     return releases
