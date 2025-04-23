@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Optional
 
 from typer import Argument, Option, Typer
 
@@ -14,7 +14,7 @@ from .commands import (
 from .container import Container
 from .context import Context
 from .io import ConsoleIO, InputOutput, Printer
-from .remote import RemoteBag
+from .remote import Remote, RemoteBag
 from .task import Task, TaskBag
 
 
@@ -31,17 +31,20 @@ class Proxy:
         self.remotes = RemoteBag()
         self.tasks = TaskBag()
 
-        self.selected = []
+        self.selected: list[Remote] = []
 
-        self.current_remote = None
-        self.current_task = None
+        self.current_remote: Optional[Remote] = None
+        self.current_task: Optional[Task] = None
 
-        self.prepared = False
-        self.started = False
+        self.prepared: bool = False
+        self.started: bool = False
 
-        self.__context = None
+        self.__context: Optional[Context] = None
 
     def make_context(self, isolate=False) -> Context:
+        if not self.current_remote:
+            raise RuntimeError("There is no current remote.")
+
         if isolate is True:
             return Context(
                 self.container,
@@ -94,7 +97,7 @@ class Proxy:
                 Option(
                     help="Customize config items. E.g., --config=python_version=3.13"
                 ),
-            ] = None,
+            ] = "",
             quiet: Annotated[
                 bool, Option(help="Do not print any output messages (level: 0)")
             ] = False,

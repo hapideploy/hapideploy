@@ -1,3 +1,5 @@
+from typing import Any
+
 import typer
 
 from hapi.core import CacheIO, InputOutput, Printer, Remote, Task
@@ -77,11 +79,13 @@ def test_it_caches_output():
     ]
 
 
-def test_it_prints_task():
+def test_printer_print_exec_task_method():
     records = []
 
     class TestingStyle(Logger):
-        def write(self, level: str, message: str, context: dict = None):
+        def write(
+            self, level: str, message: str, context: dict[Any, Any] | None = None
+        ):
             records.append(
                 dict(
                     level=level,
@@ -112,11 +116,13 @@ def test_it_prints_task():
     )
 
 
-def test_it_prints_command():
+def test_printer_print_run_command():
     records = []
 
     class TestingStyle(Logger):
-        def write(self, level: str, message: str, context: dict = None):
+        def write(
+            self, level: str, message: str, context: dict[Any, Any] | None = None
+        ):
             records.append(
                 dict(
                     level=level,
@@ -151,11 +157,13 @@ def test_it_prints_command():
     )
 
 
-def test_it_prints_line():
+def test_printer_print_line_method():
     records = []
 
     class TestingStyle(Logger):
-        def write(self, level: str, message: str, context: dict = None):
+        def write(
+            self, level: str, message: str, context: dict[Any, Any] | None = None
+        ):
             records.append(
                 dict(
                     level=level,
@@ -186,11 +194,13 @@ def test_it_prints_line():
     )
 
 
-def test_it_prints_info():
+def test_printer_print_info_method():
     records = []
 
     class TestingStyle(Logger):
-        def write(self, level: str, message: str, context: dict = None):
+        def write(
+            self, level: str, message: str, context: dict[Any, Any] | None = None
+        ):
             records.append(
                 dict(
                     level=level,

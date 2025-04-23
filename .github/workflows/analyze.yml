@@ -1,0 +1,23 @@
+name: analyze
+
+on:
+  push:
+    paths:
+      - '.github/workflows/analyze.yml'
+      - '**.py'
+      - 'pyproject.toml'
+
+jobs:
+  analyze:
+    name: Static analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: pip install poetry
+      - run: poetry install
+      - run: poetry show
+      - run: poetry run mypy src/ tests/

@@ -1,4 +1,5 @@
 import random
+from typing import Any, Optional
 
 from fabric import Result
 from invoke import StreamWatcher
@@ -36,7 +37,7 @@ class Context:
         self.tasks = tasks
         self.printer = printer
 
-        self.__cwd = []
+        self.__cwd: list[str] = []
 
     def io(self) -> InputOutput:
         """
@@ -83,7 +84,7 @@ class Context:
     def check(self, key: str) -> bool:
         return True if self.remote.has(key) else self.container.has(key)
 
-    def cook(self, key: str, fallback: any = None, throw: bool = False):
+    def cook(self, key: str, fallback: Any = None, throw: bool = False):
         """
         Return the value of a key from the remote or container.
 
@@ -130,7 +131,9 @@ class Context:
     def run(self, command: str, **kwargs):
         command = self._do_parse_command(command, **kwargs)
 
-        self._before_run_command(command, **kwargs)
+        sudo = kwargs.get("sudo") is True
+
+        self._before_run_command(command, sudo)
         res = self._do_run(command, **kwargs)
         self._after_run_command(command)
 
@@ -209,7 +212,7 @@ class Context:
             task = self.tasks.find(name)
             self.exec_task(task)
 
-    def _do_parse_command(self, command: str, **kwargs):
+    def _do_parse_command(self, command: str, env: Optional[dict[str, str]] = None):
         cwd = " && cd ".join(self.__cwd)
 
         if cwd.strip() != "":
@@ -217,8 +220,8 @@ class Context:
         else:
             command = command.strip()
 
-        if kwargs.get("env"):
-            env_vars = env_stringify(kwargs.get("env"))
+        if env:
+            env_vars = env_stringify(env)
             command = f"export {env_vars}; {command}"
 
         return self.parse(command)
@@ -233,17 +236,17 @@ class Context:
 
         self._do_exec_list(task.after)
 
-    def _before_run_command(self, command: str, **kwargs):
-        self.printer.print_run_command(self.remote, command, kwargs.get("sudo"))
+    def _before_run_command(self, command: str, sudo: bool = False):
+        self.printer.print_run_command(self.remote, command, sudo)
 
     def _after_run_command(self, command: str):
         pass
 
 
 class RunResult:
-    def __init__(self, origin: Result = None):
-        self.origin = origin
-        self.fetched = False
+    def __init__(self, origin: Optional[Result] = None):
+        self.origin: Optional[Result] = origin
+        self.fetched: bool = False
 
     def fetch(self) -> str:
         if self.fetched:
@@ -251,4 +254,4 @@ class RunResult:
 
         self.fetched = True
 
-        return self.origin.stdout.strip()
+        return self.origin.stdout.strip() if self.origin else ""
