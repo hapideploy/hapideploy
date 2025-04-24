@@ -1,4 +1,5 @@
 import re
+from typing import Any
 
 import typer
 
@@ -15,6 +16,7 @@ class InputOutput:
 
     def __init__(self, verbosity: int = 1):
         self.arguments: dict[str, str] = dict()
+        self.options: dict[str, Any] = dict()
         self.verbosity = verbosity
 
     def set_argument(self, name: str, value: str):
@@ -22,6 +24,12 @@ class InputOutput:
 
     def get_argument(self, name: str, fallback=None):
         return self.arguments[name] if name in self.arguments else fallback
+
+    def set_option(self, name: str, value: bool | str):
+        self.options[name] = value
+
+    def get_option(self, name: str, fallback=None):
+        return self.options[name] if name in self.options else fallback
 
     def quiet(self) -> bool:
         return self.verbosity == InputOutput.QUIET

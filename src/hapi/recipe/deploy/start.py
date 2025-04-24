@@ -13,5 +13,7 @@ def deploy_start(c: Context):
             c.raise_error(
                 f'Could not detect a release name because the latest release "{latest_release}" is not numeric. \nUse --config=release_name=* to set it.'
             )
+    elif not c.check("release_name"):
+        c.put("release_name", 1)
 
     c.info("Deploying {{name}} to stage={{stage}} (release: {{release_name}})")

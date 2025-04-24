@@ -26,6 +26,15 @@ def test_it_sets_and_gets_arguments():
     assert io.get_argument("age", 30) == 30
 
 
+def test_it_sets_and_gets_options():
+    io = InputOutput()
+    assert io.get_option("force") is None
+    assert io.get_option("force", "off") == "off"
+
+    io.set_option("force", True)
+    assert io.get_option("force")
+
+
 def test_it_checks_verbose_levels():
     io = InputOutput(verbosity=InputOutput.QUIET)
     assert io.quiet()

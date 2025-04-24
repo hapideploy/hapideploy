@@ -1,8 +1,10 @@
 import os
+from pathlib import Path
+from typing import Annotated, Callable
 
 from rich.console import Console
 from rich.table import Table
-from typer import Argument, Typer, prompt
+from typer import Argument, Option, Typer, prompt
 
 from ..__version import __version__
 from .container import Binding, Container
@@ -46,29 +48,72 @@ class AboutCommand(Command):
 class InitCommand(Command):
     def define_for(self, console: Typer):
         @console.command(name="init", help="Initialize Hapi files")
-        def handler():
+        def handler(
+            force: Annotated[
+                bool, Option(help="Force to create deploy.py and inventory files")
+            ] = False,
+        ):
+            self.io.set_option("force", force)
             self.handle()
 
     def handle(self):
-        recipe_list = [
-            ("1", "laravel"),
+        if self.io.get_option("force") is False:
+            for file in [
+                "deploy.py",
+                "inventory.yml",
+            ]:
+                if Path(os.getcwd() + "/" + file).exists():
+                    self.io.error(
+                        f"{file} already exists. Use --force to overwrite it."
+                    )
+                    return
+
+        candidates: list[tuple[str, Callable]] = [
+            ("laravel", InitCommand.deploy_laravel),
+            ("express", InitCommand.deploy_express),
         ]
 
-        for key, name in recipe_list:
-            self.io.writeln(f" [<comment>{key}</comment>] {name}")
+        self.io.writeln("")
 
-        recipe_name = None
+        for idx, (name, _) in enumerate(candidates):
+            self.io.writeln(f"[<comment>{idx}</comment>] {name}")
 
-        choice = prompt(self.io.decorate("<primary>Select a hapi recipe</primary>"))
+        picked = None
 
-        for key, name in recipe_list:
-            if choice == key or choice == name:
-                recipe_name = name
+        choice = prompt(self.io.decorate("\n<primary>Select a hapi recipe</primary>"))
 
-        if not recipe_name:
-            self.io.error(f'Value "{choice}" is invalid.')
+        for idx, (name, resolve_deploy_file_content) in enumerate(candidates):
+            if choice == str(idx) or choice == name:
+                picked = idx
+                deploy_file_content = resolve_deploy_file_content()
+                f = open(os.getcwd() + "/deploy.py", "w")
+                f.write(deploy_file_content)
+                f.close()
+                break
 
-        deploy_file_content = """from hapi.cli import app
+        if picked is None:
+            self.io.error(f"Recipe {choice} is invalid.")
+            return
+
+        inventory_file_content = """hosts:
+  server-1:
+    host: 192.168.33.10
+    port: 22 # Optional
+    user: vagrant # Optional
+    pemfile: ~/.ssh/id_ed25519 # Optional
+    with:
+      deploy_path: ~/deploy/{{stage}}
+"""
+
+        f = open(os.getcwd() + "/inventory.yml", "w")
+        f.write(inventory_file_content)
+        f.close()
+
+        self.io.success("deploy.py and inventory.yml files are created")
+
+    @staticmethod
+    def deploy_laravel() -> str:
+        return """from hapi.cli import app
 from hapi.recipe import Laravel
 
 app.load(Laravel)
@@ -82,27 +127,21 @@ app.add("shared_files", [])
 app.add("writable_dirs", [])
 """
 
-        f = open(os.getcwd() + "/deploy.py", "w")
-        f.write(deploy_file_content)
-        f.close()
+    @staticmethod
+    def deploy_express() -> str:
+        return """from hapi.cli import app
+from hapi.recipe import Express
 
-        self.io.success("deploy.py file is created")
+app.load(Express)
 
-        inventory_file_content = """hosts:
-  app-server:
-    host: 192.168.33.10
-    port: 22 # Optional
-    user: vagrant # Optional
-    pemfile: ~/.ssh/id_ed25519 # Optional
-    with:
-      deploy_path: ~/deploy/{{stage}}
+app.put("name", "express")
+app.put("repository", "https://github.com/hapideploy/express")
+app.put("branch", "main")
+
+app.add("shared_dirs", [])
+app.add("shared_files", [])
+app.add("writable_dirs", [])
 """
-
-        f = open(os.getcwd() + "/inventory.yml", "w")
-        f.write(inventory_file_content)
-        f.close()
-
-        self.io.success("inventory.yml file is created")
 
 
 class ConfigListCommand(Command):
