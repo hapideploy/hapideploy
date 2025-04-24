@@ -129,7 +129,7 @@ class Context:
         return self.run(command, **kwargs)
 
     def run(self, command: str, **kwargs):
-        command = self._do_parse_command(command, **kwargs)
+        command = self._do_parse_command(command, env=kwargs.get("env"))
 
         sudo = kwargs.get("sudo") is True
 
