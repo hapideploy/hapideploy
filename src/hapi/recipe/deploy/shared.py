@@ -63,4 +63,4 @@ def deploy_shared(c: Context):
 
         c.run(f"{bin_symlink} {shared_path}/{item_file} {release_path}/{item_file}")
 
-    c.info("Shared directories and files.")
+    c.info("Directories and files are shared")

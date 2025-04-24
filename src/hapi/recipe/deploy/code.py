@@ -55,8 +55,8 @@ def deploy_code(c: Context):
     else:
         c.raise_error(f"Unsupported configuration [update_code_strategy]: {strategy}")
 
-    # Save git revision in REVISION file.
+    # Save git commit hash in the REVISION file.
     rev = shlex.quote(c.run(f"{git} rev-list {target} -1").fetch())
     c.run(f"echo {rev} > {release_path}/REVISION")
 
-    c.info("Code is updated")
+    c.info("The code is updated ({{deploy_path}}/.dep/repo)")

@@ -4,13 +4,13 @@ from ..core import Context, Provider
 from .deploy import (
     deploy_clean,
     deploy_code,
+    deploy_end,
     deploy_env,
     deploy_lock,
     deploy_release,
     deploy_setup,
     deploy_shared,
     deploy_start,
-    deploy_success,
     deploy_symlink,
     deploy_unlock,
     deploy_writable,
@@ -118,19 +118,19 @@ class Common(Provider):
 
     def _register_tasks(self):
         for name, desc, func in [
-            ("deploy:start", "Start a new deployment", deploy_start),
-            ("deploy:setup", "Setup the deploy directory", deploy_setup),
+            ("deploy:start", "Start a deployment", deploy_start),
+            ("deploy:setup", "Setup the deploy path", deploy_setup),
             ("deploy:release", "Create a new release", deploy_release),
-            ("deploy:code", "Update code", deploy_code),
+            ("deploy:code", "Update the code", deploy_code),
             ("deploy:env", "Create the .env file", deploy_env),
             ("deploy:shared", "Share directories and files", deploy_shared),
-            ("deploy:lock", "Lock the deployment", deploy_lock),
-            ("deploy:unlock", "Unlock the deployment", deploy_unlock),
+            ("deploy:lock", "Lock the deployment process", deploy_lock),
+            ("deploy:unlock", "Unlock the deployment process", deploy_unlock),
             ("deploy:writable", "Make directories and files writable", deploy_writable),
             ("deploy:main", "Deploy main activities", lambda _: None),
-            ("deploy:symlink", "Create the release symlink", deploy_symlink),
+            ("deploy:symlink", "Symlink the current path", deploy_symlink),
             ("deploy:clean", "Clean deployment stuff", deploy_clean),
-            ("deploy:success", "Announce a deployment is suceed", deploy_success),
+            ("deploy:end", "End a deployment", deploy_end),
         ]:
             self.app.define_task(name, desc, func)
 
@@ -151,7 +151,7 @@ class Common(Provider):
                 "deploy:symlink",
                 "deploy:unlock",
                 "deploy:clean",
-                "deploy:success",
+                "deploy:end",
             ],
         )
 

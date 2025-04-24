@@ -11,11 +11,11 @@ def deploy_release(c: Context):
 
     releases = c.cook("releases_list")
     release_name = c.cook("release_name")
-    release_dir = f"releases/{release_name}"
+    release_sub_dir = f"releases/{release_name}"
 
-    if c.test(f"[ -d {release_dir} ]"):
+    if c.test(f"[ -d {release_sub_dir} ]"):
         c.raise_error(
-            f'Release name "{release_name}" already exists.\nIt can be overridden via:\n --config=release_name={release_name}'
+            f'Release name "{release_name}" already exists.\nIt can be overridden via:\n --config=release_name=*'
         )
 
     c.run("echo {{release_name}} > .dep/latest_release")
@@ -38,15 +38,11 @@ def deploy_release(c: Context):
 
     c.run(f"echo '{json_data}' >> .dep/releases_log")
 
-    c.run(f"mkdir -p {release_dir}")
+    c.run(f"mkdir -p {release_sub_dir}")
 
-    c.run("{{bin/symlink}} " + release_dir + " {{deploy_path}}/release")
+    c.run("{{bin/symlink}} " + release_sub_dir + " {{deploy_path}}/release")
 
-    c.info(
-        "The {{deploy_path}}/"
-        + release_dir
-        + " is created and symlinked (release: {{release_name}})"
-    )
+    c.info("The release path is symlinked ({{deploy_path}}/release)")
 
     releases.insert(0, release_name)
 

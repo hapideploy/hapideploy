@@ -55,16 +55,16 @@ class Program(Deployer):
     def remote(self, **kwargs):
         return super().define_remote(**kwargs)
 
-    def group(self, name: str, desc: str, do: list[str]):
+    def group(self, name: str, desc: str, do: str | list[str]):
         return self.define_group(name, desc, do)
 
-    def before(self, name: str, do: list[str]):
+    def before(self, name: str, do: str | list[str]):
         return super().define_hook(Task.HOOK_BEFORE, name, do)
 
-    def after(self, name: str, do: list[str]):
+    def after(self, name: str, do: str | list[str]):
         return super().define_hook(Task.HOOK_AFTER, name, do)
 
-    def fail(self, name: str, do: list[str]):
+    def fail(self, name: str, do: str | list[str]):
         return super().define_hook(Task.HOOK_FAILED, name, do)
 
     def resolve(self, key: str):

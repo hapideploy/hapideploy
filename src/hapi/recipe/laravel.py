@@ -106,7 +106,7 @@ class Laravel(Provider):
             ("npm:build", "Execute NPM build script", npm_build),
             (
                 "release:tidy",
-                "Tidy the release such as removing useless files",
+                "Tidy the release path",
                 release_tidy,
             ),
         ]:

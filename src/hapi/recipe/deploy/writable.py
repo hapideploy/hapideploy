@@ -38,4 +38,4 @@ def deploy_writable(c: Context):
     else:
         c.raise_error(f"Unsupported configuration [writable_mode]: {mode}")
 
-    c.info("Make directories and files writable")
+    c.info("Directories and files are writable")

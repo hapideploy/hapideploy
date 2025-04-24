@@ -10,9 +10,7 @@ def deploy_setup(c: Context):
 
     if c.test("[ ! -L {{current_path}} ] && [ -d {{current_path}} ]"):
         c.raise_error(
-            "There is a directory (not symlink) at {{current_path}}.\n Remove this directory so it can be replaced with a symlink for atomic deployments."
+            "There is a directory (not symlink) at {{current_path}}.\n Remove it, then it can be replaced with a symlink for atomic deployments."
         )
 
-    c.info(
-        "The {{deploy_path}} directory is ready for deployment (release: {{release_name}})"
-    )
+    c.info("The deploy path is ready ({{deploy_path}})")

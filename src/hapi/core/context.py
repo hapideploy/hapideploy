@@ -227,7 +227,8 @@ class Context:
         return self.parse(command)
 
     def _before_exec_task(self, task: Task):
-        self.printer.print_exec_task(self.remote, task)
+        if len(task.children) == 0:
+            self.printer.print_exec_task(self.remote, task)
 
         self._do_exec_list(task.before)
 

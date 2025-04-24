@@ -20,6 +20,4 @@ def deploy_lock(c: Context):
             f'Deployment process is locked by {locked_user}\nExecute "deploy:unlock" task to unlock.'
         )
 
-    release_name = c.cook("release_name")
-
-    c.info(f"Deployment process is locked by {user} (release: {release_name})")
+    c.info(f"The deployment process is locked (user: {user})")
