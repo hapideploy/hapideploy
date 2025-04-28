@@ -66,6 +66,46 @@ class Proxy:
     def clear_context(self):
         self.__context = None
 
+    def define_commands(self):
+        commands = {
+            "about": AboutCommand,
+            "init": InitCommand,
+            "tree": TreeCommand,
+            "config:list": ConfigListCommand,
+            "config:show": ConfigShowCommand,
+            "remote:list": RemoteListCommand,
+        }
+
+        command_names = commands.keys()
+
+        single_names: list[str] = []
+        complex_names: list[str] = []
+
+        for c_name in commands.keys():
+            if ":" in c_name:
+                complex_names.append(c_name)
+            else:
+                single_names.append(c_name)
+
+        for task in self.tasks.all():
+            if ":" in task.name:
+                complex_names.append(task.name)
+            else:
+                single_names.append(task.name)
+
+        single_names.sort()
+        complex_names.sort()
+
+        for name in single_names + complex_names:
+            if name in command_names:
+                cls = commands[name]
+                cls(self.container, self.io, self.remotes, self.tasks).define_for(
+                    self.console
+                )
+            else:
+                task = self.tasks.find(name)
+                self._do_define_task_command(task)
+
     def define_general_commands(self):
         for cls in [
             AboutCommand,

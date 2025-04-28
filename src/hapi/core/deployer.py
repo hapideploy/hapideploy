@@ -18,9 +18,7 @@ class Deployer(Container):
 
         self.__proxy.started = True
 
-        self.__proxy.define_general_commands()
-
-        self.__proxy.define_task_commands()
+        self.__proxy.define_commands()
 
         self.__proxy.console()
 
