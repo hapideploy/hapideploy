@@ -11,7 +11,7 @@ def test_it_adds_remotes():
         host="192.168.33.11",
         user="vagrant",
         port=22,
-        pemfile="~/.ssh/id_rsa",
+        identity_file="~/.ssh/id_rsa",
         label="server-1",
     )
 
@@ -20,7 +20,7 @@ def test_it_adds_remotes():
     assert r1.host == "192.168.33.11"
     assert r1.user == "vagrant"
     assert r1.port == 22
-    assert r1.pemfile == "~/.ssh/id_rsa"
+    assert r1.identity_file == "~/.ssh/id_rsa"
     assert r1.label == "server-1"
     assert r1.key == "vagrant@192.168.33.11:22"
 
@@ -30,7 +30,7 @@ def test_it_adds_remotes():
         host="192.168.33.12",
         user="vagrant",
         port=22,
-        pemfile="~/.ssh/id_rsa",
+        identity_file="~/.ssh/id_rsa",
         label="server-2",
     )
 
@@ -46,7 +46,7 @@ def test_it_can_not_add_duplicate_remotes():
         host="192.168.33.11",
         user="vagrant",
         port=22,
-        pemfile="~/.ssh/id_rsa",
+        identity_file="~/.ssh/id_rsa",
         label="server-1",
     )
 
@@ -57,7 +57,7 @@ def test_it_can_not_add_duplicate_remotes():
             host="192.168.33.11",
             user="vagrant",
             port=22,
-            pemfile="~/.ssh/id_rsa",
+            identity_file="~/.ssh/id_rsa",
             label="server-1",
         )
 

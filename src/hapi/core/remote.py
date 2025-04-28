@@ -13,7 +13,7 @@ class Remote(Container):
         host: str,
         user: str | None = None,
         port: int | None = None,
-        pemfile: str | None = None,
+        identity_file: str | None = None,
         label: str | None = None,
     ):
         super().__init__()
@@ -21,18 +21,23 @@ class Remote(Container):
         self.host = host
         self.user = user
         self.port = port
-        self.pemfile = pemfile
+        self.identity_file = identity_file
         self.label = host if label is None else label
 
-        u = user if user else ""
-        p = port if port else ""
+        key = self.host
 
-        self.key = f"{u}@{self.host}:{p}"
+        if user:
+            key = f"{user}@{key}"
+
+        if port:
+            key = f"{key}:{port}"
+
+        self.key = key
 
     def connect(self) -> Connection:
         connect_kwargs = dict()
-        if self.pemfile:
-            connect_kwargs["key_filename"] = self.pemfile
+        if self.identity_file:
+            connect_kwargs["key_filename"] = self.identity_file
         return Connection(
             host=self.host,
             user=self.user,

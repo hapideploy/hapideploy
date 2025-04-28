@@ -2,7 +2,7 @@ from typing import Annotated, Optional
 
 from typer import Argument, Option, Typer
 
-from ..log import FileStyle, NoneStyle
+from ..log import FileStyle, Logger, NoneStyle
 from .commands import (
     AboutCommand,
     ConfigListCommand,
@@ -26,7 +26,7 @@ class Proxy:
 
         self.container = container
         self.io = ConsoleIO()
-        self.log = NoneStyle()
+        self.log: Logger = NoneStyle()
 
         self.remotes = RemoteBag()
         self.tasks = TaskBag()
@@ -204,7 +204,7 @@ class Proxy:
         if self.remotes.empty():
             raise RuntimeError(f"The are no remotes defined.")
 
-        selector = kwargs.get("selector")
+        selector = str(kwargs.get("selector"))
 
         self.io.set_argument("selector", selector)
 
@@ -231,4 +231,4 @@ class Proxy:
                 self.container.put(key, value)
 
         if self.container.has("log_file"):
-            self.log = FileStyle(self.container.make("log_file"))
+            self.log = FileStyle(str(self.container.make("log_file")))

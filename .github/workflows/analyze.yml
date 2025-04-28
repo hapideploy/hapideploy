@@ -20,4 +20,4 @@ jobs:
       - run: pip install poetry
       - run: poetry install
       - run: poetry show
-      - run: poetry run mypy src/ tests/
+      - run: poetry run mypy src/ tests/ --check-untyped-defs

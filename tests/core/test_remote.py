@@ -14,42 +14,42 @@ def test_it_requires_host_only():
     assert remote.user is None
     assert remote.port is None
     assert remote.label == "app-server"
-    assert remote.key == "@app-server:"
+    assert remote.key == "app-server"
 
 
 def test_it_creates_an_instance_with_ip():
     remote = Remote(host="192.168.33.11")
 
     assert remote.host == "192.168.33.11"
-    assert remote.key == "@192.168.33.11:"
+    assert remote.key == "192.168.33.11"
 
 
 def test_it_creates_an_instance_with_hostname():
     remote = Remote(host="app-server")
 
     assert remote.host == "app-server"
-    assert remote.key == "@app-server:"
+    assert remote.key == "app-server"
 
 
 def test_it_creates_an_instance_with_domain():
     remote = Remote(host="hapideploy.com")
 
     assert remote.host == "hapideploy.com"
-    assert remote.key == "@hapideploy.com:"
+    assert remote.key == "hapideploy.com"
 
 
 def test_it_creates_an_instance_with_user():
     remote = Remote(host="192.168.33.11", user="vagrant")
 
     assert remote.user == "vagrant"
-    assert remote.key == "vagrant@192.168.33.11:"
+    assert remote.key == "vagrant@192.168.33.11"
 
 
 def test_it_creates_an_instance_with_port():
     remote = Remote(host="192.168.33.11", port=2222)
 
     assert remote.port == 2222
-    assert remote.key == "@192.168.33.11:2222"
+    assert remote.key == "192.168.33.11:2222"
 
 
 def test_it_creates_an_instance_with_label():
@@ -58,12 +58,14 @@ def test_it_creates_an_instance_with_label():
     assert remote.label == "custom-server"
 
 
-def test_it_creates_an_instance_with_pemfile():
+def test_it_creates_an_instance_with_identity_file():
     remote = Remote(
-        host="192.168.33.11", label="custom-server", pemfile="/path/.ssh/id_ed25519"
+        host="192.168.33.11",
+        label="custom-server",
+        identity_file="/path/.ssh/id_ed25519",
     )
 
-    assert remote.pemfile == "/path/.ssh/id_ed25519"
+    assert remote.identity_file == "/path/.ssh/id_ed25519"
 
 
 def test_it_selects_remotes():

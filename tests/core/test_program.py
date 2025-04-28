@@ -53,7 +53,7 @@ def test_it_discovers_an_inventory_file():
     assert app.get_remotes().all()[0].user == "vagrant"
     assert app.get_remotes().all()[0].port == 2201
     assert app.get_remotes().all()[0].label == "ubuntu-1"
-    assert app.get_remotes().all()[0].pemfile == "/path/to/ssh/id_ed25519"
+    assert app.get_remotes().all()[0].identity_file == "/path/to/ssh/id_ed25519"
     assert app.get_remotes().all()[0].make("deploy_path") == "~/custom/{{stage}}"
 
     assert app.get_remotes().all()[1].host == "10.0.0.1"

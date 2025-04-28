@@ -100,7 +100,7 @@ class InitCommand(Command):
     host: 192.168.33.10
     port: 22 # Optional
     user: vagrant # Optional
-    pemfile: ~/.ssh/id_ed25519 # Optional
+    identity_file: ~/.ssh/id_ed25519 # Optional
     with:
       deploy_path: ~/deploy/{{stage}}
 """
@@ -237,7 +237,7 @@ class RemoteListCommand(Command):
             self.handle()
 
     def handle(self) -> int:
-        table = Table("Label", "Host", "User", "Port", "Pemfile")
+        table = Table("Label", "Host", "User", "Port", "IdentityFile")
 
         selector = self.io.get_argument("selector")
 
@@ -253,7 +253,7 @@ class RemoteListCommand(Command):
                 remote.host,
                 str(remote.user),
                 str(remote.port),
-                str(remote.pemfile),
+                str(remote.identity_file),
             )
 
         console = Console()
