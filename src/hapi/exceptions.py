@@ -14,7 +14,7 @@ class InvalidProviderClass(ValueError):
     pass
 
 
-class InvalidHostsDefinition(ValueError):
+class InvalidRemotesDefinition(ValueError):
     pass
 
 

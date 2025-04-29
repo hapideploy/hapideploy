@@ -45,7 +45,7 @@ def test_it_discovers_an_inventory_file():
 
     current_dir = os.path.dirname(os.path.realpath(__file__))
 
-    app.discover(current_dir + "/../inventory.yml")
+    app.discover(current_dir + "/../fixtures/inventory.yml")
 
     assert len(app.get_remotes().all()) == 2
 

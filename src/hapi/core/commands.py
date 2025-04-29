@@ -95,7 +95,7 @@ class InitCommand(Command):
             self.io.error(f"Recipe {choice} is invalid.")
             return
 
-        inventory_file_content = """hosts:
+        inventory_file_content = """remotes:
   server-1:
     host: 192.168.33.10
     port: 22 # Optional

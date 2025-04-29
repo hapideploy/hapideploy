@@ -2,7 +2,7 @@ from typing import Any, Callable
 
 import yaml
 
-from ..exceptions import InvalidHostsDefinition, InvalidProviderClass
+from ..exceptions import InvalidProviderClass, InvalidRemotesDefinition
 from .context import Context
 from .deployer import Deployer
 from .task import Task
@@ -31,11 +31,11 @@ class Program(Deployer):
 
             if (
                 loaded_data is None
-                or isinstance(loaded_data.get("hosts"), dict) is False
+                or isinstance(loaded_data.get("remotes"), dict) is False
             ):
-                raise InvalidHostsDefinition(f'"hosts" definition is invalid.')
+                raise InvalidRemotesDefinition(f'"remotes" definition is invalid.')
 
-            for key, data in loaded_data["hosts"].items():
+            for key, data in loaded_data["remotes"].items():
                 if data.get("host") is None:
                     data["host"] = key
                 else:
