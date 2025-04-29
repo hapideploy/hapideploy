@@ -69,6 +69,7 @@ class InitCommand(Command):
                     return
 
         candidates: list[tuple[str, Callable]] = [
+            ("blank", InitCommand.deploy_blank),
             ("laravel", InitCommand.deploy_laravel),
             ("express", InitCommand.deploy_express),
         ]
@@ -110,6 +111,18 @@ class InitCommand(Command):
         f.close()
 
         self.io.success("deploy.py and inventory.yml files are created")
+
+    @staticmethod
+    def deploy_blank() -> str:
+        return """from hapi import Context
+from hapi.cli import app
+
+app.put("name", "blank")
+
+@app.task(name="whoami", desc="Run whoami command")
+def whoami(c: Context):
+    c.run("whoami")
+"""
 
     @staticmethod
     def deploy_laravel() -> str:
