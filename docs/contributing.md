@@ -1,30 +1,39 @@
-Fork and clone the repository.
+1. Fork and clone the repository.
 
-```powershell
-git clone https://github.com/hapideploy/hapideploy.git
-```
+    ```bash
+    git clone https://github.com/<username>/hapideploy.git
+    ```
 
-Install Python dependencies.
+2. Install Python dependencies.
 
-```powershell
-poetry install
-```
-Run static analysis.
+    ```bash
+    poetry install
+    ```
 
-```bash
-poetry run mypy src/ tests/
-````
+3. Create a new branch from `main` and make some changes.
 
-Fix code style.
+    ```bash
+   git checkout -b feature-a
+   ```
 
-```bash
-poetry run autoflake --in-place --remove-unused-variables -r src/ tests/;
-poetry run black src/ tests/;
-poetry run isort src/ tests/;
-```
+4. Run static analysis.
 
-Run all tests.
+    ```bash
+    poetry run mypy src/ tests/
+    ````
 
-```bash
-poetry run pytest
-```
+5. Fix code style.
+    
+    ```bash
+    poetry run autoflake --in-place --remove-unused-variables -r src/ tests/;
+    poetry run black src/ tests/;
+    poetry run isort src/ tests/;
+    ```
+
+6. Run all tests.
+
+    ```bash
+    poetry run pytest
+    ```
+
+7. Create a pull request into `main.`

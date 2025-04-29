@@ -1,26 +1,37 @@
-A remote is a server or device that you can SSH into it.
+A remote is a server in general, but can be any kind of device that you can SSH into it.
 
 ## Defining a remote
 
 In the `inventory.yml` file, you can define remotes like this.
 
 ```yaml
-hosts:
+remotes:
   a.hapideploy.com:
   b.hapideploy.com:
   c.hapideploy.com:
 ```
 
-`a.hapideploy.com` will be the host for SSH connections and also be the label displayed whenever a task is executed against it. It's similar to `b.hapideploy.com` and `c.hapideploy.com`.
+This case, `a.hapideploy.com` will be the hostname for SSH connections. It's also the label displayed whenever a task is executed against the remote. It's similar to `b.hapideploy.com` and `c.hapideploy.com`. E.g., Running "hapi whoami" will print these three lines.
 
-Each remote contains a list of key-value items, you can also explicitly define all of them.
+```plain
+[a.hapideploy.com] TASK whoami
+[b.hapideploy.com] TASK whoami
+[c.hapideploy.com] TASK whoami
+```
+
+Above, I assume each `*.hapideploy.com` is a host alias in `~/.ssh/config` file. But, you can explicitly define a remote with a list of key-value pairs.
 
 ```yaml
-hosts:
+remotes:
+  # "hapideploy.com" is the remote label.
   hapideploy.com:
+    # SSH host(name)
     host: 192.68.33.10
+    # SSH port
     port: 22
+    # SSH user
     user: vagrant
+    # The private key path
     identity_file: ~/.ssh/id_ed25519
 ```
 
@@ -35,37 +46,13 @@ app.put('deploy_path', '~/deploy')
 
 ```
 
-You can override it using the `with` section under a host item.
+You can override it using the `with` section under a remote item.
 
 ```yaml
-hosts:
+remotes:
   hapideploy.com:
     with:
       deploy_path: "/path/to/somewhere"
-```
-
-## Full configurations
-
-These are all available configurations for a remote.
-
-```yaml
-hosts:
-  hapideploy.com:
-
-    # SSH host(name)
-    host: 192.68.33.10
-    
-    # SSH port
-    port: 22
-    
-    # SSH user
-    user: vagrant
-    
-    # The identity file location 
-    identity_file: ~/.ssh/id_ed25519
-
-    # If the label key does not exist, "hapideploy.com" will be trust as the remote label.
-    # label: 'server-1'
 ```
 
 ## List remotes

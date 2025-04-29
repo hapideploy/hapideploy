@@ -2,16 +2,10 @@ Selector is for choosing remotes to interact with. Currently, HapiDeploy only su
 
 ## Usage
 
-Run the command below to exec a task against one, some or all remotes.
-
-```bash
-hapi <task> [selector]
-```
-
 For example, the `inventory.yaml` file defines 3 remotes like this.
 
 ```yaml
-hosts:
+remotes:
   server-1:
     host: 192.168.33.11
   server-2:
@@ -26,12 +20,12 @@ The `deploy.py` file defines a task called `ping` like this.
 from hapi import Context
 from hapi.cli import app
 
-@app.task(name="ping", desc="Check SSH connection to each remote")
+@app.task(name="ping", desc="Check SSH connection")
 def ping(c: Context):
     c.run("whoami")
 ```
 
-Run `hapi ping` will execute the `ping` task on all remotes.
+Run `hapi ping` or `hapi ping all` will execute the `ping` task on all remotes.
 
 ```bash
 hapi ping
@@ -39,8 +33,12 @@ hapi ping
 hapi ping all
 ```
 
-If you want to run the `ping` task against the `server-1` only, you have to specify it.
+> The default selector is "all".
+
+If you want to run the `ping` task against the `server-1` only, you have to specify it. It's similar to `server-2` and `server-3`.
 
 ```bash
 hapi ping server-1
+hapi ping server-2
+hapi ping server-3
 ```

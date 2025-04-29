@@ -7,9 +7,9 @@
 
 ## Introduction
 
-DeployPHP is a deployment tool with built-in support for popular PHP frameworks, making it the best choice for those who primarily work with PHP. Inspired by DeployPHP, I decided to create a similar tool in Python—a more widely used language that is also better suited for DevOps. I named it "HapiDeploy", a remote execution tool. "HapiDeploy" can be used as an SSH client, and I also plan to add support for several frameworks I frequently work with.
+[DeployPHP](https://deployer.org) is a deployment tool with built-in support for popular PHP frameworks, making it the best choice for those who primarily work with PHP. Inspired by DeployPHP, I decided to create a similar tool in Python — a more widely used language that is also better suited for DevOps. I named it **HapiDeploy**, a remote execution tool. Currently, I plan to support deploying Laravel and Express (with PM2).
 
-> HapiDeploy is still in WIP, some public methods might changed.
+> HapiDeploy is still in development. I may change some public methods. Version v0.1.0 will be released at the end of May 2025 as the first usable version. 
 
 ## Documentation
 
@@ -21,7 +21,7 @@ DeployPHP is a deployment tool with built-in support for popular PHP frameworks,
 
 ## Contributing
 
-Thank you for considering contributing to the HapiDeploy! Please read the [contributing guide](./docs/contributing.md) for more details.
+Thank you for considering contributing to HapiDeploy! Please read the [contributing guide](./docs/contributing.md) for more details.
 
 ## License
 
