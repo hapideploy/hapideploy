@@ -1,7 +1,3 @@
----
-title: Remotes
----
-
 A remote is a server or device that you can SSH into it.
 
 ## Defining a remote

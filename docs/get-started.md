@@ -1,7 +1,3 @@
----
-title: Get started
----
-
 ## Requirements
 
 HapiDeploy requires Python `3.13+`, so you need to check your python version

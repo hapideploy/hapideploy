@@ -1,7 +1,3 @@
----
-title: Selector
----
-
 Selector is for choosing remotes to interact with. Currently, HapiDeploy only supports selecting remotes by their labels.
 
 ## Usage

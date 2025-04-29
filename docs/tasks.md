@@ -1,8 +1,4 @@
----
-title: Tasks
----
-
-You can choose remotes that you want to interact with via a selector (default: "all"). With each remote, it creates a context. A task contains activities you want to do in a specific context.
+A task contains activities you want to do in a specific context.
 
 ## Defining a task
 
