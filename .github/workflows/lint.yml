@@ -1,14 +1,15 @@
-name: Lint
+name: lint
 
 on:
   push:
-    branches: ['main']
-  pull_request:
-    branches: ['main']
+    paths:
+      - '.github/workflows/lint.yml'
+      - '**.py'
+      - 'pyproject.toml'
 
 jobs:
   lint:
-    name: Lint
+    name: Check code style
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -19,8 +20,7 @@ jobs:
       - run: pip install poetry
       - run: poetry install
       - run: poetry show
-      - name: Fix code style
-        run: |
+      - run: |
           poetry run autoflake --in-place --remove-unused-variables -r src/ tests/ --check; \
           poetry run black src/ tests/ --check; \
           poetry run isort src/ tests/ --check;
