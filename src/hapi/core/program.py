@@ -36,6 +36,9 @@ class Program(Deployer):
                 raise InvalidRemotesDefinition(f'"remotes" definition is invalid.')
 
             for key, data in loaded_data["remotes"].items():
+                if data is None:
+                    self.remote(host=key, label=key)
+                    continue
                 if data.get("host") is None:
                     data["host"] = key
                 else:
