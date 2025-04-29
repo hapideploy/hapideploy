@@ -6,6 +6,7 @@ on:
       - '.github/workflows/test.yml'
       - '**.py'
       - 'pyproject.toml'
+      - 'tests/fixtures/inventory.yml'
 
 jobs:
   test:
