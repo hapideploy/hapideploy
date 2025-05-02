@@ -1,89 +1,28 @@
-HapiDeploy (WIP)
+# HapiDeploy
 
-## Requirements
+<a href="https://github.com/hapideploy/hapideploy/actions"><img src="https://github.com/hapideploy/hapideploy/workflows/test/badge.svg" alt="Test"></a>
+<a href="https://pypi.org/project/hapideploy"><img src="https://img.shields.io/pypi/dm/hapideploy" alt="Monthly Downloads"></a>
+<a href="https://pypi.org/project/hapideploy"><img src="https://img.shields.io/pypi/v/hapideploy" alt="Latest Stable Version"></a>
+<a href="https://pypi.org/project/hapideploy"><img src="https://img.shields.io/pypi/l/hapideploy" alt="The MIT License"></a>
 
-- Python 3.13
+## Introduction
 
-## Installation
+[DeployPHP](https://deployer.org) is a deployment tool with built-in support for popular PHP frameworks, making it the best choice for those who primarily work with PHP. Inspired by DeployPHP, I decided to create a similar tool in Python — a more widely used language that is also better suited for DevOps. I named it **HapiDeploy**, a remote execution tool. Currently, I plan to support deploying Laravel and Express (with PM2).
 
-Create and go to the `.hapi` directory.
+> HapiDeploy is still in development. I have just tried a few projects. I may change some public methods. Version v0.1.0 will be released at the end of May 2025 as the first usable version. 
 
-```bash
-cd /path/to/your/project
+## Documentation
 
-mkdir .hapi
+- [Get started](./docs/get-started.md)
+- [Remotes](./docs/remotes.md)
+- [Tasks](./docs/tasks.md)
+- [Selector](./docs/selector.md)
+- [Context](./docs/context.md)
 
-cd .hapi
-```
+## Contributing
 
-Create an isolated Python virtual environment.
+Thank you for considering contributing to HapiDeploy! Please read the [contributing guide](./docs/contributing.md) for more details.
 
-```bash
-python -m venv .venv
-```
+## License
 
-Activate the virtual environment above.
-
-```bash
-./.venv/Scripts/activate
-```
-
-Install the `hapideploy` package via pip.
-
-```bash
-pip install hapideploy
-```
-
-## Usage
-
-Create `deploy.py` and `inventory.yml` files.
-
-```bash
-hapi init
-```
-
-Run the `deploy` command with default selector `all` and stage `dev`.
-
-```bash 
-hapi deploy 
-```
-
-Run the `deploy` command with explicit selector, stage and custom config.
-
-```bash
-hapi deploy all \
-    --stage=dev \
-    --config=python_version=3.13,node_version=20.18.0
-```
-
-## Development
-
-Install Poetry dependency manager
-
-```powershell
-pip install poetry
-```
-
-Install Python dependencies
-
-```powershell
-poetry install
-```
-
-Fix code style
-
-```bash
-poetry run autoflake --in-place --remove-unused-variables -r src/ tests/; poetry run black src/ tests/; poetry run isort src/ tests/;
-```
-
-Run static analysis
-
-```bash
-poetry run mypy src/ tests/
-````
-
-Run all tests
-
-```bash
-poetry run pytest
-```
+HapiDeploy is licensed under the [MIT license](LICENSE.md).
