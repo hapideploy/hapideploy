@@ -1,25 +1,13 @@
 from typing import Any, Callable
 
 
-class Binding:
-    INSTANT = "instant"
-    CALLBACK = "callback"
-
-    def __init__(self, kind: str):
-        self.kind: str = kind
-        self.value: Any = None
-        self.callback: Callable[[Any], Any] = lambda _: None
-
-
 class BindingValue:
-    def __init__(self, kind: str, value: Any):
-        self.kind = kind
+    def __init__(self, value: Any):
         self.value = value
 
 
 class BindingCallback:
-    def __init__(self, kind: str, callback: Callable[[Any], Any]):
-        self.kind = kind
+    def __init__(self, callback: Callable[[Any], Any]):
         self.callback = callback
 
 
@@ -46,7 +34,7 @@ class Container:
         :param str key: The unified key (identifier) in the container.
         :param value: The value is associated with the given key.
         """
-        self.__bindings[key] = BindingValue(Binding.INSTANT, value)
+        self.__bindings[key] = BindingValue(value)
         return self
 
     def add(self, key: str, value):
@@ -57,7 +45,7 @@ class Container:
         :param value: It can be a single value such as int, str or a list.
         """
         if self.__bindings.get(key) is None:
-            self.__bindings[key] = BindingValue(Binding.INSTANT, [])
+            self.__bindings[key] = BindingValue([])
 
         if isinstance(self.__bindings[key].value, list) is False:
             raise ValueError(f'The value associated with "{key}" is not a list.')
@@ -74,7 +62,7 @@ class Container:
         """
         Bind a callback to its key in the container.
         """
-        self.__bindings[key] = BindingCallback(Binding.CALLBACK, callback)
+        self.__bindings[key] = BindingCallback(callback)
         return self
 
     def resolve(self, key: str):
@@ -128,7 +116,7 @@ class Container:
 
         return (
             binding.value
-            if binding.kind == Binding.INSTANT
+            if isinstance(binding, BindingValue)
             else binding.callback(inject if inject else self)
         )
 

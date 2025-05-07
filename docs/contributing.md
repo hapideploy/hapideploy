@@ -19,7 +19,7 @@
 4. Run static analysis.
 
     ```bash
-    poetry run mypy src/ tests/
+    poetry run mypy src/ tests/ --check-untyped-defs
     ````
 
 5. Fix code style.

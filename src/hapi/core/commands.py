@@ -7,7 +7,7 @@ from rich.table import Table
 from typer import Argument, Option, Typer, prompt
 
 from ..__version import __version__
-from .container import Binding, Container
+from .container import BindingCallback, BindingValue, Container
 from .io import InputOutput
 from .remote import RemoteBag
 from .task import TaskBag
@@ -166,32 +166,39 @@ class ConfigListCommand(Command):
             self.handle()
 
     def handle(self):
-        table = Table("Key", "Kind", "Type", "Value")
+        table = Table("Key", "Kind", "Datatype", "Value")
 
         bindings = self.container.all()
 
-        keys = list(bindings.keys())
-        keys.sort()
+        value_keys = []
+        callback_keys = []
 
-        for key in keys:
+        for key, binding in bindings.items():
+            if isinstance(binding, BindingValue):
+                value_keys.append(key)
+            elif isinstance(binding, BindingCallback):
+                callback_keys.append(key)
+
+        value_keys.sort()
+        callback_keys.sort()
+
+        for key in callback_keys:
+            table.add_row(key, "callback", "-----", "-----")
+
+        for key in value_keys:
             binding = bindings[key]
-            value = str(binding.value) if binding.kind == Binding.INSTANT else "-----"
 
-            if isinstance(binding.value, list):
-                value = "\n - ".join(binding.value)
+            value = binding.value
+            value_type = type(value).__name__
 
-                if value != "":
-                    value = f" - {value}"
+            if isinstance(value, list):
+                value = ", ".join(binding.value)
 
             table.add_row(
                 key,
-                binding.kind,
-                (
-                    type(binding.value).__name__
-                    if binding.kind == Binding.INSTANT
-                    else "-----"
-                ),
-                value,
+                "value",
+                value_type,
+                str(value),
             )
 
         console = Console()
@@ -225,10 +232,12 @@ class ConfigShowCommand(Command):
                 value = f" - {value}"
 
         table.add_row("Key", key)
-        table.add_row("Kind", binding.kind)
+        table.add_row(
+            "Kind", "value" if isinstance(binding, BindingValue) else "callback"
+        )
 
-        if binding.kind == Binding.INSTANT:
-            table.add_row("Type", type(binding.value).__name__)
+        if isinstance(binding, BindingValue):
+            table.add_row("Datatype", type(binding.value).__name__)
             table.add_row("Value", value)
 
         console = Console()
