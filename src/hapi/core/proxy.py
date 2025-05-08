@@ -132,10 +132,16 @@ class Proxy:
             stage: Annotated[
                 str, Option(help="The deployment stage. E.g., dev, testing, production")
             ] = self.STAGE_DEV,
+            put: Annotated[
+                str,
+                Option(
+                    help="Set or override config items. E.g., --put=node_version=22.15.0,python_version=3.13"
+                ),
+            ] = "",
             config: Annotated[
                 str,
                 Option(
-                    help="Customize config items. E.g., --config=python_version=3.13"
+                    help="[Deprecated] Customize config items. E.g., --config=python_version=3.13"
                 ),
             ] = "",
             quiet: Annotated[
@@ -156,7 +162,8 @@ class Proxy:
                 self.prepare(
                     selector=selector,
                     stage=stage,
-                    config=config,
+                    put=put,
+                    config=config,  # TODO: [Deprecated] Use --put instead
                     quiet=quiet,
                     normal=normal,
                     detail=detail,
@@ -222,7 +229,7 @@ class Proxy:
         self.container.put("stage", stage)
 
     def _do_prepare_config(self, **kwargs):
-        config_str = kwargs.get("config")
+        config_str = kwargs.get("put") or kwargs.get("config")
         if config_str:
             # self.io.set_option('config', config_str)
             pairs = config_str.split(",")
