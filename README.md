@@ -1,9 +1,9 @@
 # HapiDeploy
 
-<a href="https://github.com/hapideploy/hapideploy/actions"><img src="https://github.com/hapideploy/hapideploy/workflows/test/badge.svg" alt="Test"></a>
-<a href="https://pypi.org/project/hapideploy"><img src="https://img.shields.io/pypi/dm/hapideploy" alt="Monthly Downloads"></a>
-<a href="https://pypi.org/project/hapideploy"><img src="https://img.shields.io/pypi/v/hapideploy" alt="Latest Stable Version"></a>
-<a href="https://pypi.org/project/hapideploy"><img src="https://img.shields.io/pypi/l/hapideploy" alt="The MIT License"></a>
+![test](https://github.com/hapideploy/hapideploy/workflows/test/badge.svg)
+![downloads](https://img.shields.io/pypi/dm/hapideploy)
+![version](https://img.shields.io/pypi/v/hapideploy)
+![license](https://img.shields.io/pypi/l/hapideploy)
 
 ## Introduction
 
@@ -13,15 +13,12 @@
 
 ## Documentation
 
-- [Get started](./docs/get-started.md)
-- [Remotes](./docs/remotes.md)
-- [Tasks](./docs/tasks.md)
-- [Selector](./docs/selector.md)
-- [Context](./docs/context.md)
+You can find the full documentation [here](https://hapideploy.com).
 
 ## Contributing
 
-Thank you for considering contributing to HapiDeploy! Please read the [contributing guide](./docs/contributing.md) for more details.
+Thank you for considering contributing to HapiDeploy!
+Please read the [contributing guide](./docs/contributing.md) for more details.
 
 ## License
 
