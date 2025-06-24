@@ -121,7 +121,9 @@ def main():
                         for key, info in loaded_data.get("config").items():
                             load_config(app, key, info)
                     else:
-                        raise ValueError('"config" definition is invalid in hapi.yml file.')
+                        raise ValueError(
+                            '"config" definition is invalid in hapi.yml file.'
+                        )
 
                 # Load tasks from the hapi.yml file
                 if "tasks" in loaded_data:
@@ -129,7 +131,9 @@ def main():
                         for name, body in loaded_data.get("tasks").items():
                             load_task(name, body)
                     else:
-                        raise ValueError('"tasks" definition is invalid in hapi.yml file.')
+                        raise ValueError(
+                            '"tasks" definition is invalid in hapi.yml file.'
+                        )
 
                 # Load before hooks from the hapi.yml file
                 if "before" in loaded_data:
@@ -137,7 +141,9 @@ def main():
                         for name, do in loaded_data.get("before").items():
                             app.before(name, do)
                     else:
-                        raise ValueError('"before" definition is invalid in hapi.yml file.')
+                        raise ValueError(
+                            '"before" definition is invalid in hapi.yml file.'
+                        )
 
                 # Load after hooks from the hapi.yml file
                 if "after" in loaded_data:
@@ -145,7 +151,9 @@ def main():
                         for name, do in loaded_data.get("after").items():
                             app.after(name, do)
                     else:
-                        raise ValueError('"after" definition is invalid in hapi.yml file.')
+                        raise ValueError(
+                            '"after" definition is invalid in hapi.yml file.'
+                        )
 
     run_file_names = ["deploy.py"]
 

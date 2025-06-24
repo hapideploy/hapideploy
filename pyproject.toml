@@ -1,6 +1,6 @@
 [project]
 name = "hapideploy"
-version = "0.1.0"
+version = "0.2.1"
 description = "HapiDeploy is a remote execution tool written in Python, inspired by DeployPHP."
 authors = [{name="Quynh Nguyen", email="<seriquynh@gmail.com>"}]
 readme = "README.md"
