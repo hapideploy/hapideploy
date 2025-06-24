@@ -39,6 +39,7 @@ def load_recipe(name: str):
 
         app.load(Laravel)
 
+
 def load_config(app, key, info):
     if "put" in info:
         app.put(key, info.get("put"))
@@ -55,19 +56,25 @@ def load_config(app, key, info):
     else:
         raise ValueError(f"Invalid configuration for key: {key}")
 
+
 def load_task(name: str, body: dict):
+    desc: str = str(body.get("desc", ""))
     if "run" in body:
+
         def func(c: Context):
             for command in body.get("run", []):
                 c.run(command)
 
-        app.define_task(name, body.get("desc"), func)
+        app.define_task(name, desc, func)
     elif "do" in body:
-        app.define_group(
-            name=name,
-            desc=body.get("desc"),
-            names=body.get("do"),
-        )
+        if isinstance(body.get("do"), str):
+            app.group(name, desc, str(body.get("do")))
+        elif isinstance(body["do"], list):
+            resolved: list[str] = []
+            for name in body.get("do", []):
+                resolved.append((str(name)))
+            app.group(name, desc, resolved)
+
 
 def main():
     inventory_file = os.getcwd() + "/inventory.yml"
@@ -75,7 +82,7 @@ def main():
     if Path(inventory_file).exists():
         app.discover(inventory_file)
 
-    yaml_file_names = ['hapi.yml', 'hapi.yaml']
+    yaml_file_names = ["hapi.yml", "hapi.yaml"]
 
     for file_name in yaml_file_names:
         yaml_file = Path(os.getcwd() + "/" + file_name)
@@ -90,14 +97,18 @@ def main():
                     for key, data in loaded_data["remotes"].items():
                         load_remote(key, data)
                 else:
-                    raise ValueError('"remotes" definition is invalid in hapi.yml file.')
+                    raise ValueError(
+                        '"remotes" definition is invalid in hapi.yml file.'
+                    )
 
                 # Load recipes from the hapi.yml file
                 if isinstance(loaded_data.get("recipes"), list):
                     for name in loaded_data.get("recipes"):
                         load_recipe(name)
                 else:
-                    raise ValueError('"recipes" definition is invalid in hapi.yml file.')
+                    raise ValueError(
+                        '"recipes" definition is invalid in hapi.yml file.'
+                    )
 
                 # Load config from the hapi.yml file
                 if isinstance(loaded_data.get("config"), dict):
