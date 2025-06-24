@@ -93,7 +93,7 @@ def main():
                 loaded_data = yaml.safe_load(stream)
 
                 # Load remotes from the hapi.yml file
-                if isinstance(loaded_data.get("remotes"), dict):
+                if "remotes" in loaded_data and isinstance(loaded_data.get("remotes"), dict):
                     for key, data in loaded_data["remotes"].items():
                         load_remote(key, data)
                 else:
@@ -102,7 +102,7 @@ def main():
                     )
 
                 # Load recipes from the hapi.yml file
-                if isinstance(loaded_data.get("recipes"), list):
+                if "recipes" in loaded_data and isinstance(loaded_data.get("recipes"), list):
                     for name in loaded_data.get("recipes"):
                         load_recipe(name)
                 else:
@@ -111,28 +111,28 @@ def main():
                     )
 
                 # Load config from the hapi.yml file
-                if isinstance(loaded_data.get("config"), dict):
+                if "config" in loaded_data and isinstance(loaded_data.get("config"), dict):
                     for key, info in loaded_data.get("config").items():
                         load_config(app, key, info)
                 else:
                     raise ValueError('"config" definition is invalid in hapi.yml file.')
 
                 # Load tasks from the hapi.yml file
-                if isinstance(loaded_data.get("tasks"), dict):
+                if "tasks" in loaded_data and isinstance(loaded_data.get("tasks"), dict):
                     for name, body in loaded_data.get("tasks").items():
                         load_task(name, body)
                 else:
                     raise ValueError('"tasks" definition is invalid in hapi.yml file.')
 
                 # Load before hooks from the hapi.yml file
-                if isinstance(loaded_data.get("before"), dict):
+                if "before" in loaded_data and isinstance(loaded_data.get("before"), dict):
                     for name, do in loaded_data.get("before").items():
                         app.before(name, do)
                 else:
                     raise ValueError('"before" definition is invalid in hapi.yml file.')
 
                 # Load after hooks from the hapi.yml file
-                if isinstance(loaded_data.get("after"), dict):
+                if "after" in loaded_data and isinstance(loaded_data.get("after"), dict):
                     for name, do in loaded_data.get("after").items():
                         app.after(name, do)
                 else:
