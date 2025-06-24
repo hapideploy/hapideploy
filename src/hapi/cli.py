@@ -9,7 +9,7 @@ app = Program()
 app.set_instance(app)
 
 
-def define_remote(key, data):
+def load_remote(key, data):
     if data is None:
         app.remote(host=key, label=key)
     if data.get("host") is None:
@@ -29,7 +29,17 @@ def define_remote(key, data):
             remote.put(k, v)
 
 
-def define_binding(app, key, info):
+def load_recipe(name: str):
+    if name == "common":
+        from .recipe.common import Common
+
+        app.load(Common)
+    if name == "laravel":
+        from .recipe.laravel import Laravel
+
+        app.load(Laravel)
+
+def load_config(app, key, info):
     if "put" in info:
         app.put(key, info.get("put"))
     elif "add" in info:
@@ -45,6 +55,19 @@ def define_binding(app, key, info):
     else:
         raise ValueError(f"Invalid configuration for key: {key}")
 
+def load_task(name: str, body: dict):
+    if "run" in body:
+        def func(c: Context):
+            for command in body.get("run", []):
+                c.run(command)
+
+        app.define_task(name, body.get("desc"), func)
+    elif "do" in body:
+        app.define_group(
+            name=name,
+            desc=body.get("desc"),
+            names=body.get("do"),
+        )
 
 def main():
     inventory_file = os.getcwd() + "/inventory.yml"
@@ -52,44 +75,59 @@ def main():
     if Path(inventory_file).exists():
         app.discover(inventory_file)
 
-    hapi_yaml_file = Path(os.getcwd() + "/hapi.yml")
+    yaml_file_names = ['hapi.yml', 'hapi.yaml']
 
-    if hapi_yaml_file.exists():
-        import yaml
+    for file_name in yaml_file_names:
+        yaml_file = Path(os.getcwd() + "/" + file_name)
+        if yaml_file.exists():
+            import yaml
 
-        with open(hapi_yaml_file) as stream:
-            loaded_data = yaml.safe_load(stream)
+            with open(yaml_file) as stream:
+                loaded_data = yaml.safe_load(stream)
 
-            # Load remotes from the hapi.yml file
-            if isinstance(loaded_data.get("remotes"), dict):
-                for key, data in loaded_data["remotes"].items():
-                    define_remote(key, data)
+                # Load remotes from the hapi.yml file
+                if isinstance(loaded_data.get("remotes"), dict):
+                    for key, data in loaded_data["remotes"].items():
+                        load_remote(key, data)
+                else:
+                    raise ValueError('"remotes" definition is invalid in hapi.yml file.')
 
-            for value in loaded_data.get("recipes"):
-                if value == "common":
-                    from .recipe.common import Common
+                # Load recipes from the hapi.yml file
+                if isinstance(loaded_data.get("recipes"), list):
+                    for name in loaded_data.get("recipes"):
+                        load_recipe(name)
+                else:
+                    raise ValueError('"recipes" definition is invalid in hapi.yml file.')
 
-                    app.load(Common)
-                if value == "laravel":
-                    from .recipe.laravel import Laravel
+                # Load config from the hapi.yml file
+                if isinstance(loaded_data.get("config"), dict):
+                    for key, info in loaded_data.get("config").items():
+                        load_config(app, key, info)
+                else:
+                    raise ValueError('"config" definition is invalid in hapi.yml file.')
 
-                    app.load(Laravel)
+                # Load tasks from the hapi.yml file
+                if isinstance(loaded_data.get("tasks"), dict):
+                    for name, body in loaded_data.get("tasks").items():
+                        load_task(name, body)
+                else:
+                    raise ValueError('"tasks" definition is invalid in hapi.yml file.')
 
-            for key, info in loaded_data.get("config").items():
-                define_binding(app, key, info)
+                # Load before hooks from the hapi.yml file
+                if isinstance(loaded_data.get("before"), dict):
+                    for name, do in loaded_data.get("before").items():
+                        app.before(name, do)
+                else:
+                    raise ValueError('"before" definition is invalid in hapi.yml file.')
 
-            for name, body in loaded_data.get("tasks").items():
+                # Load after hooks from the hapi.yml file
+                if isinstance(loaded_data.get("after"), dict):
+                    for name, do in loaded_data.get("after").items():
+                        app.after(name, do)
+                else:
+                    raise ValueError('"after" definition is invalid in hapi.yml file.')
 
-                def func(c: Context):
-                    for command in body.get("run", []):
-                        c.run(command)
-
-                app.define_task(name, body.get("desc"), func)
-
-        app.start()
-        return
-
-    run_file_names = ["deploy.py", "hapirun.py"]
+    run_file_names = ["deploy.py"]
 
     for file_name in run_file_names:
         run_file = Path(os.getcwd() + "/" + file_name)
