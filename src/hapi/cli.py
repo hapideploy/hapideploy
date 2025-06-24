@@ -32,11 +32,12 @@ def load_remote(key, data):
 def load_recipe(name: str):
     if name == "common":
         from .recipe.common import Common
-
         app.load(Common)
+    if name == "express":
+        from .recipe.express import Express
+        app.load(Express)
     if name == "laravel":
         from .recipe.laravel import Laravel
-
         app.load(Laravel)
 
 
