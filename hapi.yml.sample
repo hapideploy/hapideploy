@@ -1,0 +1,40 @@
+remotes:
+  ubuntu-1:
+    host: 192.168.33.11
+    user: vagrant
+    identity_file: .\id_ed25519
+
+recipes:
+  - laravel
+
+config:
+  deploy_path:
+    put: ~/vue-starter-kit
+  name:
+    put: 'vue-starter-kit'
+  repository:
+    put: 'https://github.com/laravel/vue-starter-kit.git'
+  branch:
+    put: 'main'
+  node_version:
+    put: 20.19.0
+  php_version:
+    put: 8.4
+  "bin/node":
+    bind: |
+      if c.test("[ -d $HOME/.nvm/versions/node/v{{node_version}} ]"):
+        result = c.parse('export PATH="$HOME/.nvm/versions/node/v{{node_version}}/bin:$PATH"; node')
+      else:
+        c.raise_error('Node version {{node_version}} may not be installed. Please try to run "nvm install {{node_version}}"')
+  "bin/npm":
+    bind: |
+      if c.test("[ -d $HOME/.nvm/versions/node/v{{node_version}} ]"):
+        result = c.parse('export PATH="$HOME/.nvm/versions/node/v{{node_version}}/bin:$PATH"; npm')
+      else:
+        c.raise_error('Node version {{node_version}} may not be installed. Please try to run "nvm install {{node_version}}"')
+
+tasks:
+  sample:
+    desc: 'This is sample task'
+    run:
+      - whoami

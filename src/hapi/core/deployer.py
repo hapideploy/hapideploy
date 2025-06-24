@@ -47,8 +47,8 @@ class Deployer(Container):
             self.__proxy.tasks.add(task)
         return task
 
-    def define_group(self, name: str, desc: str, names: str | list[str]) -> Task:
-        children = names if isinstance(names, list) else [names]
+    def define_group(self, name: str, desc: str, do: str | list[str]) -> Task:
+        children = do if isinstance(do, list) else [do]
 
         for child in children:
             self.__proxy.tasks.find(child)
