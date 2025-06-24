@@ -32,13 +32,18 @@ def load_remote(key, data):
 def load_recipe(name: str):
     if name == "common":
         from .recipe.common import Common
+
         app.load(Common)
     if name == "express":
         from .recipe.express import Express
+
         app.load(Express)
     if name == "laravel":
         from .recipe.laravel import Laravel
+
         app.load(Laravel)
+    else:
+        raise Exception("Unsupported recipe: %s" % name)
 
 
 def load_config(app, key, info):
@@ -108,8 +113,9 @@ def main():
 
                 # Load recipes from the hapi.yml file
                 if "recipes" in loaded_data:
-                    if isinstance(loaded_data.get("recipes"), list):
-                        for name in loaded_data.get("recipes"):
+                    recipes = loaded_data.get("recipes")
+                    if isinstance(recipes, list):
+                        for name in recipes:
                             load_recipe(name)
                     else:
                         raise ValueError(
@@ -118,8 +124,9 @@ def main():
 
                 # Load config from the hapi.yml file
                 if "config" in loaded_data:
-                    if isinstance(loaded_data.get("config"), dict):
-                        for key, info in loaded_data.get("config").items():
+                    config = loaded_data.get("config")
+                    if isinstance(config, dict):
+                        for key, info in config.items():
                             load_config(app, key, info)
                     else:
                         raise ValueError(
@@ -128,8 +135,9 @@ def main():
 
                 # Load tasks from the hapi.yml file
                 if "tasks" in loaded_data:
-                    if isinstance(loaded_data.get("tasks"), dict):
-                        for name, body in loaded_data.get("tasks").items():
+                    tasks = loaded_data.get("tasks")
+                    if isinstance(tasks, dict):
+                        for name, body in tasks.items():
                             load_task(name, body)
                     else:
                         raise ValueError(
@@ -138,8 +146,9 @@ def main():
 
                 # Load before hooks from the hapi.yml file
                 if "before" in loaded_data:
-                    if isinstance(loaded_data.get("before"), dict):
-                        for name, do in loaded_data.get("before").items():
+                    before = loaded_data.get("before")
+                    if isinstance(before, dict):
+                        for name, do in before.items():
                             app.before(name, do)
                     else:
                         raise ValueError(
@@ -148,8 +157,9 @@ def main():
 
                 # Load after hooks from the hapi.yml file
                 if "after" in loaded_data:
-                    if isinstance(loaded_data.get("after"), dict):
-                        for name, do in loaded_data.get("after").items():
+                    after = loaded_data.get("after")
+                    if isinstance(after, dict):
+                        for name, do in after.items():
                             app.after(name, do)
                     else:
                         raise ValueError(
