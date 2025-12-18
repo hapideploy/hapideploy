@@ -13,16 +13,18 @@ class Remote(Container):
         host: str,
         user: str | None = None,
         port: int | None = None,
-        identity_file: str | None = None,
         label: str | None = None,
+        identity_file: str | None = None,
+        passphrase: str | None = None,
     ):
         super().__init__()
 
         self.host = host
         self.user = user
         self.port = port
-        self.identity_file = identity_file
         self.label = host if label is None else label
+        self.identity_file = identity_file
+        self.passphrase = passphrase
 
         key = self.host
 
@@ -38,6 +40,8 @@ class Remote(Container):
         connect_kwargs = dict()
         if self.identity_file:
             connect_kwargs["key_filename"] = self.identity_file
+        if self.passphrase:
+            connect_kwargs["passphrase"] = self.passphrase
         return Connection(
             host=self.host,
             user=self.user,

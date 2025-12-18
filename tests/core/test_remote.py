@@ -68,6 +68,16 @@ def test_it_creates_an_instance_with_identity_file():
     assert remote.identity_file == "/path/.ssh/id_ed25519"
 
 
+def test_it_creates_an_instance_with_passphrase():
+    remote = Remote(
+        host="192.168.33.11",
+        label="test-server",
+        passphrase='secret_string'
+    )
+
+    assert remote.passphrase == "secret_string"
+
+
 def test_it_selects_remotes():
     remotes = RemoteBag()
 
