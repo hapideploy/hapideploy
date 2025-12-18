@@ -5,19 +5,23 @@
 ![version](https://img.shields.io/pypi/v/hapideploy)
 ![license](https://img.shields.io/pypi/l/hapideploy)
 
-## Introduction
+**The Python deployment tool for developers who love simplicity.**
 
-[DeployPHP](https://deployer.org) is a deployment tool with built-in support for popular PHP frameworks, making it the best choice for those who primarily work with PHP. Inspired by DeployPHP, I decided to create a similar tool in Python — a more widely used language that is also better suited for DevOps. I named it **HapiDeploy**, a remote execution tool.
+HapiDeploy is a feature-rich tool designed for zero-downtime deployments. If you've used DeployPHP, this will feel instantly familiar—but powered by Python.
 
-## Documentation
+## Why HapiDeploy?
 
-You can find the full documentation [here](https://hapideploy.com).
+* 🐍 **Python Native:** Leverage the full power of Python and its vast library ecosystem.
+* 💡 **Familiar API:** Heavily inspired by DeployPHP; zero learning curve for migrating developers.
+* ⚡ **Zero Downtime:** Atomic deployments ensure your site never goes offline during updates.
+* 🌐 **Language Agnostic:** Deploy PHP, Node, or Python apps using one unified tool.
 
-## Contributing
+## Get Started
 
-Thank you for considering contributing to HapiDeploy!
-Please read the [contributing guide](./docs/contributing.md) for more details.
+```bash
+pip install hapideploy
+```
 
-## License
+For full documentation, recipes, and configuration examples:
 
-HapiDeploy is licensed under the [MIT license](LICENSE.md).
+👉 Visit [hapideploy.com](https://hapideploy.com)
