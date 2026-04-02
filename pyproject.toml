@@ -1,6 +1,6 @@
 [project]
 name = "hapideploy"
-version = "0.3.0"
+version = "0.4.0"
 description = "The Python deployment tool for developers who love simplicity."
 authors = [{name="Oliver Quynh", email="<contact@oliverquynh.com>"}]
 readme = "README.md"
